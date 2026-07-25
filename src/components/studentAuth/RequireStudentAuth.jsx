@@ -1,13 +1,40 @@
-import { useCallback } from 'react';
+import { useCallback, useEffect } from 'react';
 import { useLocation } from 'react-router-dom';
 import { useStudentAuthRequired } from '../../contexts/StudentAuthContext';
 
 /**
- * Soft auth wrapper: pages stay visible; login is enforced at action time via
- * useRequireLoginToUse().
+ * Soft auth wrapper:
+ * - Page content stays visible (blurred when logged out)
+ * - Side OTP popup handles login (no center blocking card)
+ * - useRequireLoginToUse() gates predict/submit actions
  */
 export default function RequireStudentAuth({ children }) {
-  return children;
+  const { isAuthenticated, openAuthModal } = useStudentAuthRequired();
+  const location = useLocation();
+
+  useEffect(() => {
+    if (isAuthenticated) return;
+    openAuthModal('login', {
+      pendingPath: `${location.pathname}${location.search || ''}`,
+    });
+  }, [isAuthenticated, openAuthModal, location.pathname, location.search]);
+
+  if (isAuthenticated) return children;
+
+  return (
+    <div className="relative">
+      <div
+        className="pointer-events-none select-none blur-[2.5px] opacity-[0.72] transition-[filter,opacity] duration-500 ease-out sm:blur-[3px]"
+        aria-hidden
+      >
+        {children}
+      </div>
+      <div
+        className="pointer-events-none absolute inset-0 bg-gradient-to-b from-[#f3f5f8]/35 via-transparent to-[#f3f5f8]/50"
+        aria-hidden
+      />
+    </div>
+  );
 }
 
 /**
