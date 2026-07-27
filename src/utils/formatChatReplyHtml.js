@@ -1,6 +1,6 @@
 /**
  * Safe, lightweight markdown → HTML for chat replies.
- * Supports: paragraphs, **bold**, *italic*, `code`, -/* bullets, 1. numbered lists.
+ * Supports: paragraphs, **bold**, __bold__, *italic*, `code`, -/* bullets, 1. numbered lists.
  */
 
 function escapeHtml(text) {
@@ -12,10 +12,18 @@ function escapeHtml(text) {
 }
 
 function inlineFormat(escaped) {
-  return escaped
-    .replace(/`([^`]+)`/g, '<code class="rounded bg-[#f1f5f9] px-1 py-0.5 text-[12px] text-[#0f172a]">$1</code>')
-    .replace(/\*\*([^*]+)\*\*/g, '<strong class="font-semibold text-[#041e30]">$1</strong>')
-    .replace(/(^|[^*])\*([^*\n]+)\*(?!\*)/g, '$1<em class="italic text-[#334155]">$2</em>');
+  let out = escaped
+    .replace(/`([^`]+)`/g, '<code class="gx-chat-code">$1</code>')
+    // Bold first (non-greedy so multiple **pairs** work)
+    .replace(/\*\*(.+?)\*\*/g, '<strong class="gx-chat-strong">$1</strong>')
+    .replace(/__(.+?)__/g, '<strong class="gx-chat-strong">$1</strong>')
+    // Italic after bold so we do not eat ** markers
+    .replace(/(^|[^*])\*([^*\n]+?)\*(?!\*)/g, '$1<em class="gx-chat-em">$2</em>')
+    .replace(/(^|[^_])_([^_\n]+?)_(?!_)/g, '$1<em class="gx-chat-em">$2</em>');
+
+  // Strip leftover unmatched markdown markers so raw ** never shows
+  out = out.replace(/\*\*/g, '').replace(/__/g, '');
+  return out;
 }
 
 /**
@@ -27,8 +35,13 @@ export function formatChatReplyHtml(raw) {
   let text = raw.trim();
   if (!text) return '';
 
-  // Normalize Windows newlines and common list markers
-  text = text.replace(/\r\n/g, '\n').replace(/\u2022/g, '-');
+  // Normalize newlines, bullets, and odd asterisk variants models sometimes emit
+  text = text
+    .replace(/\r\n/g, '\n')
+    .replace(/\u2022/g, '-')
+    .replace(/［/g, '[')
+    .replace(/］/g, ']')
+    .replace(/＊/g, '*');
 
   const lines = text.split('\n');
   const parts = [];
@@ -37,9 +50,7 @@ export function formatChatReplyHtml(raw) {
   const flushParagraph = (buffer) => {
     const body = buffer.join(' ').replace(/\s+/g, ' ').trim();
     if (!body) return;
-    parts.push(
-      `<p class="mb-2.5 last:mb-0 text-[13px] leading-relaxed text-[#334155] sm:text-sm">${inlineFormat(escapeHtml(body))}</p>`
-    );
+    parts.push(`<p class="gx-chat-p">${inlineFormat(escapeHtml(body))}</p>`);
   };
 
   while (i < lines.length) {
@@ -65,23 +76,18 @@ export function formatChatReplyHtml(raw) {
         items.push(inlineFormat(escapeHtml((n || b)[2])));
         i += 1;
       }
-      const listClass = isNumbered
-        ? 'mb-2.5 list-decimal space-y-1.5 pl-5 last:mb-0'
-        : 'mb-2.5 list-disc space-y-1.5 pl-5 last:mb-0';
-      parts.push(`<${isNumbered ? 'ol' : 'ul'} class="${listClass}">`);
+      parts.push(`<${isNumbered ? 'ol' : 'ul'} class="gx-chat-list ${isNumbered ? 'gx-chat-ol' : 'gx-chat-ul'}">`);
       items.forEach((item) => {
-        parts.push(`<li class="text-[13px] leading-relaxed text-[#334155] sm:text-sm">${item}</li>`);
+        parts.push(`<li class="gx-chat-li">${item}</li>`);
       });
       parts.push(isNumbered ? '</ol>' : '</ul>');
       continue;
     }
 
     // Heading-like **Title** alone on a line
-    const headingOnly = trimmed.match(/^\*\*(.+)\*\*:?\s*$/);
+    const headingOnly = trimmed.match(/^\*\*(.+?)\*\*:?\s*$/);
     if (headingOnly) {
-      parts.push(
-        `<p class="mb-1.5 mt-3 first:mt-0 text-[12px] font-semibold uppercase tracking-[0.06em] text-[#041e30]">${escapeHtml(headingOnly[1])}</p>`
-      );
+      parts.push(`<p class="gx-chat-heading">${escapeHtml(headingOnly[1].replace(/\*\*/g, ''))}</p>`);
       i += 1;
       continue;
     }
@@ -91,12 +97,12 @@ export function formatChatReplyHtml(raw) {
       const t = lines[i].trim();
       if (!t) break;
       if (/^([-*•]|\d+[.)])\s+/.test(t)) break;
-      if (/^\*\*.+\*\*:?\s*$/.test(t)) break;
+      if (/^\*\*.+?\*\*:?\s*$/.test(t)) break;
       para.push(t);
       i += 1;
     }
     flushParagraph(para);
   }
 
-  return parts.join('') || `<p class="text-sm text-[#334155]">${inlineFormat(escapeHtml(text))}</p>`;
+  return parts.join('') || `<p class="gx-chat-p">${inlineFormat(escapeHtml(text))}</p>`;
 }

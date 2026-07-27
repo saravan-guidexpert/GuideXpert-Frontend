@@ -15,7 +15,9 @@ import {
   swInsightsPanel,
   swInput,
   swLabel,
+  swBetterCell,
   swMetricBetter,
+  swMetricTie,
   swResultCard,
   swResultsHighlight,
   swSectionSubtitle,
@@ -156,43 +158,64 @@ export default function CollegeComparisonPage() {
     setForm((prev) => ({
       ...prev,
       [field]: option.name,
-      [`${field}Id`]: option.id,
+      [`${field}Id`]: option.id || '',
     }));
     setSuggestions((prev) => ({ ...prev, [field]: [] }));
     setActiveField(null);
     setErrors((prev) => ({ ...prev, [field]: undefined }));
   };
 
+  const useTypedCollege = (field) => {
+    const name = String(form[field] || '').trim();
+    if (!name) return;
+    setForm((prev) => ({
+      ...prev,
+      [field]: name,
+      [`${field}Id`]: '',
+    }));
+    setSuggestions((prev) => ({ ...prev, [field]: [] }));
+    setActiveField(null);
+    setErrors((prev) => ({ ...prev, [field]: undefined }));
+  };
+
+  const isExactCollegeOption = (option, query) => {
+    const q = String(query || '')
+      .trim()
+      .toLowerCase();
+    if (!q || !option) return false;
+    if (option.name?.toLowerCase() === q) return true;
+    if (option.shortName?.toLowerCase() === q) return true;
+    if (option.id && String(option.id).toLowerCase() === q) return true;
+    if (Array.isArray(option.aliases)) {
+      return option.aliases.some((alias) => String(alias).toLowerCase() === q);
+    }
+    return false;
+  };
+
   const resolveFieldSelection = async (field, typedValue) => {
-    const currentId = form[`${field}Id`];
     const query = String(typedValue || '').trim();
+    if (!query) return null;
+
+    const currentId = String(form[`${field}Id`] || '').trim();
+    // Keep a catalog pick only when the typed label still matches that selection.
     if (currentId) {
       return { id: currentId, name: form[field] || query };
     }
-    if (!query) return null;
 
     const cached = suggestions[field] || [];
-    const exactCached = cached.find(
-      (option) =>
-        option.name.toLowerCase() === query.toLowerCase() ||
-        option.shortName?.toLowerCase() === query.toLowerCase() ||
-        option.id.toLowerCase() === query.toLowerCase()
-    );
-    if (exactCached) return exactCached;
-    if (cached.length === 1) return cached[0];
+    const exactCached = cached.find((option) => isExactCollegeOption(option, query));
+    if (exactCached?.id) return exactCached;
 
-    const response = await searchCollegeComparisonOptions(query, 10, { useAi: true });
-    const options = response.success ? response.data?.options || [] : [];
-    const exact = options.find(
-      (option) =>
-        option.name.toLowerCase() === query.toLowerCase() ||
-        option.shortName?.toLowerCase() === query.toLowerCase() ||
-        (option.id && option.id.toLowerCase() === query.toLowerCase())
-    );
-    if (exact) return exact;
-    if (options.length === 1) return options[0];
+    try {
+      const response = await searchCollegeComparisonOptions(query, 10, { useAi: false });
+      const options = response.success ? response.data?.options || [] : [];
+      const exact = options.find((option) => isExactCollegeOption(option, query));
+      if (exact?.id) return exact;
+    } catch {
+      // Search failures must not block free-text compare.
+    }
 
-    // Free-text college: backend will resolve / build a profile via OpenAI.
+    // Any typed college name is valid — backend builds a profile when needed.
     return { id: '', name: query };
   };
 
@@ -300,6 +323,22 @@ export default function CollegeComparisonPage() {
     return `${t.slice(0, max)}…`;
   };
 
+  const isBetterA = (row) => row.better === 'a' || row.edge === 'A';
+  const isBetterB = (row) => row.better === 'b' || row.edge === 'B';
+  const isTie = (row) => row.better === 'tie' || row.edge === 'Tie';
+  const cellTone = (row, side) => {
+    if (isTie(row)) return swBetterCell;
+    if (side === 'a' && isBetterA(row)) return swBetterCell;
+    if (side === 'b' && isBetterB(row)) return swBetterCell;
+    return 'text-[#5a6570]';
+  };
+  const mobileCellTone = (row, side) => {
+    if (isTie(row)) return `${swBetterCell} rounded-xl`;
+    if (side === 'a' && isBetterA(row)) return `${swBetterCell} rounded-xl`;
+    if (side === 'b' && isBetterB(row)) return `${swBetterCell} rounded-xl`;
+    return 'rounded-xl bg-white';
+  };
+
   const renderMetricTable = (rows, aName, bName) => (
     <>
       <div className="hidden overflow-x-auto md:block">
@@ -329,38 +368,18 @@ export default function CollegeComparisonPage() {
                 <td className="px-3 py-3.5 font-semibold text-[#041e30]">
                   {row.metric || row.factor}
                 </td>
-                <td
-                  className={`px-3 py-3.5 ${
-                    row.better === 'a' || row.edge === 'A'
-                      ? 'bg-[#fff4ed] font-semibold text-[#c45a0c]'
-                      : 'text-[#5a6570]'
-                  }`}
-                >
+                <td className={`px-3 py-3.5 ${cellTone(row, 'a')}`}>
                   <span className="inline-flex flex-wrap items-center gap-1.5">
                     {row.aValue || row.collegeA}
-                    {row.better === 'a' || row.edge === 'A' ? (
-                      <span className={swMetricBetter}>Better</span>
-                    ) : null}
-                    {row.better === 'tie' || row.edge === 'Tie' ? (
-                      <span className={swMetricBetter}>Tie</span>
-                    ) : null}
+                    {isBetterA(row) ? <span className={swMetricBetter}>Better</span> : null}
+                    {isTie(row) ? <span className={swMetricTie}>Tie</span> : null}
                   </span>
                 </td>
-                <td
-                  className={`px-3 py-3.5 ${
-                    row.better === 'b' || row.edge === 'B'
-                      ? 'bg-[#fff4ed] font-semibold text-[#c45a0c]'
-                      : 'text-[#5a6570]'
-                  }`}
-                >
+                <td className={`px-3 py-3.5 ${cellTone(row, 'b')}`}>
                   <span className="inline-flex flex-wrap items-center gap-1.5">
                     {row.bValue || row.collegeB}
-                    {row.better === 'b' || row.edge === 'B' ? (
-                      <span className={swMetricBetter}>Better</span>
-                    ) : null}
-                    {row.better === 'tie' || row.edge === 'Tie' ? (
-                      <span className={swMetricBetter}>Tie</span>
-                    ) : null}
+                    {isBetterB(row) ? <span className={swMetricBetter}>Better</span> : null}
+                    {isTie(row) ? <span className={swMetricTie}>Tie</span> : null}
                   </span>
                 </td>
               </tr>
@@ -374,28 +393,25 @@ export default function CollegeComparisonPage() {
           <li key={row.metric || row.factor} className="rounded-xl bg-[#f8fafc] p-3.5">
             <p className="text-[11px] font-bold uppercase tracking-[0.14em] text-[#8a94a0]">
               {row.metric || row.factor}
+              {isTie(row) ? (
+                <span className={`ml-2 ${swMetricTie}`}>Tie</span>
+              ) : null}
             </p>
             <div className="mt-2.5 flex items-center justify-between gap-2">
-              <div
-                className={`min-w-0 flex-1 rounded-xl px-2 py-2 text-center text-sm ${
-                  row.better === 'a' || row.edge === 'A'
-                    ? 'bg-[#fff4ed] font-semibold text-[#c45a0c]'
-                    : 'bg-white'
-                }`}
-              >
+              <div className={`min-w-0 flex-1 px-2 py-2 text-center text-sm ${mobileCellTone(row, 'a')}`}>
                 <span className="block text-[10px] uppercase text-[#8a94a0]">A</span>
                 <span className="tabular-nums">{row.aValue || row.collegeA}</span>
+                {isBetterA(row) ? (
+                  <span className={`mt-1 inline-flex ${swMetricBetter}`}>Better</span>
+                ) : null}
               </div>
               <VsBadge className="scale-90" />
-              <div
-                className={`min-w-0 flex-1 rounded-xl px-2 py-2 text-center text-sm ${
-                  row.better === 'b' || row.edge === 'B'
-                    ? 'bg-[#fff4ed] font-semibold text-[#c45a0c]'
-                    : 'bg-white'
-                }`}
-              >
+              <div className={`min-w-0 flex-1 px-2 py-2 text-center text-sm ${mobileCellTone(row, 'b')}`}>
                 <span className="block text-[10px] uppercase text-[#8a94a0]">B</span>
                 <span className="tabular-nums">{row.bValue || row.collegeB}</span>
+                {isBetterB(row) ? (
+                  <span className={`mt-1 inline-flex ${swMetricBetter}`}>Better</span>
+                ) : null}
               </div>
             </div>
           </li>
@@ -407,6 +423,14 @@ export default function CollegeComparisonPage() {
   const renderCollegeField = (field, label, placeholder) => {
     const fieldErrors = errors[field];
     const fieldSuggestions = suggestions[field] || [];
+    const typed = String(form[field] || '').trim();
+    const hasCatalogId = Boolean(form[`${field}Id`]);
+    const showUseTyped =
+      activeField === field &&
+      typed.length >= 2 &&
+      !hasCatalogId &&
+      !fieldSuggestions.some((option) => isExactCollegeOption(option, typed));
+
     return (
       <label className={`block min-w-0 ${swLabel} relative`}>
         {label}
@@ -425,11 +449,28 @@ export default function CollegeComparisonPage() {
           autoComplete="off"
           aria-invalid={!!fieldErrors}
         />
-        {activeField === field && fieldSuggestions.length > 0 ? (
+        {activeField === field && (fieldSuggestions.length > 0 || showUseTyped) ? (
           <div className="absolute left-0 right-0 top-full z-20 mt-2 overflow-hidden rounded-2xl border border-[#dce3ec] bg-white shadow-lg">
+            {showUseTyped ? (
+              <button
+                type="button"
+                onMouseDown={(event) => {
+                  event.preventDefault();
+                  useTypedCollege(field);
+                }}
+                className="block w-full border-b border-[#eef2f7] bg-[#f0f7ff] px-4 py-3 text-left hover:bg-[#e8f1f8]"
+              >
+                <span className="block text-sm font-semibold text-[#041e30]">
+                  Use “{typed}” as typed
+                </span>
+                <span className="mt-0.5 block text-xs text-[#667085]">
+                  Not in the list — we’ll resolve this college when you compare
+                </span>
+              </button>
+            ) : null}
             {fieldSuggestions.map((option) => (
               <button
-                key={option.id}
+                key={option.id || option.name}
                 type="button"
                 onMouseDown={(event) => {
                   event.preventDefault();
@@ -446,12 +487,9 @@ export default function CollegeComparisonPage() {
             ))}
           </div>
         ) : null}
-        {activeField === field &&
-        form[field]?.trim() &&
-        !form[`${field}Id`] &&
-        fieldSuggestions.length === 0 ? (
-          <p className="mt-1.5 text-xs text-[#667085]">
-            No catalog match yet — we can still resolve this name when you compare.
+        {typed && !hasCatalogId ? (
+          <p className="mt-1.5 text-xs text-[#0b3a5c]">
+            Open input accepted — any college name works, even if it’s not in the list.
           </p>
         ) : null}
         {fieldErrors ? <span className={swError}>{fieldErrors}</span> : null}
@@ -498,7 +536,8 @@ export default function CollegeComparisonPage() {
           <section ref={resultsRef} tabIndex={-1} className={swResultsHighlight}>
             <h2 className={swSectionTitle}>Comparison results</h2>
             <p className={swSectionSubtitle}>
-              All comparison data is shown in tables. Highlighted cells mark the stronger option.
+              Green cells mark the stronger option or a tie. Scroll down to ask doubts based on this
+              comparison.
             </p>
             <div className={`mt-6 ${swResultCard}`}>
               <div className="mb-5 flex flex-wrap items-center justify-center gap-3 text-center">
@@ -596,7 +635,9 @@ export default function CollegeComparisonPage() {
                   </p>
                 )}
               </div>
+            </div>
 
+            <div className="mt-4">
               <CollegeComparisonChat comparison={result} />
             </div>
           </section>
@@ -657,7 +698,8 @@ export default function CollegeComparisonPage() {
       <div>
         <h2 className={swFormTitle}>Compare two institutions</h2>
         <p className={swFormSubtitle}>
-          Search the expanded catalog, use smart suggestions, or type any college name.
+          Type any college name — pick a suggestion or use your typed name even if it is not in the
+          list.
         </p>
       </div>
 

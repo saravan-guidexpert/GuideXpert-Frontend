@@ -1,0 +1,67 @@
+/* Styles for HTML produced by formatChatReplyHtml (kept here so Tailwind purge cannot drop them). */
+
+.gx-chat-reply .gx-chat-p {
+  margin: 0 0 0.65rem;
+  font-size: 0.875rem;
+  line-height: 1.55;
+  color: #334155;
+}
+
+.gx-chat-reply .gx-chat-p:last-child {
+  margin-bottom: 0;
+}
+
+.gx-chat-reply .gx-chat-heading {
+  margin: 0.75rem 0 0.35rem;
+  font-size: 0.72rem;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: #041e30;
+}
+
+.gx-chat-reply .gx-chat-heading:first-child {
+  margin-top: 0;
+}
+
+.gx-chat-reply .gx-chat-strong {
+  font-weight: 700;
+  color: #041e30;
+}
+
+.gx-chat-reply .gx-chat-em {
+  font-style: italic;
+  color: #334155;
+}
+
+.gx-chat-reply .gx-chat-code {
+  border-radius: 0.25rem;
+  background: #f1f5f9;
+  padding: 0.1rem 0.3rem;
+  font-size: 0.75rem;
+  color: #0f172a;
+}
+
+.gx-chat-reply .gx-chat-list {
+  margin: 0 0 0.65rem;
+  padding-left: 1.15rem;
+}
+
+.gx-chat-reply .gx-chat-list:last-child {
+  margin-bottom: 0;
+}
+
+.gx-chat-reply .gx-chat-ul {
+  list-style: disc;
+}
+
+.gx-chat-reply .gx-chat-ol {
+  list-style: decimal;
+}
+
+.gx-chat-reply .gx-chat-li {
+  margin: 0.3rem 0;
+  font-size: 0.875rem;
+  line-height: 1.5;
+  color: #334155;
+}

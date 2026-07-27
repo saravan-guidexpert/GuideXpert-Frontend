@@ -67,6 +67,8 @@ export const swProgressBar = 'h-full rounded-full bg-[#f27921] transition-[width
 export const swLinkCta =
   'mt-6 inline-flex items-center gap-1.5 text-sm font-semibold text-[#f27921] transition duration-300 group-hover:gap-2.5';
 
-export const swBetterCell = 'bg-[#fff4ed] font-semibold text-[#c45a0c]';
+export const swBetterCell = 'bg-[#ecfdf5] font-semibold text-[#047857]';
 export const swMetricBetter =
-  'inline-flex items-center rounded-md bg-[#fff4ed] px-2 py-0.5 text-[11px] font-bold uppercase tracking-wide text-[#c45a0c]';
+  'inline-flex items-center rounded-md bg-[#ecfdf5] px-2 py-0.5 text-[11px] font-bold uppercase tracking-wide text-[#047857]';
+export const swMetricTie =
+  'inline-flex items-center rounded-md bg-[#f0fdf4] px-2 py-0.5 text-[11px] font-bold uppercase tracking-wide text-[#15803d]';
