@@ -4,6 +4,7 @@ import { Careers360NewsSection, Careers360CounsellingSection } from './Careers36
 import { Careers360DataSection } from './Careers360DataSection';
 import { Careers360PredictionSection, Careers360OtherProducts } from './Careers360PredictionSection';
 import Careers360ImpactSection, { Careers360CommunityCTA } from './Careers360ImpactSection';
+import Careers360BecomeCounsellorSection from './Careers360BecomeCounsellorSection';
 import Careers360ExamStrip from './Careers360Shared';
 import StudentSuccessCarousel from '../landing/StudentSuccessCarousel';
 import { ToolCard } from '../landing/LandingWorkspaceSections';
@@ -145,6 +146,7 @@ export default function Careers360StyleHome({
           <Careers360NewsSection />
           <Careers360DataSection />
           <Careers360OtherProducts />
+          <Careers360BecomeCounsellorSection />
           <Careers360CommunityCTA />
         </>
       )}

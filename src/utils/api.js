@@ -1096,10 +1096,11 @@ export const getPredictedCollegesPublic = async (params = {}) => {
   });
 };
 
-export const searchCollegeComparisonOptions = async (query, limit = 8) => {
+export const searchCollegeComparisonOptions = async (query, limit = 8, { useAi = false } = {}) => {
   const search = new URLSearchParams();
   if (query != null) search.set('q', String(query));
   search.set('limit', String(limit));
+  if (useAi) search.set('ai', '1');
   return apiRequest(`/college-predictor/comparison/options?${search.toString()}`, {
     method: 'GET',
   });
@@ -1109,6 +1110,17 @@ export const compareCollegesPublic = async (payload) => {
   return apiRequest('/college-predictor/comparison', {
     method: 'POST',
     body: JSON.stringify(payload || {}),
+  });
+};
+
+export const chatCollegeComparisonPublic = async ({ message, comparison, history = [] } = {}) => {
+  return apiRequest('/college-predictor/comparison/chat', {
+    method: 'POST',
+    body: JSON.stringify({
+      message,
+      comparison,
+      history,
+    }),
   });
 };
 

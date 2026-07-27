@@ -116,7 +116,7 @@ export const DATA_STATS = [
 export const SECTION_COPY = {
   updates: {
     title: 'Education updates',
-    subtitle: 'Exam news, admission windows, deadlines, and tool refreshes',
+    subtitle: 'Exam news, admission windows, deadlines, and tool refreshes — kept current for every session.',
   },
   guidance: {
     title: 'Guidance & discovery',
@@ -126,7 +126,7 @@ export const SECTION_COPY = {
   data: {
     title: 'Colleges & cutoffs',
     description:
-      'Explore institutes and entrance exams available in your workspace. Use these as starting points before running a predictor.',
+      'Browse institutes students shortlist most often, backed by indexed cutoff data across major entrance exams.',
   },
   predictors: {
     title: 'Tools that turn scores into decisions',
@@ -139,7 +139,7 @@ export const SECTION_COPY = {
   },
   outcomes: {
     title: 'Student outcomes',
-    description: 'Examples of how GuideXpert predictions lined up with final admission choices.',
+    description: 'How GuideXpert predictions lined up with the colleges students ultimately joined.',
   },
   helpCta: {
     title: 'Not sure where to begin?',

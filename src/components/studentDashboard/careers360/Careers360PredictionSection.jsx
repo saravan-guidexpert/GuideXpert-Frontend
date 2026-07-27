@@ -10,8 +10,6 @@ import {
   PredictorIllustration,
   SectionDecorDots,
 } from './SectionIllustrations';
-import PixarLottie from './PixarLottie';
-import { STUDENT_LOTTIES } from './studentsAnimations';
 
 const PREDICTOR_FEATURES = [
   {
@@ -149,41 +147,38 @@ export function Careers360OtherProducts() {
   const { title, description } = SECTION_COPY.moreTools;
 
   return (
-    <section className={`${LAYOUT.section} relative overflow-hidden bg-[#f7f8fa]`}>
-      <SectionDecorDots className="absolute bottom-6 left-6 h-16 w-16 opacity-40" />
+    <section className={`${LAYOUT.section} bg-white`}>
       <div className={LAYOUT.container}>
-        <div className="mx-auto mb-8 grid max-w-3xl items-center gap-5 sm:grid-cols-[1fr_160px]">
-          <div className="text-center sm:text-left">
-            <h2 className="text-xl font-bold tracking-tight text-[#1a1a1a] sm:text-2xl">{title}</h2>
-            <p className="mt-3 text-sm leading-relaxed text-[#666]">{description}</p>
-          </div>
-          <div className="mx-auto hidden h-36 w-full overflow-hidden rounded-xl border border-[#e8eaed] bg-white sm:block">
-            <PixarLottie
-              src={STUDENT_LOTTIES.tools}
-              label="Student tools animation"
-              className="h-full w-full"
-            />
-          </div>
-        </div>
+        <header className="mb-10 max-w-2xl">
+          <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-[#f27921]">
+            More tools
+          </p>
+          <h2 className="mt-3 text-2xl font-bold tracking-tight text-[#1a1a1a] sm:text-3xl">
+            {title}
+          </h2>
+          <p className="mt-3 text-[15px] leading-relaxed text-[#666]">{description}</p>
+        </header>
 
-        <ul className="mx-auto max-w-3xl divide-y divide-[#e5e7eb] overflow-hidden rounded-2xl border border-[#e5e7eb] bg-white">
+        <ul className="grid gap-4 sm:grid-cols-2">
           {OTHER_PRODUCTS.map((product) => (
             <li key={product.id}>
               <Link
                 to={product.to}
-                className="group flex items-center gap-4 px-5 py-5 transition hover:bg-[#fafbfc] sm:gap-5 sm:px-6"
+                className="group flex h-full items-start gap-4 rounded-2xl border border-[#e5e7eb] bg-[#fafbfc] p-5 transition hover:border-[#f27921]/35 hover:bg-white hover:shadow-[0_8px_24px_rgba(16,24,40,0.06)] sm:gap-5 sm:p-6"
               >
                 <OtherProductIcon id={product.id} />
                 <div className="min-w-0 flex-1">
-                  <h3 className="text-base font-semibold text-[#1a1a1a] transition group-hover:text-[#f27921]">
-                    {product.title}
-                  </h3>
-                  <p className="mt-1 text-sm leading-relaxed text-[#666]">{product.description}</p>
+                  <div className="flex items-start justify-between gap-3">
+                    <h3 className="text-base font-semibold text-[#1a1a1a] transition group-hover:text-[#f27921]">
+                      {product.title}
+                    </h3>
+                    <LuArrowRight
+                      className="mt-0.5 h-4 w-4 shrink-0 text-[#ccc] transition group-hover:translate-x-0.5 group-hover:text-[#f27921]"
+                      aria-hidden
+                    />
+                  </div>
+                  <p className="mt-2 text-sm leading-relaxed text-[#666]">{product.description}</p>
                 </div>
-                <LuArrowRight
-                  className="h-4 w-4 shrink-0 text-[#bbb] transition group-hover:translate-x-0.5 group-hover:text-[#f27921]"
-                  aria-hidden
-                />
               </Link>
             </li>
           ))}

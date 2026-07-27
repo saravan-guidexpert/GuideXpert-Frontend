@@ -74,7 +74,8 @@ export const FOOTER_COLUMNS = [
   {
     title: 'GuideXpert',
     links: [
-      { label: 'Main website', to: '/' },
+      { label: 'Student home', to: '/' },
+      { label: 'Become a counsellor', to: '/become-counsellor' },
       { label: 'Blogs', to: '/blogs' },
       { label: 'Counsellor login', to: '/counsellor/login' },
     ],

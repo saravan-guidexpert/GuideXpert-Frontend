@@ -6,6 +6,7 @@ import ToolFactsPreview from './components/ToolFactsPreview';
 import { useStudentAuth } from '../../contexts/StudentAuthContext';
 import { useRequireLoginToUse } from '../../components/studentAuth/RequireStudentAuth';
 import { compareCollegesPublic, searchCollegeComparisonOptions } from '../../utils/api';
+import CollegeComparisonChat from './components/CollegeComparisonChat';
 import {
   swBtnPrimary,
   swBtnSecondary,
@@ -100,9 +101,19 @@ export default function CollegeComparisonPage() {
         return;
       }
       const timer = setTimeout(async () => {
-        const response = await searchCollegeComparisonOptions(query, 8);
+        let response = await searchCollegeComparisonOptions(query, 10, { useAi: false });
         if (controller.cancelled) return;
-        const options = response.success ? response.data?.options || [] : [];
+        let options = response.success ? response.data?.options || [] : [];
+
+        // If catalog matches are thin, ask OpenAI for more college suggestions.
+        if (options.length < 3 && String(query).trim().length >= 3) {
+          response = await searchCollegeComparisonOptions(query, 10, { useAi: true });
+          if (controller.cancelled) return;
+          if (response.success) {
+            options = response.data?.options || options;
+          }
+        }
+
         setSuggestions((prev) => ({ ...prev, [field]: options }));
 
         const exact = options.find(
@@ -110,7 +121,7 @@ export default function CollegeComparisonPage() {
             option.name.toLowerCase() === String(query).trim().toLowerCase() ||
             option.shortName?.toLowerCase() === String(query).trim().toLowerCase()
         );
-        if (exact) {
+        if (exact && exact.id) {
           setForm((prev) => {
             if (prev[`${field}Id`]) return prev;
             return {
@@ -121,7 +132,7 @@ export default function CollegeComparisonPage() {
           });
           setErrors((prev) => ({ ...prev, [field]: undefined }));
         }
-      }, 150);
+      }, 220);
       controller[`${field}Timer`] = timer;
     });
     return () => {
@@ -170,18 +181,18 @@ export default function CollegeComparisonPage() {
     if (exactCached) return exactCached;
     if (cached.length === 1) return cached[0];
 
-    const response = await searchCollegeComparisonOptions(query, 8);
+    const response = await searchCollegeComparisonOptions(query, 10, { useAi: true });
     const options = response.success ? response.data?.options || [] : [];
     const exact = options.find(
       (option) =>
         option.name.toLowerCase() === query.toLowerCase() ||
         option.shortName?.toLowerCase() === query.toLowerCase() ||
-        option.id.toLowerCase() === query.toLowerCase()
+        (option.id && option.id.toLowerCase() === query.toLowerCase())
     );
     if (exact) return exact;
     if (options.length === 1) return options[0];
 
-    // Free-text college: backend will resolve / build a profile.
+    // Free-text college: backend will resolve / build a profile via OpenAI.
     return { id: '', name: query };
   };
 
@@ -429,6 +440,7 @@ export default function CollegeComparisonPage() {
                 <span className="block text-sm font-semibold text-[#041e30]">{option.name}</span>
                 <span className="mt-0.5 block text-xs text-[#667085]">
                   {option.city}, {option.state} · {option.ownership}
+                  {option.source === 'ai_suggest' ? ' · OpenAI' : ''}
                 </span>
               </button>
             ))}
@@ -439,7 +451,7 @@ export default function CollegeComparisonPage() {
         !form[`${field}Id`] &&
         fieldSuggestions.length === 0 ? (
           <p className="mt-1.5 text-xs text-[#667085]">
-            No catalog match yet — you can still compare this free-text name.
+            No catalog match yet — OpenAI can suggest or resolve this name when you compare.
           </p>
         ) : null}
         {fieldErrors ? <span className={swError}>{fieldErrors}</span> : null}
@@ -452,19 +464,19 @@ export default function CollegeComparisonPage() {
       title="College Comparison"
       subtitle="Compare two institutions side-by-side and identify the stronger value choice."
       howItWorks={[
-        'Search a college from suggestions, or type any college name as free text.',
-        'Core metrics are compared first; free-text names are resolved when needed.',
-        'Ask for an AI table only after results load if you want a compact trade-off view.',
+        'Search the expanded college catalog, or type any college name.',
+        'OpenAI fills missing colleges and builds profiles when needed.',
+        'After results load, chat to ask doubts about the comparison.',
       ]}
       whatThisToolDoes={[
         'Compares two colleges on placements, fees, ROI, branch breadth, ranking signals, and approvals.',
         'Highlights the stronger option per metric so trade-offs are easier to see.',
-        'Supports final shortlisting after College Predictor and Branch Predictor.',
+        'Lets you ask follow-up questions about the same comparison with OpenAI.',
       ]}
       inputGuide={[
         'College A: Pick from suggestions or type any college name.',
         'College B: Pick a different college the same way.',
-        'Review the matrix first, then request an AI table only if you need a quick recommendation.',
+        'Review the matrix, optionally get an AI table, then chat about doubts.',
       ]}
       preview={
         <ToolFactsPreview
@@ -474,9 +486,9 @@ export default function CollegeComparisonPage() {
           metricLabel="Comparison covers"
           metricValue="Side-by-side"
           points={[
-            'Placements, fees, ROI, and approvals',
-            'Deterministic rows first to keep API cost low',
-            'Optional short AI summary after the main result',
+            'Expanded catalog plus OpenAI for any college',
+            'Deterministic rows first, AI table on demand',
+            'Ask doubts in chat after you compare',
           ]}
         />
       }
@@ -584,6 +596,8 @@ export default function CollegeComparisonPage() {
                   </p>
                 )}
               </div>
+
+              <CollegeComparisonChat comparison={result} />
             </div>
           </section>
         ) : null
@@ -643,7 +657,7 @@ export default function CollegeComparisonPage() {
       <div>
         <h2 className={swFormTitle}>Compare two institutions</h2>
         <p className={swFormSubtitle}>
-          Search the catalog or type any college name. Unknown names are resolved as free text.
+          Search the expanded catalog, use OpenAI suggestions, or type any college name.
         </p>
       </div>
 
