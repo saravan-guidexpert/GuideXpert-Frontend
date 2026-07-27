@@ -440,7 +440,7 @@ export default function CollegeComparisonPage() {
                 <span className="block text-sm font-semibold text-[#041e30]">{option.name}</span>
                 <span className="mt-0.5 block text-xs text-[#667085]">
                   {option.city}, {option.state} · {option.ownership}
-                  {option.source === 'ai_suggest' ? ' · OpenAI' : ''}
+                  {option.source === 'ai_suggest' ? ' · Suggested' : ''}
                 </span>
               </button>
             ))}
@@ -451,7 +451,7 @@ export default function CollegeComparisonPage() {
         !form[`${field}Id`] &&
         fieldSuggestions.length === 0 ? (
           <p className="mt-1.5 text-xs text-[#667085]">
-            No catalog match yet — OpenAI can suggest or resolve this name when you compare.
+            No catalog match yet — we can still resolve this name when you compare.
           </p>
         ) : null}
         {fieldErrors ? <span className={swError}>{fieldErrors}</span> : null}
@@ -465,13 +465,13 @@ export default function CollegeComparisonPage() {
       subtitle="Compare two institutions side-by-side and identify the stronger value choice."
       howItWorks={[
         'Search the expanded college catalog, or type any college name.',
-        'OpenAI fills missing colleges and builds profiles when needed.',
+        'Missing colleges are filled in automatically when needed.',
         'After results load, chat to ask doubts about the comparison.',
       ]}
       whatThisToolDoes={[
         'Compares two colleges on placements, fees, ROI, branch breadth, ranking signals, and approvals.',
         'Highlights the stronger option per metric so trade-offs are easier to see.',
-        'Lets you ask follow-up questions about the same comparison with OpenAI.',
+        'Lets you ask follow-up questions about the same comparison.',
       ]}
       inputGuide={[
         'College A: Pick from suggestions or type any college name.',
@@ -486,7 +486,7 @@ export default function CollegeComparisonPage() {
           metricLabel="Comparison covers"
           metricValue="Side-by-side"
           points={[
-            'Expanded catalog plus OpenAI for any college',
+            'Expanded catalog for any college',
             'Deterministic rows first, AI table on demand',
             'Ask doubts in chat after you compare',
           ]}
@@ -657,7 +657,7 @@ export default function CollegeComparisonPage() {
       <div>
         <h2 className={swFormTitle}>Compare two institutions</h2>
         <p className={swFormSubtitle}>
-          Search the expanded catalog, use OpenAI suggestions, or type any college name.
+          Search the expanded catalog, use smart suggestions, or type any college name.
         </p>
       </div>
 
