@@ -9,6 +9,7 @@ import BdaLogin from './pages/bda/BdaLogin';
 import BdaDashboard from './pages/bda/BdaDashboard';
 import { WebinarAuthProvider, useWebinarAuth } from './contexts/WebinarAuthContext';
 import { StudentAuthProvider } from './contexts/StudentAuthContext';
+import WebsiteChatWidget from './components/websiteChat/WebsiteChatWidget';
 import RequireStudentAuth from './components/studentAuth/RequireStudentAuth';
 import { CounsellorProfileProvider } from './contexts/CounsellorProfileContext';
 import { CounsellorTrainingProvider } from './contexts/CounsellorTrainingContext';
@@ -264,6 +265,7 @@ function App() {
           <WebinarAuthProvider>
             <StudentAuthProvider>
             <SessionExpiryRedirects />
+            <WebsiteChatWidget />
             <Routes>
           <Route path="/" element={<LandingPage />} />
           <Route path="/register" element={<LandingPage />} />

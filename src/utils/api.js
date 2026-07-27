@@ -1112,6 +1112,42 @@ export const compareCollegesPublic = async (payload) => {
   });
 };
 
+const WEB_CHAT_SESSION_KEY = 'gx_web_chat_session_v1';
+
+export const sendWebChatMessage = async ({
+  sessionId = '',
+  message = '',
+  phone = '',
+  fullName = '',
+  isWelcome = false,
+} = {}) => {
+  let sid = sessionId;
+  if (!sid) {
+    try {
+      sid = localStorage.getItem(WEB_CHAT_SESSION_KEY) || '';
+    } catch {
+      sid = '';
+    }
+  }
+  return apiRequest('/web-chat/message', {
+    method: 'POST',
+    body: JSON.stringify({
+      sessionId: sid || undefined,
+      message,
+      phone,
+      fullName,
+      isWelcome: Boolean(isWelcome),
+    }),
+  });
+};
+
+export const resetWebChatSession = async (sessionId = '') => {
+  return apiRequest('/web-chat/reset', {
+    method: 'POST',
+    body: JSON.stringify({ sessionId: sessionId || undefined }),
+  });
+};
+
 // ——— Webinar Progress ———
 
 export const syncWebinarProgress = async (token, payload) => {
