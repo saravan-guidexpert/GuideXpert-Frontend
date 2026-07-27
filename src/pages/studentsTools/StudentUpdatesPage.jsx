@@ -33,7 +33,7 @@ export default function StudentUpdatesPage() {
       <div className="border-b border-[#e8eaed] bg-white">
         <div className={`${LAYOUT.container} py-6 sm:py-8`}>
           <nav className="mb-4 flex items-center gap-1.5 text-[13px] text-[#64748b]" aria-label="Breadcrumb">
-            <Link to="/students" className="inline-flex items-center gap-1 hover:text-[#0f172a]">
+            <Link to="/" className="inline-flex items-center gap-1 hover:text-[#0f172a]">
               <FiHome className="h-3.5 w-3.5" />
               <span className="sr-only">Home</span>
             </Link>

@@ -124,7 +124,7 @@ function BreadcrumbNav({ category, title }) {
       aria-label="Breadcrumb"
     >
       <Link
-        to="/students"
+        to="/"
         className="inline-flex items-center gap-1 !text-white/70 transition hover:!text-white"
       >
         <FiHome className="h-3.5 w-3.5" aria-hidden />

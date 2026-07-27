@@ -170,7 +170,7 @@ function ProfileContent() {
             aria-label="Breadcrumb"
           >
             <Link
-              to="/students"
+              to="/"
               className="inline-flex items-center gap-1 transition hover:text-[#0f172a]"
             >
               <FiHome className="h-3.5 w-3.5" aria-hidden />

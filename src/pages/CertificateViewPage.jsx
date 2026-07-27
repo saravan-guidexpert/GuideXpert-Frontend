@@ -56,7 +56,7 @@ function ErrorState() {
             My Certificates
           </Link>
           <Link
-            to="/"
+            to="/become-counsellor"
             className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl border-2 border-gray-200 text-gray-600 text-sm font-medium hover:bg-gray-50 transition-colors"
           >
             Go to home

@@ -338,7 +338,7 @@ export default function InterResultsPosterPage() {
               <p className="text-sm text-slate-500 mb-5">{ineligibleMessage || 'Please complete the activation form first, then return here to download your poster.'}</p>
               <button
                 type="button"
-                onClick={() => { setShowIneligibleModal(false); navigate('/'); }}
+                onClick={() => { setShowIneligibleModal(false); navigate('/become-counsellor'); }}
                 className="w-full py-2.5 text-sm font-semibold text-white bg-primary-navy rounded-xl hover:opacity-90 transition"
               >
                 Go to Home

@@ -267,8 +267,8 @@ function App() {
             <SessionExpiryRedirects />
             <WebsiteChatWidget />
             <Routes>
-          <Route path="/" element={<LandingPage />} />
-          <Route path="/register" element={<LandingPage />} />
+          <Route path="/become-counsellor" element={<LandingPage />} />
+          <Route path="/register" element={<Navigate to="/become-counsellor" replace />} />
           <Route path="/features" element={<FeaturesPage />} />
           <Route path="/meet" element={<MeetingRegistration />} />
           <Route path="/meet1" element={<MeetingRegistration redirectMeetUrl="https://meet.google.com/ryt-wtjh-gep" />} />
@@ -316,7 +316,6 @@ function App() {
           <Route path="/guidance-booking-confirmation" element={<GuidanceBookingConfirmation />} />
           <Route path="/guidance-session-meet" element={<GuidanceSessionMeet />} />
           <Route
-            path="/students"
             element={
               <Suspense
                 fallback={
@@ -337,6 +336,8 @@ function App() {
                 </Suspense>
               }
             />
+            <Route path="students">
+            <Route index element={<Navigate to="/" replace />} />
             <Route
               path="rank-predictor"
               element={
@@ -457,6 +458,7 @@ function App() {
                 </RequireStudentAuth>
               }
             />
+            </Route>
           </Route>
           <Route path="/blogs" element={<BlogsPage />} />
           <Route path="/blogs/:id" element={<BlogDetails />} />

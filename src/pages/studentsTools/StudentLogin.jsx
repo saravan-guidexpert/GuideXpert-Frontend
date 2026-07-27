@@ -36,7 +36,7 @@ export default function StudentLogin() {
   const otpInputRefs = useRef([]);
 
   if (isAuthenticated) {
-    return <Navigate to="/students" replace />;
+    return <Navigate to="/" replace />;
   }
 
   const handleNameChange = (e) => {
@@ -135,7 +135,7 @@ export default function StudentLogin() {
         }
         if (result.data?.token && result.data?.user) {
           setAuthFromVerifyOtp(result.data);
-          navigate('/students', { replace: true });
+          navigate('/', { replace: true });
           return;
         }
       }

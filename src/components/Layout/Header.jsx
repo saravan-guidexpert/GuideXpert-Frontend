@@ -11,11 +11,11 @@ const Header = ({ standalone = false }) => {
 
   const navLinks = standalone
     ? [
-        { name: 'Home', to: '/', isRouter: true },
-        { name: 'About', to: '/#about', isRouter: true },
-        { name: 'Your Journey', to: '/#journey', isRouter: true },
-        { name: 'Why GuideXpert?', to: '/#why', isRouter: true },
-        { name: 'Tools', to: '/#predictor', isRouter: true },
+        { name: 'Home', to: '/become-counsellor', isRouter: true },
+        { name: 'About', to: '/become-counsellor#about', isRouter: true },
+        { name: 'Your Journey', to: '/become-counsellor#journey', isRouter: true },
+        { name: 'Why GuideXpert?', to: '/become-counsellor#why', isRouter: true },
+        { name: 'Tools', to: '/become-counsellor#predictor', isRouter: true },
         { name: 'Blogs', to: '/blogs', isRouter: true },
       ]
     : [
@@ -67,7 +67,7 @@ const Header = ({ standalone = false }) => {
             <div className="shrink-0">
               {standalone ? (
                 <Link
-                  to="/"
+                  to="/become-counsellor"
                   className="flex items-center focus:outline-none transition-opacity duration-200 hover:opacity-80"
                   aria-label="Go to home"
                 >
@@ -120,7 +120,7 @@ const Header = ({ standalone = false }) => {
               )}
               {standalone ? (
                 <Link
-                  to="/"
+                  to="/become-counsellor"
                   className="bg-primary-blue-800 hover:bg-primary-blue-900 text-white px-5 py-2.5 rounded-md text-sm font-bold shadow-sm transition-all duration-300 inline-flex items-center justify-center"
                 >
                   <ShinyText
@@ -201,7 +201,7 @@ const Header = ({ standalone = false }) => {
               <div className="flex flex-col space-y-2 pt-4 border-t border-gray-200">
                 {standalone ? (
                   <Link
-                    to="/"
+                    to="/become-counsellor"
                     onClick={() => setIsMenuOpen(false)}
                     className="bg-primary-blue-800 hover:bg-primary-blue-900 text-white px-5 py-2.5 rounded-md text-sm font-bold shadow-sm text-center"
                   >

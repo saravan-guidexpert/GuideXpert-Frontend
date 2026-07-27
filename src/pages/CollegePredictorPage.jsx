@@ -1032,7 +1032,7 @@ export default function CollegePredictorPage() {
         <div className="mx-auto flex max-w-4xl min-w-0 flex-col gap-3 px-4 py-3 sm:flex-row sm:items-center sm:justify-between sm:py-4">
           <h1 className="text-lg font-bold text-gray-900 sm:text-xl">College Predictor</h1>
           <Link
-            to="/"
+            to="/become-counsellor"
             className="inline-flex min-h-10 shrink-0 items-center text-sm font-medium text-primary-navy hover:underline sm:self-auto"
           >
             Back to home

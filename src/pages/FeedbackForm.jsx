@@ -170,7 +170,7 @@ export default function FeedbackForm() {
     }
   };
 
-  const goHome = () => navigate('/');
+  const goHome = () => navigate('/become-counsellor');
 
   const modalConfig = {
     [MODAL_SUCCESS]: {

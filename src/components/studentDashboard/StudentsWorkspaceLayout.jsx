@@ -16,11 +16,11 @@ export default function StudentsWorkspaceLayout() {
   const closeOneOnOneBooking = useCallback(() => setOneOnOneBookingOpen(false), []);
 
   const handleSearchKeyDown = (e) => {
-    if (e.key !== 'Enter' || location.pathname === '/students') return;
+    if (e.key !== 'Enter' || location.pathname === '/') return;
     const query = searchTerm.trim();
     if (!query) return;
     e.preventDefault();
-    navigate('/students', { state: { searchTerm: query } });
+    navigate('/', { state: { searchTerm: query } });
   };
 
   const outletContext = useMemo(

@@ -691,7 +691,7 @@ export default function HoliPosterPage() {
               </button>
               <button
                 type="button"
-                onClick={() => { setShowIneligibleModal(false); navigate('/'); }}
+                onClick={() => { setShowIneligibleModal(false); navigate('/become-counsellor'); }}
                 className="px-4 py-2 text-sm font-semibold text-white bg-gradient-to-r from-[#c026d3] to-[#ea580c] rounded-xl shadow-md hover:from-[#a21caf] hover:to-[#c2410c]"
               >
                 Go to Home

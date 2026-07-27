@@ -10,7 +10,7 @@ export default function Careers360Footer() {
     <footer className="border-t border-white/10 bg-sidebar-blue text-white" role="contentinfo">
       <div className={`${LAYOUT.container} py-12 sm:py-14`}>
         <div className="mb-10 flex flex-col gap-6 border-b border-white/10 pb-10 sm:flex-row sm:items-start sm:justify-between">
-          <Link to="/students" aria-label="GuideXpert student home">
+          <Link to="/" aria-label="GuideXpert student home">
             <img src={LOGO_URL} alt="GuideXpert" className="h-7 object-contain" />
           </Link>
           <p className="max-w-md text-sm leading-relaxed text-white/75">

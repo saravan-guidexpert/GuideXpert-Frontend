@@ -11,7 +11,7 @@ export default function HubPageLayout({
   cards,
   gridClassName = 'grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3',
   trustBadge = 'Trusted by 500K+ students',
-  homeTo = '/students',
+  homeTo = '/',
 }) {
   return (
     <main className={swPageShell}>

@@ -5,14 +5,14 @@ const LOGO_URL =
   'https://res.cloudinary.com/dfqdb1xws/image/upload/v1773394627/GuideXpert_Logo_2_icepsv.png';
 
 const workspaceLinks = [
-  { label: 'Dashboard', to: '/students' },
+  { label: 'Dashboard', to: '/' },
   { label: 'Predictors', to: '/students/predictors' },
   { label: 'Fit Tests', to: '/students/tests' },
   { label: 'Compare Colleges', to: '/students/college-comparison' },
 ];
 
 const siteLinks = [
-  { label: 'GuideXpert home', to: '/' },
+  { label: 'Become a counsellor', to: '/become-counsellor' },
   { label: 'Blogs', to: '/blogs' },
 ];
 
@@ -26,7 +26,7 @@ export default function StudentWorkspaceFooter() {
         <div className="grid grid-cols-1 gap-10 md:grid-cols-3 md:gap-8">
           <div className="md:max-w-sm">
             <Link
-              to="/students"
+              to="/"
               className="mb-4 inline-flex items-center rounded-lg focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-400/50"
               aria-label="Student workspace home"
             >

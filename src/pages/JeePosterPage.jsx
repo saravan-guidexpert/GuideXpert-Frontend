@@ -335,7 +335,7 @@ export default function JeePosterPage() {
               <h2 className="text-lg font-bold text-slate-900 mb-1.5">Activation Form Not Submitted</h2>
               <p className="text-sm text-slate-500 mb-5">{ineligibleMessage || 'Please complete the activation form first, then return here to download your poster.'}</p>
               <button
-                onClick={() => { setShowIneligibleModal(false); navigate('/'); }}
+                onClick={() => { setShowIneligibleModal(false); navigate('/become-counsellor'); }}
                 className="w-full py-2.5 text-sm font-semibold text-white bg-primary-navy rounded-xl hover:opacity-90 transition"
               >
                 Go to Home

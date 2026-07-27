@@ -314,7 +314,7 @@ export default function AssessmentFormCounsellorTest({ type = 'career-dna' }) {
           <div>
             {step === 1 && (
               <Link
-                to="/"
+                to="/become-counsellor"
                 className="nb-btn-back"
                 aria-label="Back to home"
               >

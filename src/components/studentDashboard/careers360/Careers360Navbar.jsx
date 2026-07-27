@@ -200,7 +200,7 @@ export default function Careers360Navbar({
       <header className="sticky top-0 z-50 bg-white shadow-[0_1px_0_#e8eaed]" role="banner">
       <div className="border-b border-[#eceef2]">
         <div className={`${LAYOUT.container} flex h-[3.75rem] items-center gap-4 lg:h-16 lg:gap-6`}>
-          <Link to="/students" className="shrink-0" aria-label="GuideXpert students workspace">
+          <Link to="/" className="shrink-0" aria-label="GuideXpert students workspace">
             <img src={LOGO_URL} alt="GuideXpert" className="h-7 w-auto object-contain lg:h-8" />
           </Link>
 

@@ -174,7 +174,7 @@ export default function CounsellorLayout() {
       >
         {/* Brand block — logo + Certified Counsellor Dashboard */}
         <Link
-          to="/"
+          to="/become-counsellor"
           className="flex w-full flex-col items-start justify-center py-5 border-b border-white/5 hover:bg-white/[0.02] transition-colors duration-200"
           aria-label="GuideXpert Home"
         >
