@@ -220,6 +220,110 @@ export default function CollegeComparisonPage() {
     return `${t.slice(0, max)}…`;
   };
 
+  const renderMetricTable = (rows, aName, bName) => (
+    <>
+      <div className="hidden overflow-x-auto md:block">
+        <table className="w-full text-sm">
+          <thead>
+            <tr className="border-b border-[#e4e9f0] text-left">
+              <th className="px-3 py-3 text-[11px] font-bold uppercase tracking-[0.14em] text-[#8a94a0]">
+                Metric
+              </th>
+              <th
+                className="max-w-40 px-3 py-3 text-[11px] font-bold uppercase tracking-[0.14em] text-[#8a94a0]"
+                title={aName}
+              >
+                {truncateLabel(aName, 18)}
+              </th>
+              <th
+                className="max-w-40 px-3 py-3 text-[11px] font-bold uppercase tracking-[0.14em] text-[#8a94a0]"
+                title={bName}
+              >
+                {truncateLabel(bName, 18)}
+              </th>
+            </tr>
+          </thead>
+          <tbody>
+            {rows.map((row) => (
+              <tr key={row.metric || row.factor} className="border-b border-[#f0f3f7]">
+                <td className="px-3 py-3.5 font-semibold text-[#041e30]">
+                  {row.metric || row.factor}
+                </td>
+                <td
+                  className={`px-3 py-3.5 ${
+                    row.better === 'a' || row.edge === 'A'
+                      ? 'bg-[#fff4ed] font-semibold text-[#c45a0c]'
+                      : 'text-[#5a6570]'
+                  }`}
+                >
+                  <span className="inline-flex flex-wrap items-center gap-1.5">
+                    {row.aValue || row.collegeA}
+                    {row.better === 'a' || row.edge === 'A' ? (
+                      <span className={swMetricBetter}>Better</span>
+                    ) : null}
+                    {row.better === 'tie' || row.edge === 'Tie' ? (
+                      <span className={swMetricBetter}>Tie</span>
+                    ) : null}
+                  </span>
+                </td>
+                <td
+                  className={`px-3 py-3.5 ${
+                    row.better === 'b' || row.edge === 'B'
+                      ? 'bg-[#fff4ed] font-semibold text-[#c45a0c]'
+                      : 'text-[#5a6570]'
+                  }`}
+                >
+                  <span className="inline-flex flex-wrap items-center gap-1.5">
+                    {row.bValue || row.collegeB}
+                    {row.better === 'b' || row.edge === 'B' ? (
+                      <span className={swMetricBetter}>Better</span>
+                    ) : null}
+                    {row.better === 'tie' || row.edge === 'Tie' ? (
+                      <span className={swMetricBetter}>Tie</span>
+                    ) : null}
+                  </span>
+                </td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+
+      <ul className="space-y-3 md:hidden" aria-label="Comparison by metric">
+        {rows.map((row) => (
+          <li key={row.metric || row.factor} className="rounded-xl bg-[#f8fafc] p-3.5">
+            <p className="text-[11px] font-bold uppercase tracking-[0.14em] text-[#8a94a0]">
+              {row.metric || row.factor}
+            </p>
+            <div className="mt-2.5 flex items-center justify-between gap-2">
+              <div
+                className={`min-w-0 flex-1 rounded-xl px-2 py-2 text-center text-sm ${
+                  row.better === 'a' || row.edge === 'A'
+                    ? 'bg-[#fff4ed] font-semibold text-[#c45a0c]'
+                    : 'bg-white'
+                }`}
+              >
+                <span className="block text-[10px] uppercase text-[#8a94a0]">A</span>
+                <span className="tabular-nums">{row.aValue || row.collegeA}</span>
+              </div>
+              <VsBadge className="scale-90" />
+              <div
+                className={`min-w-0 flex-1 rounded-xl px-2 py-2 text-center text-sm ${
+                  row.better === 'b' || row.edge === 'B'
+                    ? 'bg-[#fff4ed] font-semibold text-[#c45a0c]'
+                    : 'bg-white'
+                }`}
+              >
+                <span className="block text-[10px] uppercase text-[#8a94a0]">B</span>
+                <span className="tabular-nums">{row.bValue || row.collegeB}</span>
+              </div>
+            </div>
+          </li>
+        ))}
+      </ul>
+    </>
+  );
+
   const renderCollegeField = (field, label, placeholder) => {
     const fieldErrors = errors[field];
     const fieldSuggestions = suggestions[field] || [];
@@ -304,7 +408,9 @@ export default function CollegeComparisonPage() {
         result ? (
           <section ref={resultsRef} tabIndex={-1} className={swResultsHighlight}>
             <h2 className={swSectionTitle}>Comparison results</h2>
-            <p className={swSectionSubtitle}>Highlighted values show the stronger option for each metric.</p>
+            <p className={swSectionSubtitle}>
+              All comparison data is shown in tables. Highlighted cells mark the stronger option.
+            </p>
             <div className={`mt-6 ${swResultCard}`}>
               <div className="mb-5 flex flex-wrap items-center justify-center gap-3 text-center">
                 <span
@@ -322,130 +428,20 @@ export default function CollegeComparisonPage() {
                 </span>
               </div>
 
-              <div className="grid gap-3 md:grid-cols-2">
-                {[result.institutionA, result.institutionB].map((college, index) => (
-                  <article key={college.id} className="rounded-2xl bg-[#f8fafc] p-4">
-                    <p className="text-[11px] font-semibold uppercase tracking-[0.14em] text-[#8a94a0]">
-                      Institution {index === 0 ? 'A' : 'B'}
-                    </p>
-                    <h3 className="mt-1.5 font-sw-display text-lg font-bold text-[#041e30]">
-                      {college.name}
-                    </h3>
-                    <div className="mt-4 grid grid-cols-2 gap-3 text-sm">
-                      <div className="rounded-xl bg-white px-3 py-3">
-                        <p className="text-[10px] font-semibold uppercase tracking-wide text-[#8a94a0]">Location</p>
-                        <p className="mt-1 text-[#041e30]">{college.city}, {college.state}</p>
-                      </div>
-                      <div className="rounded-xl bg-white px-3 py-3">
-                        <p className="text-[10px] font-semibold uppercase tracking-wide text-[#8a94a0]">Ownership</p>
-                        <p className="mt-1 text-[#041e30]">{college.ownership}</p>
-                      </div>
-                      <div className="rounded-xl bg-white px-3 py-3">
-                        <p className="text-[10px] font-semibold uppercase tracking-wide text-[#8a94a0]">Branches</p>
-                        <p className="mt-1 text-[#041e30]">{college.branchCount}</p>
-                      </div>
-                      <div className="rounded-xl bg-white px-3 py-3">
-                        <p className="text-[10px] font-semibold uppercase tracking-wide text-[#8a94a0]">Approvals</p>
-                        <p className="mt-1 text-[#041e30]">{college.approvals?.join(' · ') || 'Not available'}</p>
-                      </div>
-                    </div>
-                    <div className="mt-4">
-                      <p className="text-[11px] font-semibold uppercase tracking-[0.14em] text-[#8a94a0]">
-                        Highlights
-                      </p>
-                      <ul className="mt-2 space-y-1.5 text-sm text-[#5a6570]">
-                        {(college.highlights || []).map((item) => (
-                          <li key={item} className="flex gap-2">
-                            <span className="mt-2 h-1 w-1 shrink-0 rounded-full bg-[#f27921]" aria-hidden />
-                            {item}
-                          </li>
-                        ))}
-                      </ul>
-                    </div>
-                  </article>
-                ))}
-              </div>
-
-              <div className="hidden overflow-x-auto md:block">
-                <table className="w-full text-sm">
-                  <thead>
-                    <tr className="border-b border-[#e4e9f0] text-left">
-                      <th className="px-3 py-3 text-[11px] font-bold uppercase tracking-[0.14em] text-[#8a94a0]">
-                        Metric
-                      </th>
-                      <th
-                        className="max-w-40 px-3 py-3 text-[11px] font-bold uppercase tracking-[0.14em] text-[#8a94a0]"
-                        title={result.institutionA.name}
-                      >
-                        {truncateLabel(result.institutionA.name, 18)}
-                      </th>
-                      <th
-                        className="max-w-40 px-3 py-3 text-[11px] font-bold uppercase tracking-[0.14em] text-[#8a94a0]"
-                        title={result.institutionB.name}
-                      >
-                        {truncateLabel(result.institutionB.name, 18)}
-                      </th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {result.rows.map((row) => (
-                      <tr key={row.metric} className="border-b border-[#f0f3f7]">
-                        <td className="px-3 py-3.5 font-semibold text-[#041e30]">{row.metric}</td>
-                        <td className={`px-3 py-3.5 ${row.better === 'a' ? 'bg-[#fff4ed] font-semibold text-[#c45a0c]' : 'text-[#5a6570]'}`}>
-                          <span className="inline-flex flex-wrap items-center gap-1.5">
-                            {row.aValue}
-                            {row.better === 'a' ? <span className={swMetricBetter}>Better</span> : null}
-                            {row.better === 'tie' ? <span className={swMetricBetter}>Tie</span> : null}
-                          </span>
-                        </td>
-                        <td className={`px-3 py-3.5 ${row.better === 'b' ? 'bg-[#fff4ed] font-semibold text-[#c45a0c]' : 'text-[#5a6570]'}`}>
-                          <span className="inline-flex flex-wrap items-center gap-1.5">
-                            {row.bValue}
-                            {row.better === 'b' ? <span className={swMetricBetter}>Better</span> : null}
-                            {row.better === 'tie' ? <span className={swMetricBetter}>Tie</span> : null}
-                          </span>
-                        </td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-              </div>
-
-              <ul className="space-y-3 md:hidden" aria-label="Comparison by metric">
-                {result.rows.map((row) => (
-                  <li key={row.metric} className="rounded-xl bg-[#f8fafc] p-3.5">
-                    <p className="text-[11px] font-bold uppercase tracking-[0.14em] text-[#8a94a0]">{row.metric}</p>
-                    <div className="mt-2.5 flex items-center justify-between gap-2">
-                      <div
-                        className={`min-w-0 flex-1 rounded-xl px-2 py-2 text-center text-sm ${
-                          row.better === 'a' ? 'bg-[#fff4ed] font-semibold text-[#c45a0c]' : 'bg-white'
-                        }`}
-                      >
-                        <span className="block text-[10px] uppercase text-[#8a94a0]">A</span>
-                        <span className="tabular-nums">{row.aValue}</span>
-                      </div>
-                      <VsBadge className="scale-90" />
-                      <div
-                        className={`min-w-0 flex-1 rounded-xl px-2 py-2 text-center text-sm ${
-                          row.better === 'b' ? 'bg-[#fff4ed] font-semibold text-[#c45a0c]' : 'bg-white'
-                        }`}
-                      >
-                        <span className="block text-[10px] uppercase text-[#8a94a0]">B</span>
-                        <span className="tabular-nums">{row.bValue}</span>
-                      </div>
-                    </div>
-                  </li>
-                ))}
-              </ul>
+              {renderMetricTable(
+                result.rows,
+                result.institutionA.name,
+                result.institutionB.name
+              )}
 
               <div className="mt-6 rounded-2xl border border-[#e4e9f0] bg-white p-4">
                 <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
                   <div>
                     <h3 className="font-sw-display text-base font-bold text-[#041e30]">
-                      AI trade-off summary
+                      AI comparison table
                     </h3>
                     <p className="mt-1 text-sm text-[#5a6570]">
-                      Optional and grounded on the comparison data shown above.
+                      Optional AI view in the same tabular format.
                     </p>
                   </div>
                   {!result.summary ? (
@@ -455,16 +451,59 @@ export default function CollegeComparisonPage() {
                       disabled={summaryLoading}
                       className={swBtnSecondary}
                     >
-                      {summaryLoading ? <FiLoader className="h-4 w-4 animate-spin" /> : <LuSparkles className="h-4 w-4" />}
-                      {summaryLoading ? 'Generating...' : 'Get AI summary'}
+                      {summaryLoading ? (
+                        <FiLoader className="h-4 w-4 animate-spin" />
+                      ) : (
+                        <LuSparkles className="h-4 w-4" />
+                      )}
+                      {summaryLoading ? 'Generating...' : 'Get AI table'}
                     </button>
                   ) : null}
                 </div>
-                {result.summary ? (
-                  <p className="mt-4 text-sm leading-relaxed text-[#2c3640]">{result.summary}</p>
+
+                {result.summary?.rows?.length ? (
+                  <div className="mt-4 space-y-4">
+                    {renderMetricTable(
+                      result.summary.rows,
+                      result.institutionA.name,
+                      result.institutionB.name
+                    )}
+                    <div className="overflow-x-auto">
+                      <table className="w-full text-sm">
+                        <thead>
+                          <tr className="border-b border-[#e4e9f0] text-left">
+                            <th className="px-3 py-3 text-[11px] font-bold uppercase tracking-[0.14em] text-[#8a94a0]">
+                              Profile fit
+                            </th>
+                            <th className="px-3 py-3 text-[11px] font-bold uppercase tracking-[0.14em] text-[#8a94a0]">
+                              Recommendation
+                            </th>
+                          </tr>
+                        </thead>
+                        <tbody>
+                          <tr className="border-b border-[#f0f3f7]">
+                            <td className="px-3 py-3.5 font-semibold text-[#041e30]">
+                              Prefer {result.institutionA.name}
+                            </td>
+                            <td className="px-3 py-3.5 text-[#5a6570]">
+                              {result.summary.whoShouldPreferA}
+                            </td>
+                          </tr>
+                          <tr>
+                            <td className="px-3 py-3.5 font-semibold text-[#041e30]">
+                              Prefer {result.institutionB.name}
+                            </td>
+                            <td className="px-3 py-3.5 text-[#5a6570]">
+                              {result.summary.whoShouldPreferB}
+                            </td>
+                          </tr>
+                        </tbody>
+                      </table>
+                    </div>
+                  </div>
                 ) : (
                   <p className="mt-4 text-sm leading-relaxed text-[#667085]">
-                    Skip this if the matrix is enough. This keeps API cost low.
+                    Skip this if the main table is enough. This keeps API cost low.
                   </p>
                 )}
               </div>
