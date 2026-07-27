@@ -83,20 +83,20 @@ export default function Careers360BecomeCounsellorSection() {
               </div>
             </div>
 
-            <div className="relative flex min-h-[220px] items-end bg-gradient-to-br from-[#0f172a] via-[#1a2332] to-[#0c3a42] px-6 py-10 sm:px-10 lg:min-h-0 lg:bg-none lg:px-12 lg:py-14">
-              <div className="relative w-full max-w-md text-white lg:ml-auto">
-                <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-[#f27921]">
+            <div className="relative flex min-h-[260px] items-center justify-center bg-gradient-to-br from-[#0f172a] via-[#1a2332] to-[#0c3a42] px-6 py-12 sm:px-10 sm:py-14 lg:min-h-0 lg:bg-none lg:px-12 lg:py-14">
+              <div className="relative w-full max-w-md text-center text-white">
+                <p className="gx-shiny-label text-[11px] font-semibold uppercase tracking-[0.2em]">
                   Professional path
                 </p>
-                <p className="mt-3 text-xl font-bold tracking-tight sm:text-2xl">
+                <p className="gx-shiny-text mt-4 text-xl font-bold leading-snug tracking-tight sm:text-2xl sm:leading-snug">
                   Turn expertise into impact for every student you guide.
                 </p>
-                <p className="mt-3 text-sm leading-relaxed text-white/70">
+                <p className="mx-auto mt-4 max-w-sm text-sm leading-relaxed text-white/70">
                   Explore training, tools, and how GuideXpert counsellors work—then apply to join.
                 </p>
                 <Link
                   to="/become-counsellor"
-                  className="mt-6 inline-flex items-center gap-2 text-sm font-semibold text-white transition hover:text-[#f27921]"
+                  className="mt-7 inline-flex items-center justify-center gap-2 text-sm font-semibold text-white/95 transition hover:text-[#f27921]"
                 >
                   View counsellor programme
                   <LuArrowRight className="h-4 w-4" aria-hidden />

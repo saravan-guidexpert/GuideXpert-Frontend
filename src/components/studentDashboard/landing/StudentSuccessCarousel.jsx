@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { LuChevronLeft, LuChevronRight, LuQuote } from 'react-icons/lu';
+import { LuChevronLeft, LuChevronRight } from 'react-icons/lu';
 import { STUDENT_OUTCOMES } from './landingPageData';
 import { LAYOUT } from '../careers360/careers360Theme';
 import { getStudentTestimonialsFeed } from '../../../utils/api';
@@ -104,67 +104,46 @@ export default function StudentSuccessCarousel() {
           <AnimatePresence mode="wait">
             <motion.article
               key={outcome.id}
-              initial={{ opacity: 0, y: 12 }}
+              initial={{ opacity: 0, y: 10 }}
               animate={{ opacity: 1, y: 0 }}
-              exit={{ opacity: 0, y: -12 }}
-              transition={{ duration: 0.35, ease: [0.22, 1, 0.36, 1] }}
-              className="grid overflow-hidden rounded-2xl border border-[#e5e7eb] bg-[#fafbfc] lg:grid-cols-12"
+              exit={{ opacity: 0, y: -10 }}
+              transition={{ duration: 0.3, ease: [0.22, 1, 0.36, 1] }}
+              className="rounded-2xl border border-[#e5e7eb] bg-[#fafbfc] p-6 sm:p-8"
               aria-live="polite"
             >
-              <div className="flex flex-col justify-center border-b border-[#eef0f3] p-6 sm:p-8 lg:col-span-4 lg:border-b-0 lg:border-r lg:bg-white">
-                <p className="text-[11px] font-semibold uppercase tracking-[0.14em] text-[#999]">
-                  Student rank
-                </p>
-                <p className="mt-2 text-3xl font-bold tracking-tight text-[#1a1a1a]">
-                  {outcome.rank}
-                </p>
-                {outcome.studentName ? (
-                  <p className="mt-2 text-sm font-medium text-[#666]">{outcome.studentName}</p>
-                ) : null}
-
-                <div className="mt-8 space-y-4">
-                  <div>
-                    <p className="text-[11px] font-semibold uppercase tracking-[0.14em] text-[#999]">
-                      Exam
-                    </p>
-                    <p className="mt-1 text-sm font-semibold text-[#333]">{outcome.exam}</p>
-                  </div>
-                  <div className="inline-flex items-center rounded-lg border border-[#ffe0cc] bg-[#fff8f3] px-3 py-1.5">
-                    <span className="text-sm font-bold tabular-nums text-[#f27921]">
-                      {outcome.accuracy}%
-                    </span>
-                    <span className="ml-2 text-xs font-medium text-[#b45309]">prediction accuracy</span>
-                  </div>
+              <div className="flex flex-wrap items-start justify-between gap-4">
+                <div>
+                  <p className="text-[11px] font-semibold uppercase tracking-[0.14em] text-[#999]">
+                    Student rank
+                  </p>
+                  <p className="mt-1.5 text-2xl font-bold tracking-tight text-[#1a1a1a] sm:text-3xl">
+                    {outcome.rank}
+                  </p>
+                  {outcome.studentName ? (
+                    <p className="mt-1 text-sm text-[#666]">{outcome.studentName}</p>
+                  ) : null}
+                </div>
+                <div className="text-right">
+                  <p className="text-sm font-semibold text-[#333]">{outcome.exam}</p>
+                  <p className="mt-1 text-xs font-semibold text-[#f27921]">
+                    {outcome.accuracy}% accuracy
+                  </p>
                 </div>
               </div>
 
-              <div className="flex flex-col justify-center p-6 sm:p-8 lg:col-span-8 lg:p-10">
-                <LuQuote className="h-8 w-8 text-[#f27921]/35" aria-hidden />
-                {outcome.quote ? (
-                  <p className="mt-4 text-lg font-medium leading-relaxed text-[#333] sm:text-xl sm:leading-relaxed">
-                    &ldquo;{outcome.quote}&rdquo;
-                  </p>
-                ) : (
-                  <p className="mt-4 text-lg font-medium leading-relaxed text-[#333] sm:text-xl sm:leading-relaxed">
-                    Predicted colleges matched the institutes where this student secured admission.
-                  </p>
-                )}
+              {outcome.quote ? (
+                <p className="mt-6 max-w-3xl text-[15px] leading-relaxed text-[#444]">
+                  &ldquo;{outcome.quote}&rdquo;
+                </p>
+              ) : null}
 
-                <div className="mt-8">
-                  <p className="text-[11px] font-semibold uppercase tracking-[0.14em] text-[#999]">
-                    Predicted colleges
-                  </p>
-                  <ul className="mt-3 flex flex-wrap gap-2">
-                    {(outcome.colleges || []).map((college) => (
-                      <li
-                        key={college}
-                        className="rounded-lg border border-[#e5e7eb] bg-white px-3.5 py-2 text-sm font-medium text-[#333]"
-                      >
-                        {college}
-                      </li>
-                    ))}
-                  </ul>
-                </div>
+              <div className="mt-6 border-t border-[#eef0f3] pt-5">
+                <p className="text-[11px] font-semibold uppercase tracking-[0.14em] text-[#999]">
+                  Predicted colleges
+                </p>
+                <p className="mt-2 text-sm leading-relaxed text-[#444]">
+                  {(outcome.colleges || []).join(' · ')}
+                </p>
               </div>
             </motion.article>
           </AnimatePresence>
