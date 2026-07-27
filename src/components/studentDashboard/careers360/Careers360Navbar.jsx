@@ -19,7 +19,7 @@ import { getWorkspaceMegaMenus } from '../../../constants/studentWorkspaceNavMen
 import { C360, LAYOUT } from './careers360Theme';
 import { useStudentAuthRequired } from '../../../contexts/StudentAuthContext';
 import StudentUpdatesBell from '../StudentUpdatesBell';
-import { getStudentWorkspaceUpdatesFeed, getStudentLiveActivityFeed } from '../../../utils/api';
+import { getStudentWorkspaceUpdatesFeed } from '../../../utils/api';
 import {
   countUnreadUpdates,
   markUpdatesSeen,
@@ -130,7 +130,6 @@ export default function Careers360Navbar({
   const [updates, setUpdates] = useState([]);
   const [updatesLoading, setUpdatesLoading] = useState(true);
   const [unreadCount, setUnreadCount] = useState(0);
-  const [liveItems, setLiveItems] = useState([]);
   const { pathname } = useLocation();
   const { isAuthenticated, openAuthModal, session, profile } = useStudentAuthRequired();
 
@@ -160,21 +159,6 @@ export default function Careers360Navbar({
     })();
     return () => {
       cancelled = true;
-    };
-  }, []);
-
-  useEffect(() => {
-    let cancelled = false;
-    const loadLive = async () => {
-      const res = await getStudentLiveActivityFeed({ limit: 10, sinceHours: 48 });
-      if (cancelled) return;
-      setLiveItems(res.success ? res.data?.data?.items || [] : []);
-    };
-    loadLive();
-    const poll = window.setInterval(loadLive, 15_000);
-    return () => {
-      cancelled = true;
-      window.clearInterval(poll);
     };
   }, []);
 
@@ -239,7 +223,6 @@ export default function Careers360Navbar({
           <div className="ml-auto flex items-center gap-1 sm:gap-2">
             <StudentUpdatesBell
               items={updates}
-              liveItems={liveItems}
               unreadCount={unreadCount}
               open={updatesOpen}
               loading={updatesLoading}

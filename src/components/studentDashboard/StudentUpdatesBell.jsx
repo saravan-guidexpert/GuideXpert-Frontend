@@ -1,6 +1,6 @@
 import { useEffect, useRef } from 'react';
 import { Link } from 'react-router-dom';
-import { FiBell, FiExternalLink, FiZap, FiCalendar } from 'react-icons/fi';
+import { FiBell, FiExternalLink } from 'react-icons/fi';
 import { formatUpdateDate } from '../../utils/studentWorkspaceUpdates';
 
 const PRIORITY_DOT = {
@@ -11,7 +11,6 @@ const PRIORITY_DOT = {
 
 export default function StudentUpdatesBell({
   items = [],
-  liveItems = [],
   unreadCount = 0,
   open,
   onToggle,
@@ -43,7 +42,7 @@ export default function StudentUpdatesBell({
         type="button"
         onClick={onToggle}
         className="relative inline-flex h-9 w-9 items-center justify-center rounded-full text-[#666] transition hover:bg-[#f5f6f8] hover:text-[#333]"
-        aria-label="Updates and live activity"
+        aria-label="Education updates"
         aria-expanded={open}
       >
         <FiBell className="h-5 w-5" />
@@ -58,8 +57,8 @@ export default function StudentUpdatesBell({
         <div className="absolute right-0 top-full z-[60] mt-2 w-[min(22rem,calc(100vw-1.5rem))] overflow-hidden rounded-2xl border border-[#e5e7eb] bg-white shadow-[0_16px_40px_rgba(15,23,42,0.14)]">
           <div className="flex items-center justify-between border-b border-[#f1f5f9] bg-[#fafbfc] px-4 py-3">
             <div>
-              <p className="text-sm font-semibold text-[#0f172a]">Notifications</p>
-              <p className="text-[11px] text-[#94a3b8]">Live activity, exams & deadlines</p>
+              <p className="text-sm font-semibold text-[#0f172a]">Updates</p>
+              <p className="text-[11px] text-[#94a3b8]">Exams, admissions & deadlines</p>
             </div>
             <Link
               to="/students/updates"
@@ -70,131 +69,73 @@ export default function StudentUpdatesBell({
             </Link>
           </div>
 
-          <div className="max-h-[26rem] overflow-y-auto">
-            {liveItems.length > 0 ? (
-              <div className="border-b border-[#f1f5f9]">
-                <p className="px-4 pb-1.5 pt-3 text-[10px] font-bold uppercase tracking-[0.14em] text-[#94a3b8]">
-                  Live right now
-                </p>
-                <ul>
-                  {liveItems.slice(0, 6).map((item) => {
-                    const booked = item.action === 'booked';
-                    return (
-                      <li key={`live-${item.id}`} className="border-b border-[#f8fafc] last:border-0">
-                        <div className="flex gap-3 px-4 py-2.5">
-                          <span
-                            className={`mt-0.5 flex h-8 w-8 shrink-0 items-center justify-center rounded-lg ${
-                              booked ? 'bg-[#eef6ff] text-[#2563eb]' : 'bg-[#fff4ed] text-[#f27921]'
-                            }`}
-                          >
-                            {booked ? (
-                              <FiCalendar className="h-3.5 w-3.5" aria-hidden />
-                            ) : (
-                              <FiZap className="h-3.5 w-3.5" aria-hidden />
-                            )}
-                          </span>
-                          <span className="min-w-0 flex-1">
-                            <span className="block text-sm text-[#0f172a]">
-                              <span className="font-semibold text-[#f27921]">{item.name}</span>
-                              {booked ? (
-                                <>
-                                  {' '}
-                                  just booked <span className="font-semibold">{item.tool}</span>
-                                </>
-                              ) : (
-                                <>
-                                  {' '}
-                                  just used <span className="font-semibold">{item.tool}</span>
-                                </>
-                              )}
-                            </span>
-                            <span className="mt-0.5 block text-[11px] text-[#94a3b8]">
-                              {item.when || 'just now'}
-                            </span>
-                          </span>
-                          <span className="relative mt-1.5 flex h-2 w-2 shrink-0">
-                            <span className="absolute inline-flex h-2 w-2 animate-ping rounded-full bg-emerald-400 opacity-60" />
-                            <span className="relative inline-flex h-2 w-2 rounded-full bg-emerald-500" />
-                          </span>
-                        </div>
-                      </li>
-                    );
-                  })}
-                </ul>
-              </div>
-            ) : null}
-
+          <div className="max-h-[22rem] overflow-y-auto">
             {loading ? (
               <p className="px-4 py-8 text-center text-sm text-[#94a3b8]">Loading…</p>
-            ) : items.length === 0 && liveItems.length === 0 ? (
+            ) : items.length === 0 ? (
               <p className="px-4 py-8 text-center text-sm text-[#94a3b8]">
-                No notifications right now.
+                No education updates right now.
               </p>
-            ) : items.length === 0 ? null : (
-              <>
-                <p className="px-4 pb-1.5 pt-3 text-[10px] font-bold uppercase tracking-[0.14em] text-[#94a3b8]">
-                  Education updates
-                </p>
-                <ul>
-                  {items.slice(0, 8).map((item) => {
-                    const href = item.linkUrl || '/students/updates';
-                    const isExternal = /^https?:\/\//i.test(href);
-                    const content = (
-                      <>
-                        <span
-                          className={`mt-1.5 h-2 w-2 shrink-0 rounded-full ${PRIORITY_DOT[item.priority] || PRIORITY_DOT.normal}`}
-                          aria-hidden
-                        />
-                        <span className="min-w-0 flex-1">
-                          <span className="flex flex-wrap items-center gap-2">
-                            {item.tag ? (
-                              <span className="rounded bg-[#fff4ed] px-1.5 py-0.5 text-[10px] font-bold uppercase tracking-wide text-[#e06810]">
-                                {item.tag}
-                              </span>
-                            ) : null}
-                            <span className="text-[11px] text-[#94a3b8]">
-                              {formatUpdateDate(item.publishedAt)}
+            ) : (
+              <ul>
+                {items.slice(0, 8).map((item) => {
+                  const href = item.linkUrl || '/students/updates';
+                  const isExternal = /^https?:\/\//i.test(href);
+                  const content = (
+                    <>
+                      <span
+                        className={`mt-1.5 h-2 w-2 shrink-0 rounded-full ${PRIORITY_DOT[item.priority] || PRIORITY_DOT.normal}`}
+                        aria-hidden
+                      />
+                      <span className="min-w-0 flex-1">
+                        <span className="flex flex-wrap items-center gap-2">
+                          {item.tag ? (
+                            <span className="rounded bg-[#fff4ed] px-1.5 py-0.5 text-[10px] font-bold uppercase tracking-wide text-[#e06810]">
+                              {item.tag}
                             </span>
-                          </span>
-                          <span className="mt-1 block text-sm font-semibold text-[#0f172a]">
-                            {item.title}
-                          </span>
-                          <span className="mt-0.5 line-clamp-2 block text-xs leading-relaxed text-[#64748b]">
-                            {item.summary}
+                          ) : null}
+                          <span className="text-[11px] text-[#94a3b8]">
+                            {formatUpdateDate(item.publishedAt)}
                           </span>
                         </span>
-                        {isExternal ? (
-                          <FiExternalLink className="mt-1 h-3.5 w-3.5 shrink-0 text-[#94a3b8]" />
-                        ) : null}
-                      </>
-                    );
+                        <span className="mt-1 block text-sm font-semibold text-[#0f172a]">
+                          {item.title}
+                        </span>
+                        <span className="mt-0.5 line-clamp-2 block text-xs leading-relaxed text-[#64748b]">
+                          {item.summary}
+                        </span>
+                      </span>
+                      {isExternal ? (
+                        <FiExternalLink className="mt-1 h-3.5 w-3.5 shrink-0 text-[#94a3b8]" />
+                      ) : null}
+                    </>
+                  );
 
-                    return (
-                      <li key={item.id} className="border-b border-[#f1f5f9] last:border-0">
-                        {isExternal ? (
-                          <a
-                            href={href}
-                            target="_blank"
-                            rel="noreferrer"
-                            onClick={() => onOpenItem?.(item)}
-                            className="flex gap-3 px-4 py-3 transition hover:bg-[#f8fafc]"
-                          >
-                            {content}
-                          </a>
-                        ) : (
-                          <Link
-                            to={href}
-                            onClick={() => onOpenItem?.(item)}
-                            className="flex gap-3 px-4 py-3 transition hover:bg-[#f8fafc]"
-                          >
-                            {content}
-                          </Link>
-                        )}
-                      </li>
-                    );
-                  })}
-                </ul>
-              </>
+                  return (
+                    <li key={item.id} className="border-b border-[#f1f5f9] last:border-0">
+                      {isExternal ? (
+                        <a
+                          href={href}
+                          target="_blank"
+                          rel="noreferrer"
+                          onClick={() => onOpenItem?.(item)}
+                          className="flex gap-3 px-4 py-3 transition hover:bg-[#f8fafc]"
+                        >
+                          {content}
+                        </a>
+                      ) : (
+                        <Link
+                          to={href}
+                          onClick={() => onOpenItem?.(item)}
+                          className="flex gap-3 px-4 py-3 transition hover:bg-[#f8fafc]"
+                        >
+                          {content}
+                        </Link>
+                      )}
+                    </li>
+                  );
+                })}
+              </ul>
             )}
           </div>
         </div>
