@@ -3,6 +3,7 @@ import { FiMessageSquare, FiSend, FiX, FiLoader, FiRotateCcw, FiColumns, FiSearc
 import { Link } from 'react-router-dom';
 import { useStudentAuth } from '../../contexts/StudentAuthContext';
 import { resetWebChatSession, sendWebChatMessage } from '../../utils/api';
+import ChatTypingIndicator from './ChatTypingIndicator';
 
 const SESSION_KEY = 'gx_web_chat_session_v1';
 
@@ -325,9 +326,13 @@ export default function WebsiteChatWidget() {
                     College & rank tools · counselling answers
                   </p>
                   <div className="mt-2 flex items-center gap-1.5">
-                    <span className="h-1.5 w-1.5 rounded-full bg-[#f27921]" />
+                    <span
+                      className={`h-1.5 w-1.5 rounded-full ${
+                        loading ? 'animate-pulse bg-[#f27921]' : 'bg-[#f27921]'
+                      }`}
+                    />
                     <span className="text-[10px] font-semibold uppercase tracking-[0.14em] text-white/65">
-                      Online
+                      {loading ? 'Typing…' : 'Online'}
                     </span>
                   </div>
                 </div>
@@ -376,14 +381,7 @@ export default function WebsiteChatWidget() {
               {messages.map((msg) => (
                 <MessageBubble key={msg.id} msg={msg} />
               ))}
-              {loading ? (
-                <div className="flex justify-start">
-                  <div className="inline-flex items-center gap-2.5 rounded-2xl rounded-bl-md border border-[#dce3ec] bg-white px-3.5 py-2.5 text-sm text-[#5a6570] shadow-[0_1px_0_rgba(4,30,48,0.03)]">
-                    <FiLoader className="h-4 w-4 animate-spin text-[#f27921]" />
-                    <span className="text-[13px]">Working on that…</span>
-                  </div>
-                </div>
-              ) : null}
+              {loading ? <ChatTypingIndicator /> : null}
             </div>
           </div>
 

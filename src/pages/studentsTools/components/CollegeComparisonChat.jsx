@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from 'react';
 import { FiLoader, FiMessageCircle, FiSend } from 'react-icons/fi';
+import ChatTypingIndicator from '../../../components/websiteChat/ChatTypingIndicator';
 import { chatCollegeComparisonPublic } from '../../../utils/api';
 import { swBtnPrimary, swInput } from './studentWorkspaceUi';
 
@@ -114,10 +115,7 @@ export default function CollegeComparisonChat({ comparison }) {
           </div>
         ))}
         {loading ? (
-          <div className="flex items-center gap-2 text-sm text-[#667085]">
-            <FiLoader className="h-4 w-4 animate-spin" />
-            Thinking with OpenAI…
-          </div>
+          <ChatTypingIndicator label="GuideXpert is preparing an answer" />
         ) : null}
       </div>
 
