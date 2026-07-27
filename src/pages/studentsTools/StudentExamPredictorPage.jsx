@@ -13,11 +13,11 @@ import {
   FiGrid,
 } from 'react-icons/fi';
 import ToolWorkspaceLayout from './components/ToolWorkspaceLayout';
+import ToolFactsPreview from './components/ToolFactsPreview';
 import RankPredictorWithLeadGate from '../../components/rankPredictor/RankPredictorWithLeadGate';
 import { getExamConfig } from '../../utils/rankPredictor';
 import {
   swInsightsPanel,
-  swPreviewLabel,
   swResultCard,
   swResultsPanel,
   swSectionSubtitle,
@@ -84,20 +84,17 @@ export default function StudentExamPredictorPage() {
         'Verify your mobile with OTP so we can save your lead and show your prediction.',
       ]}
       preview={
-        <div className="space-y-3 text-sm">
-          <div className="flex items-center gap-2">
-            <span className={`flex h-7 w-7 items-center justify-center rounded-lg ${iconClass}`}>
-              <ExamIcon className="h-3.5 w-3.5" strokeWidth={2.5} aria-hidden />
-            </span>
-            <p className={swPreviewLabel}>{exam.name}</p>
-          </div>
-          <div>
-            <p className={swPreviewLabel}>Score range</p>
-            <p className="mt-0.5 text-lg font-semibold tabular-nums text-slate-900">
-              {exam.min} – {exam.max}
-            </p>
-          </div>
-        </div>
+        <ToolFactsPreview
+          icon={ExamIcon}
+          iconClass={iconClass}
+          name={exam.name}
+          metricLabel="Score range"
+          metricValue={`${exam.min} – ${exam.max}`}
+          points={[
+            `Enter ${exam.scoreLabel.toLowerCase()} for a rank or percentile estimate`,
+            'OTP verification unlocks and saves your prediction',
+          ]}
+        />
       }
       results={
         result ? (

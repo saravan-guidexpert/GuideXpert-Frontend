@@ -13,12 +13,12 @@ import {
   FiArrowLeft,
 } from 'react-icons/fi';
 import ToolWorkspaceLayout from './components/ToolWorkspaceLayout';
+import ToolFactsPreview from './components/ToolFactsPreview';
 import CollegePredictorWithLeadGate from '../../components/collegePredictor/CollegePredictorWithLeadGate';
 import { getEntranceExamMeta, ENTRANCE_EXAMS } from '../../constants/collegePredictorOptions';
 import {
   swBtnGhost,
   swInsightsPanel,
-  swPreviewLabel,
   swSectionSubtitle,
   swSectionTitle,
   swWorkspaceTitle,
@@ -80,23 +80,17 @@ export default function StudentCollegePredictorPredictPage() {
         'Browse matches and load more colleges as needed.',
       ]}
       preview={
-        <div className="space-y-3 text-sm">
-          <p className={swPreviewLabel}>Live predictor</p>
-          <div className="flex items-center gap-3">
-            <div className={`flex h-10 w-10 items-center justify-center rounded-xl ${iconClass}`}>
-              <ExamIcon className="h-5 w-5" aria-hidden />
-            </div>
-            <div>
-              <p className="font-semibold text-slate-800">{examMeta?.label}</p>
-              <p className="text-xs text-slate-500">OTP-gated college matches</p>
-            </div>
-          </div>
-          {matchCount != null && (
-            <p className="text-xs text-slate-600">
-              Last search: <span className="font-semibold text-slate-800">{matchCount}</span> colleges
-            </p>
-          )}
-        </div>
+        <ToolFactsPreview
+          icon={ExamIcon}
+          iconClass={iconClass}
+          name={examMeta?.label || exam}
+          metricLabel="Live predictor"
+          metricValue={matchCount != null ? `${matchCount} matches` : 'OTP gated'}
+          points={[
+            'College shortlist from your rank and category',
+            'Results unlock after mobile OTP verification',
+          ]}
+        />
       }
       insights={
         <section className={swInsightsPanel}>

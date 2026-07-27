@@ -90,45 +90,47 @@ export default function RelatedToolsSection({
 
   return (
     <section
-      className="sw-fade-up border-t border-[#d5dde8] !py-0 pt-12 sm:pt-14"
+      className="sw-fade-up border-t border-[#d5dde8] !py-0 pt-14 sm:pt-16"
       aria-labelledby="related-tools-heading"
     >
-      <div className="mb-8 max-w-2xl">
-        <p className="font-sw-display text-[11px] font-semibold uppercase tracking-[0.22em] text-[#f27921]">
-          GuideXpert
+      <div className="mb-10 max-w-2xl sm:mb-12">
+        <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-[#f27921]">
+          More tools
         </p>
-        <h2 id="related-tools-heading" className={`mt-2 ${swSectionTitle}`}>
+        <h2 id="related-tools-heading" className={`mt-3 ${swSectionTitle}`}>
           {title}
         </h2>
-        <p className={swSectionSubtitle}>{subtitle}</p>
+        <p className={`mt-2 ${swSectionSubtitle}`}>{subtitle}</p>
       </div>
 
-      <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 xl:grid-cols-4">
+      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 sm:gap-5 xl:grid-cols-4">
         {items.map((tool, index) => {
           const Icon = tool.icon;
           return (
             <Link
               key={tool.to}
               to={tool.to}
-              className="group relative z-10 flex min-h-[11rem] w-full min-w-0 flex-col border border-[#d0d7e1] border-l-[3px] border-l-transparent bg-white p-5 transition duration-200 hover:border-l-[#f27921] hover:bg-[#fbfcfe] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#f27921]/35 focus-visible:ring-offset-2"
+              className="group relative z-10 flex min-h-[12rem] w-full min-w-0 flex-col border border-[#d5dde8] bg-white p-6 transition duration-200 hover:border-[#041e30]/30 hover:bg-[#fbfcfe] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#f27921]/35 focus-visible:ring-offset-2"
             >
-              <div className="mb-4 flex items-center justify-between">
+              <div className="mb-5 flex items-center justify-between gap-3">
                 {Icon ? (
                   <div
-                    className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-md ${tool.iconClass || 'bg-[#fff4ed] text-[#f27921]'}`}
+                    className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-lg ${tool.iconClass || 'bg-[#fff4ed] text-[#f27921]'}`}
                   >
                     <Icon className="h-5 w-5" aria-hidden />
                   </div>
                 ) : null}
-                <span className="font-sw-display text-sm font-bold tabular-nums text-[#d0d7e1]">
+                <span className="font-sw-display text-sm font-bold tabular-nums text-[#c5ced9]">
                   {String(index + 1).padStart(2, '0')}
                 </span>
               </div>
               <h3 className="font-sw-display text-base font-bold tracking-tight text-[#041e30]">
                 {tool.title}
               </h3>
-              <p className="mt-2 flex-1 text-sm leading-relaxed text-[#5a6570]">{tool.description}</p>
-              <span className="mt-4 inline-flex items-center gap-1.5 text-sm font-semibold text-[#041e30] transition duration-200 group-hover:gap-2.5 group-hover:text-[#f27921]">
+              <p className="mt-2.5 flex-1 text-sm leading-relaxed text-[#5a6570]">
+                {tool.description}
+              </p>
+              <span className="mt-5 inline-flex items-center gap-1.5 text-sm font-semibold text-[#041e30] transition duration-200 group-hover:gap-2.5 group-hover:text-[#f27921]">
                 Open tool <LuArrowRight className="h-4 w-4" aria-hidden />
               </span>
             </Link>
