@@ -3,7 +3,7 @@ import { ADMISSION_PREDICTOR_TOOLS, FIT_TEST_TOOLS, COMPARE_TOOLS } from '../../
 import { TRENDING_COLLEGES } from '../landing/landingPageData';
 import { WORKSPACE_IMAGES } from './studentWorkspaceImages';
 
-export const HOME_TAGLINE = 'Empowering Students Building Futures';
+export const HOME_TAGLINE = 'Guiding Every Choice. Shaping Every Future.';
 export const HOME_SUBTITLE =
   'Rank predictors, college shortlists, and fit tests — one workspace for Indian entrance exams.';
 
