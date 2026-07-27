@@ -1096,6 +1096,22 @@ export const getPredictedCollegesPublic = async (params = {}) => {
   });
 };
 
+export const searchCollegeComparisonOptions = async (query, limit = 8) => {
+  const search = new URLSearchParams();
+  if (query != null) search.set('q', String(query));
+  search.set('limit', String(limit));
+  return apiRequest(`/college-predictor/comparison/options?${search.toString()}`, {
+    method: 'GET',
+  });
+};
+
+export const compareCollegesPublic = async (payload) => {
+  return apiRequest('/college-predictor/comparison', {
+    method: 'POST',
+    body: JSON.stringify(payload || {}),
+  });
+};
+
 // ——— Webinar Progress ———
 
 export const syncWebinarProgress = async (token, payload) => {

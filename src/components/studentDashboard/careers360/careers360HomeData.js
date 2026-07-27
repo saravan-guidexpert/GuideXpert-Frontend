@@ -9,8 +9,8 @@ export const HOME_SUBTITLE =
 
 export const POPULAR_PREDICTORS = [
   { label: 'JEE Main College Predictor', to: '/students/college-predictor', popular: true },
-  { label: 'NEET College Predictor', to: '/students/college-predictor', popular: true },
-  { label: 'JEE Main Rank Predictor', to: '/students/rank-predictor/jeemainmarks', popular: false },
+  { label: 'JEE Main Rank Predictor', to: '/students/rank-predictor/jeemainmarks', popular: true },
+  { label: 'Branch Predictor', to: '/students/branch-predictor', popular: false },
   { label: 'AP EAMCET Rank', to: '/students/rank-predictor/apeamcet', popular: false },
 ];
 

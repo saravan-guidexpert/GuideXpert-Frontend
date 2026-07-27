@@ -21,7 +21,7 @@ function HeroCounsellingCard({ onBookClick }) {
 
   return (
     <motion.div
-      className={`relative min-h-[280px] overflow-hidden rounded-2xl bg-gradient-to-br p-6 shadow-lg sm:min-h-[300px] sm:p-8 ${slide.accent}`}
+      className={`relative overflow-hidden rounded-2xl bg-gradient-to-br p-5 shadow-lg sm:min-h-[300px] sm:p-8 ${slide.accent}`}
       initial={{ opacity: 0, y: 14 }}
       animate={{ opacity: 1, y: 0 }}
       transition={smoothTransition}
@@ -37,7 +37,7 @@ function HeroCounsellingCard({ onBookClick }) {
           </span>
           {slide.badge}
         </span>
-        <h2 className="mt-4 text-xl font-bold leading-snug tracking-tight text-white sm:text-2xl">
+        <h2 className="mt-3.5 text-[1.2rem] font-bold leading-snug tracking-tight text-white sm:mt-4 sm:text-2xl">
           <ShinyText
             text={slide.title}
             speed={2.4}
@@ -49,7 +49,7 @@ function HeroCounsellingCard({ onBookClick }) {
             className="font-bold"
           />
         </h2>
-        <p className="mt-3 text-sm leading-relaxed text-white/80">
+        <p className="mt-2.5 text-sm leading-relaxed text-white/80 sm:mt-3">
           <ShinyText
             text={slide.description}
             speed={2.6}
@@ -64,7 +64,7 @@ function HeroCounsellingCard({ onBookClick }) {
         <button
           type="button"
           onClick={onBookClick}
-          className="mt-6 inline-flex w-fit items-center gap-2 rounded-lg bg-[#f27921] px-4 py-2.5 text-sm font-semibold text-white shadow-md transition hover:bg-[#e06810]"
+          className="mt-5 inline-flex w-full items-center justify-center gap-2 rounded-lg bg-[#f27921] px-4 py-3 text-sm font-semibold text-white shadow-md transition hover:bg-[#e06810] sm:mt-6 sm:w-fit sm:justify-start sm:py-2.5"
         >
           <FiCalendar className="h-4 w-4" aria-hidden />
           <ShinyText
@@ -94,16 +94,16 @@ function HeroStatItem({ stat, index }) {
       ref={ref}
       variants={fadeUp}
       transition={smoothTransition}
-      className="relative min-w-0 flex-1 rounded-2xl border border-[#e6e9f0] bg-white/80 px-4 py-4 text-center shadow-[0_8px_24px_-18px_rgba(30,40,80,0.35)] backdrop-blur-sm sm:px-5 sm:py-5"
+      className="relative min-w-0 rounded-xl border border-[#e6e9f0] bg-white/80 px-2.5 py-3 text-center shadow-[0_8px_24px_-18px_rgba(30,40,80,0.35)] backdrop-blur-sm sm:rounded-2xl sm:px-5 sm:py-5"
     >
       <div
-        className="pointer-events-none absolute inset-x-5 top-0 h-px bg-gradient-to-r from-transparent via-[#f27921]/55 to-transparent"
+        className="pointer-events-none absolute inset-x-3 top-0 h-px bg-gradient-to-r from-transparent via-[#f27921]/55 to-transparent sm:inset-x-5"
         aria-hidden
       />
-      <p className="font-sw-display text-2xl font-bold tracking-tight text-[#1a1a1a] sm:text-[1.75rem]">
+      <p className="font-sw-display text-lg font-bold tracking-tight text-[#1a1a1a] sm:text-[1.75rem]">
         {display}
       </p>
-      <p className="mt-1.5 text-[11px] font-medium leading-snug text-[#667085] sm:text-xs">
+      <p className="mt-1 text-[10px] font-medium leading-snug text-[#667085] sm:mt-1.5 sm:text-xs">
         {stat.label}
       </p>
     </motion.div>
@@ -113,7 +113,7 @@ function HeroStatItem({ stat, index }) {
 function HeroTrustStats() {
   return (
     <motion.div
-      className="mt-8 grid grid-cols-1 gap-3 sm:mt-9 sm:grid-cols-3 sm:gap-3.5"
+      className="grid grid-cols-3 gap-2 sm:gap-3.5"
       initial="hidden"
       whileInView="visible"
       viewport={defaultViewport}
@@ -148,21 +148,20 @@ export default function StudentsDashboardHero({
           'linear-gradient(165deg, #f3f0f8 0%, #eef1f8 42%, #f7f8fc 72%, #ffffff 100%)',
       }}
     >
-      <div className={`${LAYOUT.container} relative py-8 sm:py-10 lg:py-12`}>
-        <div className="grid items-center gap-8 lg:grid-cols-2 lg:gap-10 xl:gap-12">
-          <div className="min-w-0">
+      <div className={`${LAYOUT.container} relative py-6 sm:py-10 lg:py-12`}>
+        <div className="grid items-start gap-6 sm:gap-8 lg:grid-cols-2 lg:items-center lg:gap-10 xl:gap-12">
+          <div className="order-1 min-w-0">
             <motion.h1
-              className="max-w-xl text-[1.75rem] font-bold leading-[1.15] tracking-tight text-[#1a1a1a] sm:text-4xl lg:text-[2.5rem] lg:leading-[1.12]"
+              className="max-w-xl text-[1.65rem] font-bold leading-[1.2] tracking-tight text-[#1a1a1a] sm:text-4xl sm:leading-[1.15] lg:text-[2.5rem] lg:leading-[1.12]"
               initial={{ opacity: 0, y: 16 }}
               animate={{ opacity: 1, y: 0 }}
               transition={smoothTransition}
             >
-              {HOME_TAGLINE.split(' ').slice(0, 2).join(' ')}{' '}
-              <span className="block sm:inline">{HOME_TAGLINE.split(' ').slice(2).join(' ')}</span>
+              {HOME_TAGLINE}
             </motion.h1>
 
             <motion.div
-              className="relative mt-6 max-w-xl sm:mt-7"
+              className="relative mt-5 max-w-xl sm:mt-7"
               initial={{ opacity: 0, y: 14 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ ...smoothTransition, delay: 0.06 }}
@@ -175,19 +174,19 @@ export default function StudentsDashboardHero({
                 onChange={(e) => onSearchChange(e.target.value)}
                 placeholder="Search Colleges, Exams, Courses & more"
                 aria-label="Search Colleges, Exams, Courses & more"
-                className="w-full rounded-full border border-[#d8dce6] bg-white py-3.5 pl-5 pr-12 text-sm text-[#333] shadow-[0_2px_12px_rgba(30,40,80,0.06)] placeholder:text-[#9aa0ae] focus:border-[#f27921] focus:outline-none focus:ring-2 focus:ring-[#f27921]/20 sm:text-[15px]"
+                className="w-full rounded-full border border-[#d8dce6] bg-white py-3 pl-4 pr-11 text-sm text-[#333] shadow-[0_2px_12px_rgba(30,40,80,0.06)] placeholder:text-[#9aa0ae] focus:border-[#f27921] focus:outline-none focus:ring-2 focus:ring-[#f27921]/20 sm:py-3.5 sm:pl-5 sm:pr-12 sm:text-[15px]"
               />
               {searchTerm ? (
                 <button
                   type="button"
                   onClick={onClearSearch}
-                  className="absolute right-4 top-1/2 -translate-y-1/2 text-[#999] hover:text-[#555]"
+                  className="absolute right-3.5 top-1/2 -translate-y-1/2 text-[#999] hover:text-[#555] sm:right-4"
                   aria-label="Clear search"
                 >
                   <FiX className="h-5 w-5" />
                 </button>
               ) : (
-                <FiSearch className="pointer-events-none absolute right-4 top-1/2 h-5 w-5 -translate-y-1/2 text-[#8b90a0]" />
+                <FiSearch className="pointer-events-none absolute right-3.5 top-1/2 h-5 w-5 -translate-y-1/2 text-[#8b90a0] sm:right-4" />
               )}
               {showSuggestions && suggestions.length > 0 ? (
                 <ul className="absolute left-0 right-0 top-full z-50 mt-2 overflow-hidden rounded-2xl border border-[#e5e7eb] bg-white py-1 shadow-lg">
@@ -207,7 +206,7 @@ export default function StudentsDashboardHero({
             </motion.div>
 
             <motion.div
-              className="mt-5 flex flex-wrap gap-3 sm:mt-6"
+              className="mt-4 flex flex-wrap gap-x-2.5 gap-y-3 pt-2 sm:mt-6 sm:gap-3"
               initial={{ opacity: 0, y: 12 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ ...smoothTransition, delay: 0.1 }}
@@ -216,7 +215,7 @@ export default function StudentsDashboardHero({
                 <Link
                   key={item.label}
                   to={item.to}
-                  className="relative mt-2 inline-flex items-center rounded-full border border-[#d8dce6] bg-white px-4 py-2 text-sm font-medium text-[#333] shadow-sm transition hover:border-[#f27921]/50 hover:text-[#f27921]"
+                  className="relative inline-flex items-center rounded-full border border-[#d8dce6] bg-white px-3.5 py-2 text-[13px] font-medium text-[#333] shadow-sm transition hover:border-[#f27921]/50 hover:text-[#f27921] sm:px-4 sm:text-sm"
                 >
                   <span className="absolute -top-2 left-3 rounded bg-[#f27921] px-1.5 py-px text-[9px] font-bold uppercase tracking-wide text-white">
                     Popular
@@ -226,15 +225,21 @@ export default function StudentsDashboardHero({
               ))}
             </motion.div>
 
-            <HeroTrustStats />
+            <div className="mt-6 hidden sm:mt-9 sm:block">
+              <HeroTrustStats />
+            </div>
           </div>
 
-          <div className="min-w-0 w-full lg:max-w-none">
+          <div className="order-2 min-w-0 w-full lg:max-w-none">
             <HeroCounsellingCard onBookClick={onBookCounselling} />
+          </div>
+
+          <div className="order-3 min-w-0 sm:hidden">
+            <HeroTrustStats />
           </div>
         </div>
 
-        <div className="relative mt-8 min-h-[3.5rem] sm:mt-10">
+        <div className="relative mt-6 min-h-[3.25rem] sm:mt-10 sm:min-h-[3.5rem]">
           <HeroLiveActivityToasts />
         </div>
       </div>

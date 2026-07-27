@@ -272,19 +272,19 @@ function DualCardsHero({
     <>
       <BreadcrumbNav category={category} title={title} />
 
-      <div className="sw-fade-up mb-8 flex flex-col gap-5 sm:mb-10 lg:mb-12 lg:flex-row lg:items-end lg:justify-between lg:gap-10">
+      <div className="sw-fade-up mb-7 flex flex-col gap-4 sm:mb-10 sm:gap-5 lg:mb-12 lg:flex-row lg:items-end lg:justify-between lg:gap-10">
         <div className="min-w-0 max-w-2xl">
           <div className="flex gap-3 sm:gap-4">
             <span
-              className="mt-1.5 hidden h-[2.75rem] w-1 shrink-0 rounded-full bg-[#f27921] sm:block sm:h-[3.25rem]"
+              className="mt-1.5 h-[2.5rem] w-1 shrink-0 rounded-full bg-[#f27921] sm:h-[3.25rem]"
               aria-hidden
             />
-            <div>
-              <h1 className="font-sw-display text-[1.85rem] font-bold leading-[1.15] tracking-tight !text-white sm:text-4xl lg:text-[2.45rem]">
+            <div className="min-w-0">
+              <h1 className="font-sw-display text-[1.7rem] font-bold leading-[1.18] tracking-tight !text-white sm:text-4xl sm:leading-[1.15] lg:text-[2.45rem]">
                 {title}
               </h1>
               {subtitle ? (
-                <p className="mt-2.5 max-w-xl text-[15px] leading-relaxed !text-white/75 sm:text-base">
+                <p className="mt-2 max-w-xl text-[15px] leading-relaxed !text-white/75 sm:mt-2.5 sm:text-base">
                   {subtitle}
                 </p>
               ) : null}
@@ -293,7 +293,7 @@ function DualCardsHero({
         </div>
 
         {trustBadge ? (
-          <div className="shrink-0 text-left lg:max-w-[14rem] lg:pb-1 lg:text-right">
+          <div className="shrink-0 border-t border-white/10 pt-3 text-left sm:border-0 sm:pt-0 lg:max-w-[14rem] lg:pb-1 lg:text-right">
             <p className="text-sm font-semibold !text-white/90">{trustBadge}</p>
             {trustSubline ? (
               <p className="mt-1 text-xs leading-relaxed !text-white/55">{trustSubline}</p>
@@ -303,13 +303,13 @@ function DualCardsHero({
       </div>
 
       <div className="grid items-start gap-5 lg:grid-cols-[minmax(0,22.5rem)_minmax(0,1fr)] xl:grid-cols-[minmax(0,24rem)_minmax(0,1fr)] lg:gap-6 xl:gap-8">
-        <div className="sw-fade-up sw-fade-up-delay-1 w-full min-w-0">
+        <div className="order-1 sw-fade-up sw-fade-up-delay-1 w-full min-w-0">
           <div className="sw-gx-form-rail w-full min-w-0 rounded-xl bg-white">
             <div className="w-full min-w-0">{children}</div>
           </div>
         </div>
 
-        <aside className="sw-fade-up sw-fade-up-delay-2 w-full min-w-0 self-start">
+        <aside className="order-2 sw-fade-up sw-fade-up-delay-2 w-full min-w-0 self-start">
           <p className="mb-3 text-[11px] font-semibold uppercase tracking-[0.16em] !text-white/55">
             How predictions work
           </p>
@@ -339,25 +339,25 @@ function FeaturesHero({ title, subtitle, trustBadge, features, children, categor
     <>
       <BreadcrumbNav category={category} title={title} />
 
-      <div className="grid items-start gap-10 lg:grid-cols-[minmax(0,1.1fr)_minmax(0,24rem)] xl:grid-cols-[minmax(0,1.15fr)_minmax(0,26rem)] lg:gap-12 xl:gap-16">
-        <div className="sw-fade-up min-w-0 text-white lg:pr-4">
+      <div className="grid items-start gap-8 sm:gap-10 lg:grid-cols-[minmax(0,1.1fr)_minmax(0,24rem)] xl:grid-cols-[minmax(0,1.15fr)_minmax(0,26rem)] lg:gap-12 xl:gap-16">
+        <div className="order-1 sw-fade-up min-w-0 text-white lg:order-1 lg:pr-4">
           {trustBadge ? (
-            <p className="mb-5 inline-flex items-center gap-1.5 rounded-full bg-[#16a34a]/20 px-3.5 py-1.5 text-xs font-semibold !text-[#86efac] ring-1 ring-[#4ade80]/35">
+            <p className="mb-4 inline-flex items-center gap-1.5 rounded-full bg-[#16a34a]/20 px-3.5 py-1.5 text-xs font-semibold !text-[#86efac] ring-1 ring-[#4ade80]/35 sm:mb-5">
               <FiCheck className="h-3.5 w-3.5" strokeWidth={3} aria-hidden />
               {trustBadge}
             </p>
           ) : null}
 
-          <h1 className="font-sw-display text-[1.85rem] font-bold leading-[1.15] tracking-tight !text-white sm:text-4xl lg:text-[2.55rem]">
+          <h1 className="font-sw-display text-[1.7rem] font-bold leading-[1.18] tracking-tight !text-white sm:text-4xl sm:leading-[1.15] lg:text-[2.55rem]">
             {title}
           </h1>
           {subtitle ? (
-            <p className="mt-4 max-w-xl text-[15px] leading-relaxed !text-white/80 sm:text-base">
+            <p className="mt-3 max-w-xl text-[15px] leading-relaxed !text-white/80 sm:mt-4 sm:text-base">
               {subtitle}
             </p>
           ) : null}
 
-          <ul className="mt-10 space-y-5">
+          <ul className="mt-8 hidden space-y-5 sm:mt-10 lg:block">
             {features.map((feature, index) => {
               const Icon = FEATURE_ICONS[index % FEATURE_ICONS.length];
               const iconStyle = FEATURE_ICON_STYLES[index % FEATURE_ICON_STYLES.length];
@@ -380,11 +380,31 @@ function FeaturesHero({ title, subtitle, trustBadge, features, children, categor
           </ul>
         </div>
 
-        <div className="sw-fade-up sw-fade-up-delay-1 w-full min-w-0 max-w-full justify-self-stretch lg:justify-self-end">
-          <div className="w-full min-w-0 max-w-full rounded-[1.25rem] border border-white/40 bg-white p-6 shadow-[0_24px_60px_-28px_rgba(0,0,0,0.55)] sm:p-8">
+        <div className="order-2 sw-fade-up sw-fade-up-delay-1 w-full min-w-0 max-w-full justify-self-stretch lg:order-2 lg:justify-self-end">
+          <div className="w-full min-w-0 max-w-full rounded-2xl border border-white/40 bg-white p-5 shadow-[0_24px_60px_-28px_rgba(0,0,0,0.55)] sm:rounded-[1.25rem] sm:p-8">
             <div className="w-full min-w-0 max-w-full">{children}</div>
           </div>
         </div>
+
+        <ul className="order-3 mt-2 space-y-4 lg:hidden">
+          {features.map((feature, index) => {
+            const Icon = FEATURE_ICONS[index % FEATURE_ICONS.length];
+            const iconStyle = FEATURE_ICON_STYLES[index % FEATURE_ICON_STYLES.length];
+            return (
+              <li key={`mobile-${feature.title}-${index}`} className="flex gap-3.5">
+                <span
+                  className={`mt-0.5 flex h-10 w-10 shrink-0 items-center justify-center rounded-xl ${iconStyle}`}
+                >
+                  <Icon className="h-4 w-4" aria-hidden />
+                </span>
+                <div className="min-w-0 pt-0.5">
+                  <p className="text-sm font-semibold !text-white">{feature.title}</p>
+                  <p className="mt-1 text-sm leading-relaxed !text-white/65">{feature.detail}</p>
+                </div>
+              </li>
+            );
+          })}
+        </ul>
       </div>
     </>
   );

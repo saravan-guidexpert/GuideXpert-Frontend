@@ -1,13 +1,16 @@
-import { useRef, useState } from 'react';
-import { FiColumns } from 'react-icons/fi';
-import { LuSearch, LuRocket, LuZap, LuMapPin } from 'react-icons/lu';
+import { useEffect, useMemo, useRef, useState } from 'react';
+import { FiAlertCircle, FiColumns, FiLoader } from 'react-icons/fi';
+import { LuSearch, LuRocket, LuZap, LuMapPin, LuSparkles } from 'react-icons/lu';
 import ToolWorkspaceLayout from './components/ToolWorkspaceLayout';
 import ToolFactsPreview from './components/ToolFactsPreview';
 import { useStudentAuth } from '../../contexts/StudentAuthContext';
 import { useRequireLoginToUse } from '../../components/studentAuth/RequireStudentAuth';
+import { compareCollegesPublic, searchCollegeComparisonOptions } from '../../utils/api';
 import {
   swBtnPrimary,
+  swBtnSecondary,
   swError,
+  swErrorBox,
   swInsightsPanel,
   swInput,
   swLabel,
@@ -16,6 +19,8 @@ import {
   swResultsHighlight,
   swSectionSubtitle,
   swSectionTitle,
+  swFormSubtitle,
+  swFormTitle,
 } from './components/studentWorkspaceUi';
 
 function VsBadge({ className = '' }) {
@@ -62,42 +67,151 @@ const RELATED = [
 export default function CollegeComparisonPage() {
   const { savePrediction } = useStudentAuth() || {};
   const requireLoginToUse = useRequireLoginToUse();
-  const [a, setA] = useState('');
-  const [b, setB] = useState('');
+  const [form, setForm] = useState({
+    institutionA: '',
+    institutionB: '',
+    institutionAId: '',
+    institutionBId: '',
+  });
   const [errors, setErrors] = useState({});
   const [result, setResult] = useState(null);
+  const [apiError, setApiError] = useState('');
+  const [loading, setLoading] = useState(false);
+  const [summaryLoading, setSummaryLoading] = useState(false);
+  const [suggestions, setSuggestions] = useState({ institutionA: [], institutionB: [] });
+  const [activeField, setActiveField] = useState(null);
   const resultsRef = useRef(null);
+  const blurTimerRef = useRef(null);
 
-  const onSubmit = (event) => {
+  const selectedPairKey = useMemo(() => {
+    if (!result?.institutionA?.id || !result?.institutionB?.id) return '';
+    return `${result.institutionA.id}::${result.institutionB.id}`;
+  }, [result]);
+
+  useEffect(() => {
+    const controller = { cancelled: false };
+    const fields = ['institutionA', 'institutionB'];
+    fields.forEach((field) => {
+      const query = form[field];
+      const selectedId = form[`${field}Id`];
+      if (!query || query.trim().length < 2 || selectedId) {
+        setSuggestions((prev) => ({ ...prev, [field]: selectedId ? prev[field] : [] }));
+        return;
+      }
+      const timer = setTimeout(async () => {
+        const response = await searchCollegeComparisonOptions(query, 6);
+        if (!controller.cancelled) {
+          setSuggestions((prev) => ({
+            ...prev,
+            [field]: response.success ? response.data?.options || [] : [],
+          }));
+        }
+      }, 180);
+      controller[`${field}Timer`] = timer;
+    });
+    return () => {
+      controller.cancelled = true;
+      if (controller.institutionATimer) clearTimeout(controller.institutionATimer);
+      if (controller.institutionBTimer) clearTimeout(controller.institutionBTimer);
+    };
+  }, [form.institutionA, form.institutionAId, form.institutionB, form.institutionBId]);
+
+  const onFieldChange = (field, value) => {
+    setForm((prev) => ({
+      ...prev,
+      [field]: value,
+      [`${field}Id`]: '',
+    }));
+    setErrors((prev) => ({ ...prev, [field]: undefined }));
+    setApiError('');
+  };
+
+  const onSelectOption = (field, option) => {
+    setForm((prev) => ({
+      ...prev,
+      [field]: option.name,
+      [`${field}Id`]: option.id,
+    }));
+    setSuggestions((prev) => ({ ...prev, [field]: [] }));
+    setActiveField(null);
+    setErrors((prev) => ({ ...prev, [field]: undefined }));
+  };
+
+  const validate = () => {
+    const nextErrors = {};
+    if (!form.institutionAId) nextErrors.institutionA = 'Select the first college from suggestions.';
+    if (!form.institutionBId) nextErrors.institutionB = 'Select the second college from suggestions.';
+    if (
+      form.institutionAId &&
+      form.institutionBId &&
+      form.institutionAId === form.institutionBId
+    ) {
+      nextErrors.institutionB = 'Choose a different second college.';
+    }
+    setErrors(nextErrors);
+    return Object.keys(nextErrors).length === 0;
+  };
+
+  const runComparison = async (includeSummary = false) => {
+    const payload = {
+      collegeAId: form.institutionAId || result?.institutionA?.id,
+      collegeBId: form.institutionBId || result?.institutionB?.id,
+      includeSummary,
+    };
+    const response = await compareCollegesPublic(payload);
+    if (!response.success) {
+      throw new Error(
+        response?.data?.response || response?.message || 'Could not compare these colleges right now.'
+      );
+    }
+    return response.data;
+  };
+
+  const onSubmit = async (event) => {
     event.preventDefault();
     if (!requireLoginToUse()) return;
-    const nextErrors = {};
-    if (!a) nextErrors.a = 'Institution A is required.';
-    if (!b) nextErrors.b = 'Institution B is required.';
-    setErrors(nextErrors);
-    if (Object.keys(nextErrors).length > 0) return;
-    const rows = [
-      { metric: 'Average Package', aValue: '8.5 LPA', bValue: '7.2 LPA', better: 'a' },
-      { metric: 'Placement %', aValue: '91%', bValue: '86%', better: 'a' },
-      { metric: 'Fees', aValue: '14L', bValue: '11L', better: 'b' },
-      { metric: 'Ranking', aValue: '24', bValue: '31', better: 'a' },
-    ];
-    setResult({
-      institutionA: a,
-      institutionB: b,
-      rows,
-    });
-    savePrediction?.({
-      type: 'college_comparison',
-      tool: 'College Comparison',
-      title: 'Compared colleges',
-      summary: `${a} vs ${b}`,
-      payload: { institutionA: a, institutionB: b, rows },
-    });
-    setTimeout(() => {
-      resultsRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' });
-      resultsRef.current?.focus({ preventScroll: true });
-    }, 60);
+    if (!validate()) return;
+    setLoading(true);
+    setApiError('');
+    try {
+      const comparison = await runComparison(false);
+      setResult(comparison);
+      savePrediction?.({
+        type: 'college_comparison',
+        tool: 'College Comparison',
+        title: 'Compared colleges',
+        summary: `${comparison.institutionA.name} vs ${comparison.institutionB.name}`,
+        payload: comparison,
+      });
+      setTimeout(() => {
+        resultsRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        resultsRef.current?.focus({ preventScroll: true });
+      }, 60);
+    } catch (error) {
+      setApiError(error.message);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const onGenerateSummary = async () => {
+    if (!result || summaryLoading) return;
+    setSummaryLoading(true);
+    setApiError('');
+    try {
+      const comparison = await runComparison(true);
+      if (!comparison.summary) {
+        setApiError('AI summary is unavailable until the backend LLM env is configured.');
+        return;
+      }
+      if (`${comparison.institutionA.id}::${comparison.institutionB.id}` === selectedPairKey) {
+        setResult(comparison);
+      }
+    } catch (error) {
+      setApiError(error.message);
+    } finally {
+      setSummaryLoading(false);
+    }
   };
 
   const truncateLabel = (s, max = 14) => {
@@ -106,24 +220,70 @@ export default function CollegeComparisonPage() {
     return `${t.slice(0, max)}…`;
   };
 
+  const renderCollegeField = (field, label, placeholder) => {
+    const fieldErrors = errors[field];
+    const fieldSuggestions = suggestions[field] || [];
+    return (
+      <label className={`block min-w-0 ${swLabel} relative`}>
+        {label}
+        <input
+          value={form[field]}
+          onChange={(e) => onFieldChange(field, e.target.value)}
+          onFocus={() => {
+            if (blurTimerRef.current) clearTimeout(blurTimerRef.current);
+            setActiveField(field);
+          }}
+          onBlur={() => {
+            blurTimerRef.current = setTimeout(() => setActiveField(null), 120);
+          }}
+          className={swInput}
+          placeholder={placeholder}
+          autoComplete="off"
+          aria-invalid={!!fieldErrors}
+        />
+        {activeField === field && fieldSuggestions.length > 0 ? (
+          <div className="absolute left-0 right-0 top-full z-20 mt-2 overflow-hidden rounded-2xl border border-[#dce3ec] bg-white shadow-lg">
+            {fieldSuggestions.map((option) => (
+              <button
+                key={option.id}
+                type="button"
+                onMouseDown={(event) => {
+                  event.preventDefault();
+                  onSelectOption(field, option);
+                }}
+                className="block w-full border-b border-[#eef2f7] px-4 py-3 text-left last:border-b-0 hover:bg-[#fff8f3]"
+              >
+                <span className="block text-sm font-semibold text-[#041e30]">{option.name}</span>
+                <span className="mt-0.5 block text-xs text-[#667085]">
+                  {option.city}, {option.state} · {option.ownership}
+                </span>
+              </button>
+            ))}
+          </div>
+        ) : null}
+        {fieldErrors ? <span className={swError}>{fieldErrors}</span> : null}
+      </label>
+    );
+  };
+
   return (
     <ToolWorkspaceLayout
       title="College Comparison"
       subtitle="Compare two institutions side-by-side and identify the stronger value choice."
       howItWorks={[
-        'Core metrics are evaluated side-by-side for both institutions.',
-        'Each metric highlights the stronger value based on predefined rules.',
-        'The matrix helps you make a balanced decision across outcomes and cost.',
+        'Pick two colleges from the search suggestions to avoid fuzzy naming.',
+        'Core metrics are compared deterministically before any AI is used.',
+        'Ask for an AI summary only after results load if you want a concise trade-off view.',
       ]}
       whatThisToolDoes={[
-        'Compares two colleges on placements, fees, rankings, and other key metrics.',
+        'Compares two colleges on placements, fees, ROI, branch breadth, ranking signals, and approvals.',
         'Highlights the stronger option per metric so trade-offs are easier to see.',
         'Supports final shortlisting after College Predictor and Branch Predictor.',
       ]}
       inputGuide={[
-        'College A: Enter or select the first institution you want to compare.',
-        'College B: Enter or select the second institution.',
-        'Review the results matrix — highlighted cells mark the stronger value.',
+        'College A: Start typing and select a college from the suggestions.',
+        'College B: Pick a different college from the same verified list.',
+        'Review the matrix first, then request an AI summary only if you need a quick recommendation.',
       ]}
       preview={
         <ToolFactsPreview
@@ -133,9 +293,9 @@ export default function CollegeComparisonPage() {
           metricLabel="Comparison covers"
           metricValue="Side-by-side"
           points={[
-            'Fees and ROI signals',
-            'Placement and ranking metrics',
-            'Decision matrix with stronger-value highlights',
+            'Placements, fees, ROI, and approvals',
+            'Deterministic rows first to keep API cost low',
+            'Optional short AI summary after the main result',
           ]}
         />
       }
@@ -149,17 +309,61 @@ export default function CollegeComparisonPage() {
               <div className="mb-5 flex flex-wrap items-center justify-center gap-3 text-center">
                 <span
                   className="max-w-48 truncate font-sw-display text-base font-bold text-[#041e30]"
-                  title={result.institutionA}
+                  title={result.institutionA.name}
                 >
-                  {result.institutionA}
+                  {result.institutionA.name}
                 </span>
                 <VsBadge />
                 <span
                   className="max-w-48 truncate font-sw-display text-base font-bold text-[#041e30]"
-                  title={result.institutionB}
+                  title={result.institutionB.name}
                 >
-                  {result.institutionB}
+                  {result.institutionB.name}
                 </span>
+              </div>
+
+              <div className="grid gap-3 md:grid-cols-2">
+                {[result.institutionA, result.institutionB].map((college, index) => (
+                  <article key={college.id} className="rounded-2xl bg-[#f8fafc] p-4">
+                    <p className="text-[11px] font-semibold uppercase tracking-[0.14em] text-[#8a94a0]">
+                      Institution {index === 0 ? 'A' : 'B'}
+                    </p>
+                    <h3 className="mt-1.5 font-sw-display text-lg font-bold text-[#041e30]">
+                      {college.name}
+                    </h3>
+                    <div className="mt-4 grid grid-cols-2 gap-3 text-sm">
+                      <div className="rounded-xl bg-white px-3 py-3">
+                        <p className="text-[10px] font-semibold uppercase tracking-wide text-[#8a94a0]">Location</p>
+                        <p className="mt-1 text-[#041e30]">{college.city}, {college.state}</p>
+                      </div>
+                      <div className="rounded-xl bg-white px-3 py-3">
+                        <p className="text-[10px] font-semibold uppercase tracking-wide text-[#8a94a0]">Ownership</p>
+                        <p className="mt-1 text-[#041e30]">{college.ownership}</p>
+                      </div>
+                      <div className="rounded-xl bg-white px-3 py-3">
+                        <p className="text-[10px] font-semibold uppercase tracking-wide text-[#8a94a0]">Branches</p>
+                        <p className="mt-1 text-[#041e30]">{college.branchCount}</p>
+                      </div>
+                      <div className="rounded-xl bg-white px-3 py-3">
+                        <p className="text-[10px] font-semibold uppercase tracking-wide text-[#8a94a0]">Approvals</p>
+                        <p className="mt-1 text-[#041e30]">{college.approvals?.join(' · ') || 'Not available'}</p>
+                      </div>
+                    </div>
+                    <div className="mt-4">
+                      <p className="text-[11px] font-semibold uppercase tracking-[0.14em] text-[#8a94a0]">
+                        Highlights
+                      </p>
+                      <ul className="mt-2 space-y-1.5 text-sm text-[#5a6570]">
+                        {(college.highlights || []).map((item) => (
+                          <li key={item} className="flex gap-2">
+                            <span className="mt-2 h-1 w-1 shrink-0 rounded-full bg-[#f27921]" aria-hidden />
+                            {item}
+                          </li>
+                        ))}
+                      </ul>
+                    </div>
+                  </article>
+                ))}
               </div>
 
               <div className="hidden overflow-x-auto md:block">
@@ -171,15 +375,15 @@ export default function CollegeComparisonPage() {
                       </th>
                       <th
                         className="max-w-40 px-3 py-3 text-[11px] font-bold uppercase tracking-[0.14em] text-[#8a94a0]"
-                        title={result.institutionA}
+                        title={result.institutionA.name}
                       >
-                        {truncateLabel(result.institutionA, 18)}
+                        {truncateLabel(result.institutionA.name, 18)}
                       </th>
                       <th
                         className="max-w-40 px-3 py-3 text-[11px] font-bold uppercase tracking-[0.14em] text-[#8a94a0]"
-                        title={result.institutionB}
+                        title={result.institutionB.name}
                       >
-                        {truncateLabel(result.institutionB, 18)}
+                        {truncateLabel(result.institutionB.name, 18)}
                       </th>
                     </tr>
                   </thead>
@@ -191,12 +395,14 @@ export default function CollegeComparisonPage() {
                           <span className="inline-flex flex-wrap items-center gap-1.5">
                             {row.aValue}
                             {row.better === 'a' ? <span className={swMetricBetter}>Better</span> : null}
+                            {row.better === 'tie' ? <span className={swMetricBetter}>Tie</span> : null}
                           </span>
                         </td>
                         <td className={`px-3 py-3.5 ${row.better === 'b' ? 'bg-[#fff4ed] font-semibold text-[#c45a0c]' : 'text-[#5a6570]'}`}>
                           <span className="inline-flex flex-wrap items-center gap-1.5">
                             {row.bValue}
                             {row.better === 'b' ? <span className={swMetricBetter}>Better</span> : null}
+                            {row.better === 'tie' ? <span className={swMetricBetter}>Tie</span> : null}
                           </span>
                         </td>
                       </tr>
@@ -231,6 +437,37 @@ export default function CollegeComparisonPage() {
                   </li>
                 ))}
               </ul>
+
+              <div className="mt-6 rounded-2xl border border-[#e4e9f0] bg-white p-4">
+                <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+                  <div>
+                    <h3 className="font-sw-display text-base font-bold text-[#041e30]">
+                      AI trade-off summary
+                    </h3>
+                    <p className="mt-1 text-sm text-[#5a6570]">
+                      Optional and grounded on the comparison data shown above.
+                    </p>
+                  </div>
+                  {!result.summary ? (
+                    <button
+                      type="button"
+                      onClick={onGenerateSummary}
+                      disabled={summaryLoading}
+                      className={swBtnSecondary}
+                    >
+                      {summaryLoading ? <FiLoader className="h-4 w-4 animate-spin" /> : <LuSparkles className="h-4 w-4" />}
+                      {summaryLoading ? 'Generating...' : 'Get AI summary'}
+                    </button>
+                  ) : null}
+                </div>
+                {result.summary ? (
+                  <p className="mt-4 text-sm leading-relaxed text-[#2c3640]">{result.summary}</p>
+                ) : (
+                  <p className="mt-4 text-sm leading-relaxed text-[#667085]">
+                    Skip this if the matrix is enough. This keeps API cost low.
+                  </p>
+                )}
+              </div>
             </div>
           </section>
         ) : null
@@ -242,11 +479,11 @@ export default function CollegeComparisonPage() {
             <ul className="mt-4 space-y-2.5 text-sm text-[#5a6570]">
               <li className="flex gap-2.5">
                 <span className="mt-2 h-1 w-1 shrink-0 rounded-full bg-[#f27921]" aria-hidden />
-                If budget is tight, prioritize the lower-fee option unless the package gap is large.
+                If budget is tight, prioritize the lower-fee option unless the placement and ROI gap is significant.
               </li>
               <li className="flex gap-2.5">
                 <span className="mt-2 h-1 w-1 shrink-0 rounded-full bg-[#f27921]" aria-hidden />
-                Use this matrix with branch preference and campus fit for your final choice.
+                Use this matrix with branch preference, city fit, and your exam-based shortlist before finalizing.
               </li>
             </ul>
           </section>
@@ -262,8 +499,8 @@ export default function CollegeComparisonPage() {
                 </p>
                 <h2 className={`mt-2 ${swSectionTitle}`}>A clearer side-by-side view</h2>
                 <p className={swSectionSubtitle}>
-                  Enter two colleges above to see packages, placements, fees, and rankings in one matrix —
-                  then use the suggestions below for predictors that deepen your shortlist.
+                  Select two verified colleges above to compare packages, placements, fees, ROI, and ranking
+                  signals in one matrix — then request an AI summary only if you want a quick recommendation.
                 </p>
               </div>
               <div className="flex h-14 w-14 shrink-0 items-center justify-center rounded-2xl bg-[#041e30] text-white">
@@ -273,8 +510,8 @@ export default function CollegeComparisonPage() {
             <div className="mt-8 grid gap-5 sm:grid-cols-3">
               {[
                 { label: 'Packages & placements', detail: 'Spot which campus leads on outcomes.' },
-                { label: 'Fees & ranking', detail: 'Balance cost against reputation signals.' },
-                { label: 'Decision-ready', detail: 'Highlight the stronger value on each row.' },
+                { label: 'Fees & ROI', detail: 'Balance yearly cost against likely value.' },
+                { label: 'Decision-ready', detail: 'See deterministic rows before using any AI.' },
               ].map((item) => (
                 <div key={item.label} className="rounded-xl bg-[#f7f9fc] px-4 py-4">
                   <p className="text-sm font-semibold text-[#041e30]">{item.label}</p>
@@ -287,47 +524,32 @@ export default function CollegeComparisonPage() {
       }
     >
       <div>
-        <h2 className="text-lg font-bold text-[#111827] sm:text-xl">Enter both institutions</h2>
-        <p className="mt-1.5 text-sm leading-relaxed text-[#6b7280]">
-          We’ll compare packages, placements, fees, and ranking side by side.
+        <h2 className={swFormTitle}>Select both institutions</h2>
+        <p className={swFormSubtitle}>
+          Search from the verified college list so the comparison stays deterministic and low-cost.
         </p>
       </div>
 
       <form className="mt-8 space-y-7" onSubmit={onSubmit} noValidate>
+        {apiError ? (
+          <div className={`${swErrorBox} flex items-start gap-2.5`}>
+            <FiAlertCircle className="mt-0.5 h-4 w-4 shrink-0" />
+            <span>{apiError}</span>
+          </div>
+        ) : null}
         <div className="flex flex-col gap-7 md:grid md:grid-cols-[1fr_auto_1fr] md:items-end md:gap-5">
-          <label className={`block min-w-0 ${swLabel}`}>
-            Institution A
-            <input
-              value={a}
-              onChange={(e) => setA(e.target.value)}
-              className={swInput}
-              placeholder="e.g. IIT Madras"
-              autoComplete="organization"
-              aria-invalid={!!errors.a}
-            />
-            {errors.a ? <span className={swError}>{errors.a}</span> : null}
-          </label>
+          {renderCollegeField('institutionA', 'Institution A', 'e.g. IIIT Hyderabad')}
 
           <div className="flex justify-center md:pb-1.5">
             <VsBadge />
           </div>
 
-          <label className={`block min-w-0 ${swLabel}`}>
-            Institution B
-            <input
-              value={b}
-              onChange={(e) => setB(e.target.value)}
-              className={swInput}
-              placeholder="e.g. NIT Trichy"
-              autoComplete="organization"
-              aria-invalid={!!errors.b}
-            />
-            {errors.b ? <span className={swError}>{errors.b}</span> : null}
-          </label>
+          {renderCollegeField('institutionB', 'Institution B', 'e.g. NIT Trichy')}
         </div>
 
-        <button type="submit" className={swBtnPrimary}>
-          Run comparison
+        <button type="submit" disabled={loading} className={swBtnPrimary}>
+          {loading ? <FiLoader className="h-4 w-4 animate-spin" /> : null}
+          {loading ? 'Running comparison...' : 'Run comparison'}
         </button>
       </form>
     </ToolWorkspaceLayout>
