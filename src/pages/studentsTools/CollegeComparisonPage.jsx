@@ -65,7 +65,7 @@ const RELATED = [
 ];
 
 export default function CollegeComparisonPage() {
-  const { savePrediction } = useStudentAuth() || {};
+  const { savePrediction, session } = useStudentAuth() || {};
   const requireLoginToUse = useRequireLoginToUse();
   const [form, setForm] = useState({
     institutionA: '',
@@ -94,19 +94,34 @@ export default function CollegeComparisonPage() {
     fields.forEach((field) => {
       const query = form[field];
       const selectedId = form[`${field}Id`];
-      if (!query || query.trim().length < 2 || selectedId) {
-        setSuggestions((prev) => ({ ...prev, [field]: selectedId ? prev[field] : [] }));
+      if (selectedId) return;
+      if (!query || !String(query).trim()) {
+        setSuggestions((prev) => ({ ...prev, [field]: [] }));
         return;
       }
       const timer = setTimeout(async () => {
-        const response = await searchCollegeComparisonOptions(query, 6);
-        if (!controller.cancelled) {
-          setSuggestions((prev) => ({
-            ...prev,
-            [field]: response.success ? response.data?.options || [] : [],
-          }));
+        const response = await searchCollegeComparisonOptions(query, 8);
+        if (controller.cancelled) return;
+        const options = response.success ? response.data?.options || [] : [];
+        setSuggestions((prev) => ({ ...prev, [field]: options }));
+
+        const exact = options.find(
+          (option) =>
+            option.name.toLowerCase() === String(query).trim().toLowerCase() ||
+            option.shortName?.toLowerCase() === String(query).trim().toLowerCase()
+        );
+        if (exact) {
+          setForm((prev) => {
+            if (prev[`${field}Id`]) return prev;
+            return {
+              ...prev,
+              [field]: exact.name,
+              [`${field}Id`]: exact.id,
+            };
+          });
+          setErrors((prev) => ({ ...prev, [field]: undefined }));
         }
-      }, 180);
+      }, 150);
       controller[`${field}Timer`] = timer;
     });
     return () => {
@@ -137,14 +152,57 @@ export default function CollegeComparisonPage() {
     setErrors((prev) => ({ ...prev, [field]: undefined }));
   };
 
-  const validate = () => {
+  const resolveFieldSelection = async (field, typedValue) => {
+    const currentId = form[`${field}Id`];
+    const query = String(typedValue || '').trim();
+    if (currentId) {
+      return { id: currentId, name: form[field] || query };
+    }
+    if (!query) return null;
+
+    const cached = suggestions[field] || [];
+    const exactCached = cached.find(
+      (option) =>
+        option.name.toLowerCase() === query.toLowerCase() ||
+        option.shortName?.toLowerCase() === query.toLowerCase() ||
+        option.id.toLowerCase() === query.toLowerCase()
+    );
+    if (exactCached) return exactCached;
+    if (cached.length === 1) return cached[0];
+
+    const response = await searchCollegeComparisonOptions(query, 8);
+    const options = response.success ? response.data?.options || [] : [];
+    const exact = options.find(
+      (option) =>
+        option.name.toLowerCase() === query.toLowerCase() ||
+        option.shortName?.toLowerCase() === query.toLowerCase() ||
+        option.id.toLowerCase() === query.toLowerCase()
+    );
+    if (exact) return exact;
+    if (options.length === 1) return options[0];
+
+    // Free-text college: backend will resolve / build a profile.
+    return { id: '', name: query };
+  };
+
+  const validate = (resolvedA, resolvedB) => {
     const nextErrors = {};
-    if (!form.institutionAId) nextErrors.institutionA = 'Select the first college from suggestions.';
-    if (!form.institutionBId) nextErrors.institutionB = 'Select the second college from suggestions.';
+    if (!resolvedA?.name?.trim()) {
+      nextErrors.institutionA = 'Enter a college name (pick a suggestion or type any college).';
+    }
+    if (!resolvedB?.name?.trim()) {
+      nextErrors.institutionB = 'Enter a second college name (pick a suggestion or type any college).';
+    }
     if (
-      form.institutionAId &&
-      form.institutionBId &&
-      form.institutionAId === form.institutionBId
+      resolvedA?.id &&
+      resolvedB?.id &&
+      resolvedA.id === resolvedB.id
+    ) {
+      nextErrors.institutionB = 'Choose a different second college.';
+    } else if (
+      resolvedA?.name &&
+      resolvedB?.name &&
+      resolvedA.name.trim().toLowerCase() === resolvedB.name.trim().toLowerCase()
     ) {
       nextErrors.institutionB = 'Choose a different second college.';
     }
@@ -152,11 +210,15 @@ export default function CollegeComparisonPage() {
     return Object.keys(nextErrors).length === 0;
   };
 
-  const runComparison = async (includeSummary = false) => {
+  const runComparison = async (includeSummary = false, resolvedA, resolvedB) => {
     const payload = {
-      collegeAId: form.institutionAId || result?.institutionA?.id,
-      collegeBId: form.institutionBId || result?.institutionB?.id,
+      collegeAId: resolvedA?.id || form.institutionAId || result?.institutionA?.id || '',
+      collegeBId: resolvedB?.id || form.institutionBId || result?.institutionB?.id || '',
+      collegeAName: resolvedA?.name || form.institutionA || result?.institutionA?.name || '',
+      collegeBName: resolvedB?.name || form.institutionB || result?.institutionB?.name || '',
       includeSummary,
+      phone: session?.phone || '',
+      fullName: session?.fullName || '',
     };
     const response = await compareCollegesPublic(payload);
     if (!response.success) {
@@ -170,11 +232,18 @@ export default function CollegeComparisonPage() {
   const onSubmit = async (event) => {
     event.preventDefault();
     if (!requireLoginToUse()) return;
-    if (!validate()) return;
     setLoading(true);
     setApiError('');
     try {
-      const comparison = await runComparison(false);
+      const [resolvedA, resolvedB] = await Promise.all([
+        resolveFieldSelection('institutionA', form.institutionA),
+        resolveFieldSelection('institutionB', form.institutionB),
+      ]);
+      if (resolvedA?.id) onSelectOption('institutionA', resolvedA);
+      if (resolvedB?.id) onSelectOption('institutionB', resolvedB);
+      if (!validate(resolvedA, resolvedB)) return;
+
+      const comparison = await runComparison(false, resolvedA, resolvedB);
       setResult(comparison);
       savePrediction?.({
         type: 'college_comparison',
@@ -365,6 +434,14 @@ export default function CollegeComparisonPage() {
             ))}
           </div>
         ) : null}
+        {activeField === field &&
+        form[field]?.trim() &&
+        !form[`${field}Id`] &&
+        fieldSuggestions.length === 0 ? (
+          <p className="mt-1.5 text-xs text-[#667085]">
+            No catalog match yet — you can still compare this free-text name.
+          </p>
+        ) : null}
         {fieldErrors ? <span className={swError}>{fieldErrors}</span> : null}
       </label>
     );
@@ -375,9 +452,9 @@ export default function CollegeComparisonPage() {
       title="College Comparison"
       subtitle="Compare two institutions side-by-side and identify the stronger value choice."
       howItWorks={[
-        'Pick two colleges from the search suggestions to avoid fuzzy naming.',
-        'Core metrics are compared deterministically before any AI is used.',
-        'Ask for an AI summary only after results load if you want a concise trade-off view.',
+        'Search a college from suggestions, or type any college name as free text.',
+        'Core metrics are compared first; free-text names are resolved when needed.',
+        'Ask for an AI table only after results load if you want a compact trade-off view.',
       ]}
       whatThisToolDoes={[
         'Compares two colleges on placements, fees, ROI, branch breadth, ranking signals, and approvals.',
@@ -385,9 +462,9 @@ export default function CollegeComparisonPage() {
         'Supports final shortlisting after College Predictor and Branch Predictor.',
       ]}
       inputGuide={[
-        'College A: Start typing and select a college from the suggestions.',
-        'College B: Pick a different college from the same verified list.',
-        'Review the matrix first, then request an AI summary only if you need a quick recommendation.',
+        'College A: Pick from suggestions or type any college name.',
+        'College B: Pick a different college the same way.',
+        'Review the matrix first, then request an AI table only if you need a quick recommendation.',
       ]}
       preview={
         <ToolFactsPreview
@@ -538,8 +615,9 @@ export default function CollegeComparisonPage() {
                 </p>
                 <h2 className={`mt-2 ${swSectionTitle}`}>A clearer side-by-side view</h2>
                 <p className={swSectionSubtitle}>
-                  Select two verified colleges above to compare packages, placements, fees, ROI, and ranking
-                  signals in one matrix — then request an AI summary only if you want a quick recommendation.
+                  Select from the expanded college list or type any college name. Free-text colleges are
+                  resolved automatically, then compared on packages, placements, fees, ROI, and ranking
+                  signals.
                 </p>
               </div>
               <div className="flex h-14 w-14 shrink-0 items-center justify-center rounded-2xl bg-[#041e30] text-white">
@@ -563,9 +641,9 @@ export default function CollegeComparisonPage() {
       }
     >
       <div>
-        <h2 className={swFormTitle}>Select both institutions</h2>
+        <h2 className={swFormTitle}>Compare two institutions</h2>
         <p className={swFormSubtitle}>
-          Search from the verified college list so the comparison stays deterministic and low-cost.
+          Search the catalog or type any college name. Unknown names are resolved as free text.
         </p>
       </div>
 

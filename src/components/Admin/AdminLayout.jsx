@@ -2,7 +2,7 @@ import { createElement, useState, useMemo, useEffect, useCallback, useRef } from
 import { useSidebarScrollbarActivity } from '../../hooks/useSidebarScrollbarActivity';
 import { Link, NavLink, Outlet, useLocation, useNavigate } from 'react-router-dom';
 import { HiMenu, HiX } from 'react-icons/hi';
-import { FiLayout, FiUsers, FiBarChart2, FiDownload, FiSettings, FiCalendar, FiClock, FiVideo, FiFileText, FiBell, FiLink, FiClipboard, FiMessageSquare, FiBookOpen, FiImage, FiPhone, FiLayers, FiTarget, FiUserPlus, FiSend, FiDatabase, FiHeadphones, FiChevronLeft, FiChevronRight, FiLogOut, FiGlobe } from 'react-icons/fi';
+import { FiLayout, FiUsers, FiBarChart2, FiDownload, FiSettings, FiCalendar, FiClock, FiVideo, FiFileText, FiBell, FiLink, FiClipboard, FiMessageSquare, FiBookOpen, FiImage, FiPhone, FiLayers, FiTarget, FiUserPlus, FiSend, FiDatabase, FiHeadphones, FiChevronLeft, FiChevronRight, FiLogOut, FiGlobe, FiColumns } from 'react-icons/fi';
 import { useAuth } from '../../hooks/useAuth';
 import { AdminDashboardProvider } from '../../contexts/AdminDashboardContext';
 import { useAdminDateRange } from '../../hooks/useAdminDateRange';
@@ -50,6 +50,7 @@ const navItems = [
   { to: '/admin/iit-counselling', label: 'IIT Counselling', icon: FiClipboard, sectionKey: 'iit-counselling', sidebarPlacement: 'students' },
   { to: '/admin/iit-counselling-utm', label: 'IIT Counselling UTM', icon: FiLink, sectionKey: 'iit-counselling', sidebarPlacement: 'students' },
   { to: '/admin/organic-rank-leads', label: 'Organic rank leads', icon: FiTarget, sectionKey: 'leads', sidebarPlacement: 'students' },
+  { to: '/admin/college-comparisons', label: 'College comparisons', icon: FiColumns, sectionKey: 'leads', sidebarPlacement: 'students' },
   { to: '/admin/student-workspace-leads', label: 'Student workspace leads', icon: FiUsers, sectionKey: 'leads', sidebarPlacement: 'students' },
   { to: '/admin/iit-meet-attendance', label: 'IIT Meet Attendance', icon: FiVideo, sectionKey: 'iit-meet-attendance', sidebarPlacement: 'students' },
   { to: '/admin/calling-team/bdas', label: 'BDA Management', icon: FiUserPlus, sectionKey: 'calling-team', sidebarPlacement: 'students' },

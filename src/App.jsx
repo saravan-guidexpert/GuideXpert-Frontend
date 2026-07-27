@@ -88,6 +88,7 @@ import OsviCallsData from './pages/admin/OsviCallsData';
 import AiCallsDashboard from './pages/admin/ai-calls/AiCallsDashboard';
 import IitAiCallSummary from './pages/admin/ai-calls/IitAiCallSummary';
 import PosterDownloads from './pages/admin/PosterDownloads';
+import CollegeComparisonsAdmin from './pages/admin/CollegeComparisonsAdmin';
 import CertifiedCounsellors from './pages/admin/CertifiedCounsellors';
 import CallingTeamDashboard from './pages/admin/callingTeam/CallingTeamDashboard';
 import CallingTeamLeads from './pages/admin/callingTeam/CallingTeamLeads';
@@ -528,6 +529,7 @@ function App() {
             <Route path="influencer-create" element={<InfluencerCreate />} />
             <Route path="influencer-tracking" element={<InfluencerTracking />} />
             <Route path="poster-downloads" element={<PosterDownloads />} />
+            <Route path="college-comparisons" element={<CollegeComparisonsAdmin />} />
             <Route path="posters" element={<PosterAutomationAdminPage />} />
             <Route path="assessment-results" element={<AssessmentResults />} />
             <Route path="assessment-2-results" element={<Navigate to="/admin/assessment-results?type=2" replace />} />

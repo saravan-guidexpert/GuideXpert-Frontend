@@ -1219,6 +1219,17 @@ export const getPosterDownloadStats = async (params = {}, token = getStoredToken
   return adminRequest(`/poster-downloads/stats${query ? `?${query}` : ''}`, { method: 'GET' }, token);
 };
 
+/** GET /admin/college-comparisons — saved college comparison searches. */
+export const getCollegeComparisons = async (params = {}, token = getStoredToken()) => {
+  const search = new URLSearchParams();
+  if (params.page != null) search.set('page', String(params.page));
+  if (params.limit != null) search.set('limit', String(params.limit));
+  if (params.phone) search.set('phone', params.phone);
+  if (params.q) search.set('q', params.q);
+  const query = search.toString();
+  return adminRequest(`/college-comparisons${query ? `?${query}` : ''}`, { method: 'GET' }, token);
+};
+
 /** GET /admin/posters — list poster templates. */
 export const listPosterTemplates = async (token = getStoredToken()) => {
   return adminRequest('/posters', { method: 'GET' }, token);
