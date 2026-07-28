@@ -1,87 +1,16 @@
 import { Link } from 'react-router-dom';
 import { motion } from 'framer-motion';
-import { FiCalendar, FiCheck, FiSearch, FiX } from 'react-icons/fi';
+import { FiSearch, FiX } from 'react-icons/fi';
 import {
   HOME_TAGLINE,
-  HERO_FEATURE_SLIDES,
   HERO_TRUST_STATS,
   POPULAR_PREDICTORS,
 } from './careers360/careers360HomeData';
 import { LAYOUT } from './careers360/careers360Theme';
 import { useCountUp } from './landing/useCountUp';
 import { fadeUp, staggerContainer, defaultViewport, smoothTransition } from './landing/motion';
-import ShinyText from '../UI/ShinyText';
 import HeroLiveActivityToasts from './HeroLiveActivityToasts';
-
-const HERO_COUNSELLING_CARD =
-  HERO_FEATURE_SLIDES.find((s) => s.id === 'iitian-counselling') || HERO_FEATURE_SLIDES[0];
-
-function HeroCounsellingCard({ onBookClick }) {
-  const slide = HERO_COUNSELLING_CARD;
-
-  return (
-    <motion.div
-      className={`relative overflow-hidden rounded-2xl bg-gradient-to-br p-5 shadow-lg sm:min-h-[300px] sm:p-8 ${slide.accent}`}
-      initial={{ opacity: 0, y: 14 }}
-      animate={{ opacity: 1, y: 0 }}
-      transition={smoothTransition}
-    >
-      <div className="pointer-events-none absolute inset-0 overflow-hidden" aria-hidden>
-        <div className="absolute -right-8 -top-10 h-40 w-40 rounded-full bg-white/5 blur-2xl" />
-        <div className="absolute -bottom-16 left-1/3 h-48 w-48 rounded-full bg-[#f27921]/20 blur-3xl" />
-      </div>
-      <div className="relative z-10 flex h-full max-w-lg flex-col">
-        <span className="inline-flex w-fit items-center gap-1.5 rounded-lg border border-white/20 bg-white/10 px-2.5 py-1.5 text-[11px] font-medium text-white backdrop-blur-md">
-          <span className="flex h-4 w-4 items-center justify-center rounded-full bg-emerald-400/90 text-[#0f172a]">
-            <FiCheck className="h-2.5 w-2.5" strokeWidth={3} />
-          </span>
-          {slide.badge}
-        </span>
-        <h2 className="mt-3.5 text-[1.2rem] font-bold leading-snug tracking-tight text-white sm:mt-4 sm:text-2xl">
-          <ShinyText
-            text={slide.title}
-            speed={2.4}
-            delay={0.35}
-            color="#ffffff"
-            shineColor="#ffd7b0"
-            spread={110}
-            direction="left"
-            className="font-bold"
-          />
-        </h2>
-        <p className="mt-2.5 text-sm leading-relaxed text-white/80 sm:mt-3">
-          <ShinyText
-            text={slide.description}
-            speed={2.6}
-            delay={0.4}
-            color="#e8eaf2"
-            shineColor="#ffffff"
-            spread={100}
-            direction="left"
-            className="leading-relaxed"
-          />
-        </p>
-        <button
-          type="button"
-          onClick={onBookClick}
-          className="mt-5 inline-flex w-full items-center justify-center gap-2 rounded-lg bg-[#f27921] px-4 py-3 text-sm font-semibold text-white shadow-md transition hover:bg-[#e06810] sm:mt-6 sm:w-fit sm:justify-start sm:py-2.5"
-        >
-          <FiCalendar className="h-4 w-4" aria-hidden />
-          <ShinyText
-            text={slide.cta}
-            speed={2.2}
-            delay={0.55}
-            color="#ffffff"
-            shineColor="#ffe4c8"
-            spread={110}
-            direction="left"
-            className="font-semibold"
-          />
-        </button>
-      </div>
-    </motion.div>
-  );
-}
+import OneOnOneSessionBookingForm from '../oneOnOneSession/OneOnOneSessionBookingForm';
 
 function HeroStatItem({ stat, index }) {
   const { ref, display } = useCountUp(stat.value, {
@@ -127,6 +56,29 @@ function HeroTrustStats() {
   );
 }
 
+function HeroCounsellingForm() {
+  return (
+    <motion.div
+      className="overflow-hidden rounded-2xl border border-[#e5e7eb] bg-white shadow-[0_16px_40px_-24px_rgba(15,23,42,0.35)]"
+      initial={{ opacity: 0, y: 14 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={smoothTransition}
+    >
+      <div className="border-b border-[#e8eaed] bg-[#fbfcfe] px-4 py-3.5 sm:px-5">
+        <p className="text-[11px] font-semibold uppercase tracking-[0.14em] text-[#f27921]">
+          Free session
+        </p>
+        <h2 className="mt-1 text-base font-bold text-[#0F172A] sm:text-lg">
+          Book free IITian 1-on-1 counselling
+        </h2>
+      </div>
+      <div className="max-h-[min(34rem,70vh)] overflow-y-auto px-3 py-4 sm:px-5 sm:py-5">
+        <OneOnOneSessionBookingForm showIntro={false} />
+      </div>
+    </motion.div>
+  );
+}
+
 export default function StudentsDashboardHero({
   searchTerm,
   onSearchChange,
@@ -136,7 +88,6 @@ export default function StudentsDashboardHero({
   showSuggestions,
   onSuggestionPick,
   onClearSearch,
-  onBookCounselling,
 }) {
   const popular = POPULAR_PREDICTORS.filter((p) => p.popular).slice(0, 2);
 
@@ -149,7 +100,7 @@ export default function StudentsDashboardHero({
       }}
     >
       <div className={`${LAYOUT.container} relative py-6 sm:py-10 lg:py-12`}>
-        <div className="grid items-start gap-6 sm:gap-8 lg:grid-cols-2 lg:items-center lg:gap-10 xl:gap-12">
+        <div className="grid items-start gap-6 sm:gap-8 lg:grid-cols-2 lg:items-start lg:gap-10 xl:gap-12">
           <div className="order-1 min-w-0">
             <motion.h1
               className="max-w-xl text-[1.65rem] font-bold leading-[1.2] tracking-tight text-[#1a1a1a] sm:text-4xl sm:leading-[1.15] lg:text-[2.5rem] lg:leading-[1.12]"
@@ -225,16 +176,19 @@ export default function StudentsDashboardHero({
               ))}
             </motion.div>
 
-            <div className="mt-6 hidden sm:mt-9 sm:block">
+            {/* Desktop: stats under popular in left column */}
+            <div className="mt-9 hidden lg:block">
               <HeroTrustStats />
             </div>
           </div>
 
-          <div className="order-2 min-w-0 w-full lg:max-w-none">
-            <HeroCounsellingCard onBookClick={onBookCounselling} />
+          {/* Mobile/tablet: form directly after popular chips; desktop: right column */}
+          <div className="order-2 min-w-0 w-full lg:order-2 lg:max-w-none">
+            <HeroCounsellingForm />
           </div>
 
-          <div className="order-3 min-w-0 sm:hidden">
+          {/* Mobile/tablet: stats after the booking form */}
+          <div className="order-3 min-w-0 lg:hidden">
             <HeroTrustStats />
           </div>
         </div>

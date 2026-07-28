@@ -29,50 +29,44 @@ import {
 } from '../../utils/oneOnOneCounselingValidation';
 
 const STEP_TITLES = {
-  1: 'Student Details',
-  2: 'Session Preferences',
+  1: 'Name & verification',
+  2: 'Session preferences',
 };
-
-const neoCheckboxClass =
-  'mt-0.5 h-4 w-4 shrink-0 rounded border-2 border-[#0F172A] accent-[#0F172A]';
-
-const neoCheckboxLabelClass =
-  'flex cursor-pointer items-start gap-3 rounded-[10px] border-2 border-[#0F172A] bg-white p-4 shadow-[2px_2px_0px_#0F172A] transition-all hover:-translate-y-0.5 hover:shadow-[3px_3px_0px_#0F172A]';
 
 function SuccessView() {
   return (
-    <div className="rounded-[14px] border-2 border-[#0F172A] bg-white p-8 text-center shadow-[6px_6px_0px_#0F172A] sm:p-12">
+    <div className="rounded-2xl border border-[#e5e7eb] bg-white p-6 text-center sm:p-8">
       <div
-        className="mx-auto mb-6 flex h-16 w-16 items-center justify-center rounded-full border-2 border-[#0F172A] bg-[#c7f36b] text-3xl shadow-[4px_4px_0px_#0F172A]"
+        className="mx-auto mb-5 flex h-14 w-14 items-center justify-center rounded-full bg-[#fff4ed] text-2xl text-[#f27921]"
         aria-hidden
       >
         ✓
       </div>
-      <p className="mb-3 inline-flex rounded border-2 border-emerald-800 bg-emerald-100 px-3 py-1 text-[10px] font-black uppercase tracking-widest text-emerald-900">
+      <p className="mb-2 text-[11px] font-semibold uppercase tracking-[0.14em] text-[#f27921]">
         Booking successful
       </p>
-      <h2 className="text-3xl font-black tracking-tight text-[#0F172A] sm:text-4xl">
+      <h2 className="text-xl font-bold tracking-tight text-[#041e30] sm:text-2xl">
         Your session request is confirmed
       </h2>
-      <p className="mx-auto mt-4 max-w-lg text-sm font-medium leading-relaxed text-slate-600">
+      <p className="mx-auto mt-3 max-w-lg text-sm leading-relaxed text-[#5a6570]">
         Thank you for booking your free 1-on-1 IITian career counseling session with GuideXpert.
       </p>
 
-      <div className="mx-auto mt-8 max-w-xl rounded-[12px] border-2 border-[#0F172A] bg-[#c7f36b] p-5 text-left shadow-[4px_4px_0px_#0F172A] sm:p-6">
-        <p className="text-[10px] font-black uppercase tracking-widest text-[#0F172A]/80">
+      <div className="mx-auto mt-6 max-w-xl rounded-2xl border border-[#e5e7eb] bg-[#f8f9fc] p-5 text-left sm:p-6">
+        <p className="text-[11px] font-semibold uppercase tracking-[0.14em] text-[#f27921]">
           What happens next
         </p>
-        <p className="mt-2 text-base font-black leading-snug text-[#0F172A] sm:text-lg">
+        <p className="mt-2 text-sm font-semibold leading-snug text-[#041e30] sm:text-base">
           Our executive will get in touch with you shortly on WhatsApp for the exact confirmation of
           your preferred session slot.
         </p>
-        <p className="mt-3 text-sm font-semibold leading-relaxed text-[#0F172A]/85">
+        <p className="mt-3 text-sm leading-relaxed text-[#5a6570]">
           The time you selected is your preference — we will confirm the final slot with you before
           the session.
         </p>
       </div>
 
-      <p className="mx-auto mt-6 max-w-md text-xs font-bold uppercase tracking-wide text-slate-500">
+      <p className="mx-auto mt-5 max-w-md text-xs font-medium text-[#8a94a0]">
         Keep WhatsApp notifications on so you don&apos;t miss our message.
       </p>
     </div>
@@ -220,7 +214,6 @@ export default function OneOnOneSessionBookingForm({
       const result = await saveOneOnOneSection1({
         studentName: form.studentName.trim(),
         mobileNumber: form.mobileNumber.replace(/\D/g, ''),
-        currentClass: form.currentClass,
         otpVerified: true,
         ...utmPayload,
         ...(fingerprint ? { visitorFingerprint: fingerprint } : {}),
@@ -290,6 +283,7 @@ export default function OneOnOneSessionBookingForm({
     try {
       const result = await saveOneOnOneSection2({
         leadId,
+        currentClass: form.currentClass,
         sessionAttendee: form.sessionAttendee,
         interestedBranch: form.interestedBranch,
         collegeBudget: form.collegeBudget,
@@ -316,59 +310,52 @@ export default function OneOnOneSessionBookingForm({
       {!submitted ? (
         <>
           {showIntro ? (
-            <div className="mb-6 rounded-[14px] border-2 border-[#0F172A] bg-[#0F172A] p-6 text-white shadow-[6px_6px_0px_#c7f36b]">
-              <p className="mb-2 inline-flex rounded border border-slate-600 bg-[#1E293B] px-2 py-1 font-mono text-[10px] font-bold uppercase tracking-widest text-slate-300">
+            <div className="mb-5 rounded-2xl border border-[#e5e7eb] bg-gradient-to-br from-[#041e30] to-[#0b2a42] p-5 text-white sm:p-6">
+              <p className="mb-2 text-[11px] font-semibold uppercase tracking-[0.14em] text-[#f27921]">
                 1-on-1 Career Counseling
               </p>
-              <h1 className="text-2xl font-black tracking-tight text-white sm:text-3xl">
+              <h1 className="text-xl font-bold tracking-tight text-white sm:text-2xl">
                 Book Your 1-on-1 IITian Career Counseling Session
               </h1>
-              <p className="mt-2 text-sm font-medium text-slate-300">
+              <p className="mt-2 text-sm font-medium text-white/70">
                 Step {currentStep} of 2 — {STEP_TITLES[currentStep]}
               </p>
-              <p className="mt-1 text-sm font-medium text-slate-400">
+              <p className="mt-1 text-sm leading-relaxed text-white/55">
                 Get clarity on college selection, branch selection, placements, fees, and future career
                 options — guided by experienced IITians.
               </p>
-              <ul className="mt-4 flex flex-wrap gap-2 text-xs font-bold uppercase tracking-wide text-slate-200">
-                <li className="rounded border border-slate-600 bg-[#1E293B] px-2 py-1">1-on-1 personalized</li>
-                <li className="rounded border border-emerald-800 bg-emerald-950/60 px-2 py-1 text-emerald-100">
+              <ul className="mt-4 flex flex-wrap gap-2 text-xs font-medium text-white/80">
+                <li className="rounded-full border border-white/15 bg-white/10 px-3 py-1">
+                  1-on-1 personalized
+                </li>
+                <li className="rounded-full border border-[#f27921]/30 bg-[#f27921]/15 px-3 py-1 text-[#ffd2ae]">
                   100% free counseling
                 </li>
               </ul>
             </div>
           ) : (
-            <p className="mb-4 text-sm font-semibold text-slate-600">
+            <p className="mb-3 text-sm font-medium text-[#5a6570]">
               Step {currentStep} of 2 — {STEP_TITLES[currentStep]}
             </p>
           )}
 
-          <div className="mb-6">
-            <div className="h-2 overflow-hidden rounded-full border-2 border-[#0F172A] bg-slate-200">
+          <div className="mb-5">
+            <div className="h-1.5 overflow-hidden rounded-full bg-[#eef0f4]">
               <div
-                className="h-full bg-[#c7f36b] transition-all duration-300"
+                className="h-full rounded-full bg-[#f27921] transition-all duration-300"
                 style={{ width: `${(currentStep / 2) * 100}%` }}
               />
             </div>
           </div>
 
-          <form
-            onSubmit={handleSubmit}
-            className="rounded-[14px] border-2 border-[#0F172A] bg-white p-5 shadow-[6px_6px_0px_#0F172A] sm:p-7"
-            noValidate
-          >
-            <p className="mb-4 text-xs font-semibold text-slate-600">
-              Fields marked with <span className="text-red-700">*</span> are required.
+          <form onSubmit={handleSubmit} className="space-y-1" noValidate>
+            <p className="mb-4 text-xs font-medium text-[#667085]">
+              Fields marked with <span className="text-[#f27921]">*</span> are required.
             </p>
 
             {currentStep === 1 ? (
-              <div className="grid grid-cols-1 gap-5 sm:grid-cols-2">
-                <NeoField
-                  label="1. Student Name"
-                  error={errors.studentName}
-                  className="sm:col-span-2"
-                  required
-                >
+              <div className="grid grid-cols-1 gap-4">
+                <NeoField label="Student Name" error={errors.studentName} required>
                   <FormInput
                     id="studentName"
                     name="studentName"
@@ -382,7 +369,7 @@ export default function OneOnOneSessionBookingForm({
                 </NeoField>
 
                 <MobileOtpField
-                  label="2. Mobile Number"
+                  label="Mobile Number"
                   required
                   fullName={form.studentName}
                   mobileNumber={form.mobileNumber}
@@ -390,24 +377,26 @@ export default function OneOnOneSessionBookingForm({
                   error={errors.mobileNumber}
                   onVerifiedChange={handleOtpVerifiedChange}
                   occupation="1-on-1 Counseling"
+                  className=""
                 />
+              </div>
+            ) : null}
 
+            {currentStep === 2 ? (
+              <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
                 <ChoiceGroup
-                  label="3. Current Class"
+                  label="Current Class"
                   name="currentClass"
                   options={CURRENT_CLASS_OPTIONS}
                   value={form.currentClass}
                   onChange={(value) => setField('currentClass', value)}
                   error={errors.currentClass}
                   required
+                  className="sm:col-span-2"
                 />
-              </div>
-            ) : null}
 
-            {currentStep === 2 ? (
-              <div className="grid grid-cols-1 gap-5 sm:grid-cols-2">
                 <NeoField
-                  label="4. Who Will Attend the Session?"
+                  label="Who Will Attend the Session?"
                   error={errors.sessionAttendee}
                   className="sm:col-span-2"
                   required
@@ -424,7 +413,7 @@ export default function OneOnOneSessionBookingForm({
                   />
                 </NeoField>
 
-                <NeoField label="5. Interested Branch" error={errors.interestedBranch} required>
+                <NeoField label="Interested Branch" error={errors.interestedBranch} required>
                   <FormSelect
                     id="interestedBranch"
                     name="interestedBranch"
@@ -437,7 +426,7 @@ export default function OneOnOneSessionBookingForm({
                   />
                 </NeoField>
 
-                <NeoField label="6. College Budget" error={errors.collegeBudget} required>
+                <NeoField label="College Budget" error={errors.collegeBudget} required>
                   <FormSelect
                     id="collegeBudget"
                     name="collegeBudget"
@@ -451,7 +440,7 @@ export default function OneOnOneSessionBookingForm({
                 </NeoField>
 
                 <ChoiceGroup
-                  label="7. Preferred Language"
+                  label="Preferred Language"
                   name="preferredLanguage"
                   options={PREFERRED_LANGUAGE_OPTIONS}
                   value={form.preferredLanguage}
@@ -461,7 +450,7 @@ export default function OneOnOneSessionBookingForm({
                 />
 
                 <SessionSlotPicker
-                  label="8. Preferred Session Slot"
+                  label="Preferred Session Slot"
                   name="preferredTimeSlot"
                   options={sessionSlotOptions}
                   value={form.preferredTimeSlot}
@@ -469,16 +458,16 @@ export default function OneOnOneSessionBookingForm({
                   error={errors.preferredTimeSlot}
                   required
                 />
-                <p className="-mt-2 text-xs font-semibold text-slate-600 sm:col-span-2">
+                <p className="-mt-1 text-xs font-medium text-[#667085] sm:col-span-2">
                   3-hour slots from 9 AM–9 PM (IST) for the next 2 calendar days. Slots update at
                   12:00 AM IST.
                 </p>
 
                 <div className="sm:col-span-2">
-                  <p className="mb-3 text-sm font-black uppercase tracking-wide text-[#0F172A]">
-                    Confirmation <span className="text-red-700">*</span>
+                  <p className="mb-2 text-[13px] font-semibold text-[#041e30]">
+                    Confirmation <span className="text-[#f27921]">*</span>
                   </p>
-                  <label className={neoCheckboxLabelClass}>
+                  <label className="flex cursor-pointer items-start gap-3 rounded-xl border border-[#e5e7eb] bg-[#f8f9fc] p-3.5 transition hover:border-[#f27921]/35">
                     <input
                       type="checkbox"
                       checked={parentAttendanceConfirmed}
@@ -486,9 +475,9 @@ export default function OneOnOneSessionBookingForm({
                         setParentAttendanceConfirmed(e.target.checked);
                         if (e.target.checked) setSubmitError('');
                       }}
-                      className={neoCheckboxClass}
+                      className="mt-0.5 h-4 w-4 shrink-0 rounded border-[#d8dce6] text-[#f27921] accent-[#f27921]"
                     />
-                    <span className="text-sm font-semibold text-[#0F172A]">
+                    <span className="text-sm font-medium text-[#041e30]">
                       I&apos;ll mandatorily attend the session with the parent.
                     </span>
                   </label>
@@ -497,23 +486,23 @@ export default function OneOnOneSessionBookingForm({
             ) : null}
 
             {submitError ? (
-              <p className="mt-5 rounded-[10px] border-2 border-red-900 bg-red-100 px-4 py-3 text-sm font-bold text-red-900">
+              <p className="mt-4 rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm font-medium text-red-700">
                 {submitError}
               </p>
             ) : null}
 
-            <div className="mt-8 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-              <p className="text-xs font-bold uppercase tracking-wide text-slate-500">
+            <div className="mt-6 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+              <p className="text-xs font-medium text-[#8a94a0]">
                 {currentStep === 2
                   ? "We'll contact you on WhatsApp to confirm your session."
-                  : 'Data is saved section by section.'}
+                  : 'Verify your number to continue.'}
               </p>
-              <div className="flex items-center gap-3">
+              <div className="flex items-center gap-2.5">
                 <button
                   type="button"
                   onClick={handleBack}
                   disabled={currentStep === 1 || submitting}
-                  className="rounded-[14px] border-2 border-[#0F172A] bg-white px-6 py-3 text-sm font-black uppercase tracking-wide text-[#0F172A] disabled:cursor-not-allowed disabled:opacity-50"
+                  className="rounded-xl border border-[#d8dce6] bg-white px-5 py-2.5 text-sm font-semibold text-[#041e30] transition hover:border-[#f27921]/40 hover:text-[#f27921] disabled:cursor-not-allowed disabled:opacity-50"
                 >
                   Back
                 </button>
@@ -531,15 +520,15 @@ export default function OneOnOneSessionBookingForm({
                         ? 'Please confirm parent attendance to book your session'
                         : undefined
                   }
-                  className="rounded-[14px] border-2 border-[#0F172A] bg-[#c7f36b] px-6 py-3 text-sm font-black uppercase tracking-wide text-[#0F172A] shadow-[4px_4px_0px_#0F172A] transition-all hover:-translate-y-0.5 hover:bg-[#b0d95d] disabled:cursor-not-allowed disabled:opacity-70"
+                  className="rounded-xl bg-[#f27921] px-5 py-2.5 text-sm font-semibold text-white shadow-[0_8px_20px_-12px_rgba(242,121,33,0.7)] transition hover:bg-[#e06810] disabled:cursor-not-allowed disabled:opacity-70"
                 >
                   {submitting
                     ? currentStep === 2
                       ? 'Booking…'
                       : 'Saving…'
                     : currentStep === 2
-                      ? 'Book My Free Counseling Session'
-                      : 'Save & Next'}
+                      ? 'Book free session'
+                      : 'Continue'}
                 </button>
               </div>
             </div>

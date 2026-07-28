@@ -219,15 +219,15 @@ export default function MobileOtpField({
     <div className={className}>
       <label className={neoLabelClass} htmlFor="mobileNumber">
         {label}
-        {required ? <span className="text-red-700"> *</span> : null}
+        {required ? <span className="text-[#f27921]"> *</span> : null}
       </label>
       <div className="flex flex-col gap-2 sm:flex-row sm:items-stretch">
         <div className="relative flex-1">
           <input
             id="mobileNumber"
             name="mobileNumber"
-            className={`${neoInputClass} ${otpVerified ? 'bg-emerald-50 pr-28' : 'pr-24'} ${
-              externalError ? 'border-red-800 bg-red-50' : ''
+            className={`${neoInputClass} ${otpVerified ? 'border-emerald-300 bg-emerald-50/70 pr-24' : 'pr-4'} ${
+              externalError ? 'border-red-400 bg-red-50' : ''
             }`}
             inputMode="numeric"
             maxLength={10}
@@ -241,7 +241,7 @@ export default function MobileOtpField({
             placeholder="10-digit number"
           />
           {otpVerified ? (
-            <span className="absolute right-3 top-1/2 -translate-y-1/2 rounded-md border-2 border-emerald-700 bg-emerald-100 px-2 py-1 text-[10px] font-black uppercase tracking-wide text-emerald-800">
+            <span className="absolute right-3 top-1/2 -translate-y-1/2 rounded-full bg-emerald-100 px-2.5 py-1 text-[10px] font-semibold uppercase tracking-wide text-emerald-700">
               Verified
             </span>
           ) : null}
@@ -250,7 +250,7 @@ export default function MobileOtpField({
           <button
             type="button"
             onClick={handleEditPhone}
-            className="rounded-[10px] border-2 border-[#0F172A] bg-white px-4 py-3 text-xs font-black uppercase tracking-wide text-[#0F172A] transition-all hover:-translate-y-0.5 hover:bg-slate-50"
+            className="rounded-xl border border-[#d8dce6] bg-white px-4 py-2.5 text-xs font-semibold text-[#041e30] transition hover:border-[#f27921]/40 hover:text-[#f27921]"
           >
             Edit
           </button>
@@ -266,7 +266,7 @@ export default function MobileOtpField({
                   ? `Resend available in ${resendIn}s`
                   : undefined
             }
-            className="rounded-[10px] border-2 border-[#0F172A] bg-[#0F172A] px-4 py-3 text-xs font-black uppercase tracking-wide text-white shadow-[3px_3px_0px_#c7f36b] transition-all hover:-translate-y-0.5 hover:bg-[#1E293B] disabled:cursor-not-allowed disabled:opacity-60"
+            className="rounded-xl bg-[#041e30] px-4 py-2.5 text-xs font-semibold text-white transition hover:bg-[#0b2a42] disabled:cursor-not-allowed disabled:opacity-60"
           >
             {otpLoading && !otpSent
               ? 'Sending...'
@@ -279,15 +279,15 @@ export default function MobileOtpField({
         )}
       </div>
       {externalError ? (
-        <p className="mt-1 text-xs font-bold text-red-700">{externalError}</p>
+        <p className="mt-1.5 text-xs font-medium text-red-600">{externalError}</p>
       ) : null}
       {!otpVerified && !otpSent && !externalError && !canRequestOtp() && missingOtpRequirementHint() ? (
-        <p className="mt-1 text-xs font-semibold text-slate-600">{missingOtpRequirementHint()}</p>
+        <p className="mt-1.5 text-xs font-medium text-[#667085]">{missingOtpRequirementHint()}</p>
       ) : null}
 
       {otpSent && !otpVerified ? (
-        <div className="mt-3 rounded-[10px] border-2 border-[#0F172A] bg-[#F8FAFC] p-3">
-          <label className="mb-2 block text-xs font-black uppercase tracking-wide text-[#0F172A]">
+        <div className="mt-3 rounded-xl border border-[#e5e7eb] bg-[#f8f9fc] p-3">
+          <label className="mb-2 block text-xs font-semibold uppercase tracking-[0.12em] text-[#667085]">
             Enter OTP
           </label>
           <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
@@ -307,7 +307,7 @@ export default function MobileOtpField({
                   onKeyDown={(e) => handleOtpKeyDown(index, e)}
                   onFocus={(e) => e.target.select()}
                   aria-label={`OTP digit ${index + 1}`}
-                  className="h-12 w-12 rounded-[10px] border-2 border-[#0F172A] bg-white text-center text-lg font-black text-[#0F172A] outline-none transition-all focus:-translate-y-0.5 focus:shadow-[3px_3px_0px_#0F172A]"
+                  className="h-11 w-11 rounded-xl border border-[#d8dce6] bg-white text-center text-lg font-semibold text-[#041e30] outline-none transition focus:border-[#f27921] focus:ring-2 focus:ring-[#f27921]/20"
                 />
               ))}
             </div>
@@ -315,23 +315,23 @@ export default function MobileOtpField({
               type="button"
               onClick={handleVerifyOtp}
               disabled={otpLoading || otp.length !== 6}
-              className="rounded-[10px] border-2 border-[#0F172A] bg-[#c7f36b] px-5 py-3 text-xs font-black uppercase tracking-wide text-[#0F172A] shadow-[3px_3px_0px_#0F172A] transition-all hover:-translate-y-0.5 hover:bg-[#b0d95d] disabled:cursor-not-allowed disabled:opacity-60"
+              className="rounded-xl bg-[#f27921] px-5 py-2.5 text-xs font-semibold text-white transition hover:bg-[#e06810] disabled:cursor-not-allowed disabled:opacity-60"
             >
               {otpLoading ? 'Verifying...' : 'Verify'}
             </button>
           </div>
           {otpError ? (
-            <p className="mt-2 text-xs font-bold text-red-700">{otpError}</p>
+            <p className="mt-2 text-xs font-medium text-red-600">{otpError}</p>
           ) : otpInfo ? (
-            <p className="mt-2 text-xs font-bold text-emerald-800">{otpInfo}</p>
+            <p className="mt-2 text-xs font-medium text-emerald-700">{otpInfo}</p>
           ) : null}
         </div>
       ) : null}
       {otpVerified && otpInfo ? (
-        <p className="mt-2 text-xs font-bold text-emerald-800">{otpInfo}</p>
+        <p className="mt-2 text-xs font-medium text-emerald-700">{otpInfo}</p>
       ) : null}
       {!otpSent && otpError ? (
-        <p className="mt-2 text-xs font-bold text-red-700">{otpError}</p>
+        <p className="mt-2 text-xs font-medium text-red-600">{otpError}</p>
       ) : null}
     </div>
   );

@@ -12,6 +12,7 @@ import {
   swPageShell,
 } from './studentWorkspaceUi';
 import RelatedToolsSection from './RelatedToolsSection';
+import ToolPageVisual, { ToolFactsVector } from './ToolPageVisual';
 
 const FEATURE_ICONS = [FiLayers, FiFilter, FiTarget];
 const FEATURE_ICON_STYLES = [
@@ -149,7 +150,7 @@ function splitGuideItem(item) {
   return { label: null, detail: text };
 }
 
-function ToolInfoSection({ title, whatThisToolDoes, inputGuide, preview }) {
+function ToolInfoSection({ title, whatThisToolDoes, inputGuide, preview, pathname }) {
   const hasWhat = Array.isArray(whatThisToolDoes) && whatThisToolDoes.length > 0;
   const hasGuide = Array.isArray(inputGuide) && inputGuide.length > 0;
   const hasPreview = Boolean(preview);
@@ -159,7 +160,7 @@ function ToolInfoSection({ title, whatThisToolDoes, inputGuide, preview }) {
 
   return (
     <section className="sw-fade-up" aria-labelledby="tool-info-heading">
-      <div className="grid gap-8 border-b border-[#d5dde8] pb-8 sm:gap-10 sm:pb-10 lg:grid-cols-[minmax(0,1.35fr)_minmax(0,20rem)] lg:items-end lg:gap-12">
+      <div className="grid gap-8 border-b border-[#d5dde8] pb-8 sm:gap-10 sm:pb-10 lg:grid-cols-[minmax(0,1.2fr)_minmax(0,18rem)] lg:items-end lg:gap-12">
         <header className="min-w-0">
           <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-[#f27921]">
             About this tool
@@ -177,6 +178,9 @@ function ToolInfoSection({ title, whatThisToolDoes, inputGuide, preview }) {
 
         {hasPreview ? (
           <aside className="min-w-0 border-t border-[#e4e9f0] pt-5 lg:border-t-0 lg:border-l lg:pl-8 lg:pt-0">
+            <div className="mb-3">
+              <ToolFactsVector pathname={pathname} />
+            </div>
             <p className="text-[11px] font-semibold uppercase tracking-[0.14em] text-[#8a94a0]">
               Tool facts
             </p>
@@ -187,72 +191,84 @@ function ToolInfoSection({ title, whatThisToolDoes, inputGuide, preview }) {
 
       {bodyCols > 0 ? (
         <div
-          className={`mt-8 grid gap-10 sm:mt-10 sm:gap-12 ${
-            bodyCols === 2 ? 'lg:grid-cols-2 lg:gap-16' : 'lg:grid-cols-1'
-          }`}
+          className={`mt-8 grid items-start gap-10 sm:mt-10 sm:gap-12 lg:grid-cols-[minmax(0,1fr)_minmax(0,18rem)] lg:gap-12 xl:gap-16`}
         >
-          {hasWhat ? (
-            <div className="min-w-0">
-              <div className="flex items-baseline gap-3">
-                <span className="font-sw-display text-sm font-bold tabular-nums text-[#f27921]">
-                  01
-                </span>
-                <h3 className="text-base font-semibold tracking-tight text-[#041e30]">
-                  What this tool does
-                </h3>
-              </div>
-              <ul className="mt-6 space-y-5 border-l border-[#e4e9f0] pl-5">
-                {whatThisToolDoes.map((item) => (
-                  <li key={item} className="relative">
-                    <span
-                      className="absolute -left-[1.41rem] top-2.5 h-2 w-2 rounded-full bg-[#f27921] ring-4 ring-[#f3f5f8]"
-                      aria-hidden
-                    />
-                    <p className="text-[15px] leading-[1.7] text-[#3d4754]">{item}</p>
-                  </li>
-                ))}
-              </ul>
-            </div>
-          ) : null}
-
-          {hasGuide ? (
-            <div className="min-w-0">
-              <div className="flex items-baseline gap-3">
-                <span className="font-sw-display text-sm font-bold tabular-nums text-[#f27921]">
-                  {hasWhat ? '02' : '01'}
-                </span>
-                <h3 className="text-base font-semibold tracking-tight text-[#041e30]">
-                  How to use it
-                </h3>
-              </div>
-              <ol className="mt-6 space-y-6">
-                {inputGuide.map((item, index) => {
-                  const { label, detail } = splitGuideItem(item);
-                  return (
-                    <li key={item} className="grid grid-cols-[2rem_minmax(0,1fr)] gap-4">
-                      <span className="flex h-8 w-8 items-center justify-center rounded-full border border-[#d5dde8] bg-white text-xs font-bold tabular-nums text-[#041e30]">
-                        {index + 1}
-                      </span>
-                      <div className="min-w-0 pt-1">
-                        {label ? (
-                          <>
-                            <p className="text-sm font-semibold text-[#041e30]">{label}</p>
-                            <p className="mt-1.5 text-[15px] leading-[1.7] text-[#3d4754]">
-                              {detail}
-                            </p>
-                          </>
-                        ) : (
-                          <p className="text-[15px] leading-[1.7] text-[#3d4754]">{detail}</p>
-                        )}
-                      </div>
+          <div
+            className={`min-w-0 grid gap-10 sm:gap-12 ${
+              bodyCols === 2 ? 'lg:grid-cols-2 lg:gap-12' : ''
+            }`}
+          >
+            {hasWhat ? (
+              <div className="min-w-0">
+                <div className="flex items-baseline gap-3">
+                  <span className="font-sw-display text-sm font-bold tabular-nums text-[#f27921]">
+                    01
+                  </span>
+                  <h3 className="text-base font-semibold tracking-tight text-[#041e30]">
+                    What this tool does
+                  </h3>
+                </div>
+                <ul className="mt-6 space-y-5 border-l border-[#e4e9f0] pl-5">
+                  {whatThisToolDoes.map((item) => (
+                    <li key={item} className="relative">
+                      <span
+                        className="absolute -left-[1.41rem] top-2.5 h-2 w-2 rounded-full bg-[#f27921] ring-4 ring-[#f3f5f8]"
+                        aria-hidden
+                      />
+                      <p className="text-[15px] leading-[1.7] text-[#3d4754]">{item}</p>
                     </li>
-                  );
-                })}
-              </ol>
-            </div>
-          ) : null}
+                  ))}
+                </ul>
+              </div>
+            ) : null}
+
+            {hasGuide ? (
+              <div className="min-w-0">
+                <div className="flex items-baseline gap-3">
+                  <span className="font-sw-display text-sm font-bold tabular-nums text-[#f27921]">
+                    {hasWhat ? '02' : '01'}
+                  </span>
+                  <h3 className="text-base font-semibold tracking-tight text-[#041e30]">
+                    How to use it
+                  </h3>
+                </div>
+                <ol className="mt-6 space-y-6">
+                  {inputGuide.map((item, index) => {
+                    const { label, detail } = splitGuideItem(item);
+                    return (
+                      <li key={item} className="grid grid-cols-[2rem_minmax(0,1fr)] gap-4">
+                        <span className="flex h-8 w-8 items-center justify-center rounded-full border border-[#d5dde8] bg-white text-xs font-bold tabular-nums text-[#041e30]">
+                          {index + 1}
+                        </span>
+                        <div className="min-w-0 pt-1">
+                          {label ? (
+                            <>
+                              <p className="text-sm font-semibold text-[#041e30]">{label}</p>
+                              <p className="mt-1.5 text-[15px] leading-[1.7] text-[#3d4754]">
+                                {detail}
+                              </p>
+                            </>
+                          ) : (
+                            <p className="text-[15px] leading-[1.7] text-[#3d4754]">{detail}</p>
+                          )}
+                        </div>
+                      </li>
+                    );
+                  })}
+                </ol>
+              </div>
+            ) : null}
+          </div>
+
+          <aside className="min-w-0 lg:sticky lg:top-24">
+            <ToolPageVisual pathname={pathname} />
+          </aside>
         </div>
-      ) : null}
+      ) : (
+        <div className="mt-8 sm:mt-10">
+          <ToolPageVisual pathname={pathname} className="max-w-md" />
+        </div>
+      )}
     </section>
   );
 }
@@ -440,6 +456,7 @@ export default function ToolWorkspaceLayout({
       whatThisToolDoes={whatThisToolDoes}
       inputGuide={inputGuide}
       preview={preview}
+      pathname={pathname}
     />
   ) : null;
   const hasBelowHero = Boolean(

@@ -39,8 +39,9 @@ export function hasValidationErrors(errors) {
 }
 
 export const ONE_ON_ONE_STEP_CONFIG = {
-  1: ['studentName', 'mobileNumber', 'currentClass'],
+  1: ['studentName', 'mobileNumber'],
   2: [
+    'currentClass',
     'sessionAttendee',
     'interestedBranch',
     'collegeBudget',

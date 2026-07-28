@@ -38,24 +38,9 @@ export const HOME_BANNERS = [
   },
 ];
 
-/** Fixed right-side hero counselling card */
-export const HERO_FEATURE_SLIDES = [
-  {
-    id: 'iitian-counselling',
-    title: 'Free IITian One-on-One Counselling',
-    description:
-      'Want to join a free IITian one-on-one counselling session? Book your free slot today and get personalised guidance.',
-    cta: 'Book free',
-    to: '/one-on-one-session',
-    accent: 'from-[#1a2744] via-[#2a1f4d] to-[#4a1d6a]',
-    badge: 'Free session',
-    ctaIcon: 'calendar',
-  },
-];
-
 /** Animated trust metrics shown in the students hero */
 export const HERO_TRUST_STATS = [
-  { value: 1000, suffix: '+', label: 'Successfully guided students' },
+  { value: 1, suffix: ' Lakh+', label: 'Successfully guided students' },
   { value: 50, suffix: '+', label: 'IITians' },
   { value: 1000, suffix: '+', label: 'Counsellors' },
 ];
@@ -67,6 +52,8 @@ export const WORKSPACE_UPDATES = [
     title: 'JEE Main rank model refreshed for the latest session trends',
     date: 'Jun 2026',
     to: '/students/rank-predictor/jeemainmarks',
+    image: WORKSPACE_IMAGES.updateJee,
+    imageId: 'update-jee',
   },
   {
     id: 2,
@@ -74,18 +61,24 @@ export const WORKSPACE_UPDATES = [
     title: 'AP & TS EAMCET cutoff sets added for 2026 shortlisting',
     date: 'Jun 2026',
     to: '/students/rank-predictor/apeamcet',
+    image: WORKSPACE_IMAGES.updateEamcet,
+    imageId: 'update-eamcet',
   },
   {
     id: 3,
     title: 'Compare up to four colleges on fees, placements, and campus',
     date: 'May 2026',
     to: '/students/college-comparison',
+    image: WORKSPACE_IMAGES.updateCompare,
+    imageId: 'update-compare',
   },
   {
     id: 4,
     title: 'Course fit test — map interests to engineering and science tracks',
     date: 'May 2026',
     to: '/students/course-fit-test',
+    image: WORKSPACE_IMAGES.updateFitCourse,
+    imageId: 'update-fit',
   },
   {
     id: 5,
@@ -93,6 +86,8 @@ export const WORKSPACE_UPDATES = [
     title: 'NIAT programs now discoverable in the college predictor',
     date: 'Apr 2026',
     to: '/students/college-predictor',
+    image: WORKSPACE_IMAGES.updateNiat,
+    imageId: 'update-niat',
   },
 ];
 

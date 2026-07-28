@@ -1,15 +1,16 @@
 export const neoInputClass =
-  'w-full rounded-[10px] border-2 border-[#0F172A] bg-white px-4 py-3 text-sm font-semibold text-[#0F172A] outline-none transition-all focus:-translate-y-0.5 focus:shadow-[3px_3px_0px_#0F172A]';
+  'w-full rounded-xl border border-[#d8dce6] bg-white px-3.5 py-2.5 text-sm font-medium text-[#1a1a1a] outline-none transition placeholder:text-[#9aa0ae] focus:border-[#f27921] focus:ring-2 focus:ring-[#f27921]/20';
 
-export const neoLabelClass = 'mb-2 block text-sm font-black uppercase tracking-wide text-[#0F172A]';
+export const neoLabelClass =
+  'mb-1.5 block text-[13px] font-semibold tracking-tight text-[#041e30]';
 
-const inputError = 'border-red-800 bg-red-50';
+const inputError = 'border-red-400 bg-red-50 focus:border-red-400 focus:ring-red-200';
 
 export function FormLabel({ htmlFor, children, required }) {
   return (
     <label htmlFor={htmlFor} className={neoLabelClass}>
       {children}
-      {required ? <span className="text-red-700"> *</span> : null}
+      {required ? <span className="text-[#f27921]"> *</span> : null}
     </label>
   );
 }
@@ -31,7 +32,7 @@ export function FormSelect({ id, error, placeholder = 'Select…', options, clas
       id={id}
       className={`${neoInputClass} cursor-pointer appearance-none bg-[length:16px] bg-[right_12px_center] bg-no-repeat pr-10 ${error ? inputError : ''} ${className}`.trim()}
       style={{
-        backgroundImage: `url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 24 24' fill='none' stroke='%230F172A' stroke-width='2.5' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='m6 9 6 6 6-6'/%3E%3C/svg%3E")`,
+        backgroundImage: `url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 24 24' fill='none' stroke='%23667085' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='m6 9 6 6 6-6'/%3E%3C/svg%3E")`,
       }}
       aria-invalid={error ? 'true' : 'false'}
       {...props}
@@ -62,7 +63,7 @@ export function FormTextarea({ id, error, className = '', ...props }) {
 
 export function FieldError({ message }) {
   if (!message) return null;
-  return <p className="mt-1 text-xs font-bold text-red-700">{message}</p>;
+  return <p className="mt-1.5 text-xs font-medium text-red-600">{message}</p>;
 }
 
 export function ChoiceGroup({
@@ -91,11 +92,11 @@ export function ChoiceGroup({
     <div className={`sm:col-span-1 ${className}`.trim()}>
       <p className={neoLabelClass}>
         {label}
-        {required ? <span className="text-red-700"> *</span> : null}
+        {required ? <span className="text-[#f27921]"> *</span> : null}
       </p>
       <div
-        className={`rounded-[10px] border-2 bg-[#F8FAFC] p-3 ${
-          error ? 'border-red-800' : 'border-[#0F172A]'
+        className={`rounded-xl border bg-[#f8f9fc] p-2.5 ${
+          error ? 'border-red-400' : 'border-[#e5e7eb]'
         }`}
         role="radiogroup"
         aria-required={required ? 'true' : undefined}
@@ -103,26 +104,26 @@ export function ChoiceGroup({
         aria-label={typeof label === 'string' ? label : undefined}
       >
         <div className="flex flex-col gap-2 sm:flex-row sm:flex-wrap">
-        {normalizedOptions.map((option) => {
-          const id = `${name || label}-${option.value}`;
-          return (
-            <label
-              key={option.value}
-              htmlFor={id}
-              className="flex flex-1 min-w-[140px] cursor-pointer items-center gap-2 rounded-lg border-2 border-transparent bg-white px-3 py-2.5 text-sm font-semibold text-[#0F172A] has-[:checked]:border-[#0F172A] has-[:checked]:bg-[#c7f36b] has-[:checked]:shadow-[2px_2px_0px_#0F172A]"
-            >
-              <input
-                id={id}
-                name={name}
-                type="radio"
-                checked={value === option.value}
-                onChange={() => onChange(option.value)}
-                className="h-4 w-4 border-2 border-[#0F172A] accent-[#0F172A]"
-              />
-              {option.label}
-            </label>
-          );
-        })}
+          {normalizedOptions.map((option) => {
+            const id = `${name || label}-${option.value}`;
+            return (
+              <label
+                key={option.value}
+                htmlFor={id}
+                className="flex min-w-[140px] flex-1 cursor-pointer items-center gap-2 rounded-lg border border-transparent bg-white px-3 py-2.5 text-sm font-medium text-[#1a1a1a] transition has-[:checked]:border-[#f27921]/45 has-[:checked]:bg-[#fff4ed] has-[:checked]:text-[#c45a0c]"
+              >
+                <input
+                  id={id}
+                  name={name}
+                  type="radio"
+                  checked={value === option.value}
+                  onChange={() => onChange(option.value)}
+                  className="h-4 w-4 border-[#d8dce6] text-[#f27921] accent-[#f27921]"
+                />
+                {option.label}
+              </label>
+            );
+          })}
         </div>
       </div>
       <FieldError message={error} />
@@ -135,7 +136,7 @@ export function NeoField({ label, children, error, className = '', required = fa
     <div className={`sm:col-span-1 ${className}`.trim()}>
       <p className={neoLabelClass}>
         {label}
-        {required ? <span className="text-red-700"> *</span> : null}
+        {required ? <span className="text-[#f27921]"> *</span> : null}
       </p>
       {children}
       <FieldError message={error} />

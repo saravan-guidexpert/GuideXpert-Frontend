@@ -1,8 +1,10 @@
 import { Link } from 'react-router-dom';
 import { useEffect, useState } from 'react';
-import { LuArrowRight } from 'react-icons/lu';
+import { LuArrowRight, LuCalendar } from 'react-icons/lu';
 import { SECTION_COPY, WORKSPACE_UPDATES } from './careers360HomeData';
 import { LAYOUT } from './careers360Theme';
+import CollegeCampusImage from '../landing/CollegeCampusImage';
+import { CounsellingIllustration } from './SectionIllustrations';
 import { getStudentWorkspaceUpdatesFeed } from '../../../utils/api';
 import { formatUpdateDate } from '../../../utils/studentWorkspaceUpdates';
 
@@ -14,6 +16,8 @@ function normalizeHomeItems(apiItems) {
     title: item.title,
     date: formatUpdateDate(item.publishedAt),
     to: item.linkUrl || '/students/updates',
+    image: item.imageUrl || '',
+    imageId: `live-update-${item.id}`,
     external: /^https?:\/\//i.test(item.linkUrl || ''),
   }));
 }
@@ -57,10 +61,13 @@ export function Careers360NewsSection() {
     };
   }, []);
 
+  const [featured, ...rest] = items;
+  const sideItems = rest.slice(0, 4);
+
   return (
     <section className={`${LAYOUT.section} bg-white`}>
       <div className={LAYOUT.container}>
-        <div className="mb-8 flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
+        <div className="mb-10 flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
           <div className="max-w-xl">
             <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-[#f27921]">
               Updates
@@ -78,36 +85,85 @@ export function Careers360NewsSection() {
           </Link>
         </div>
 
-        <ul className="overflow-hidden rounded-2xl border border-[#e5e7eb] divide-y divide-[#eef0f3]">
-          {items.map((item) => (
-            <li key={item.id}>
-              <UpdateLink
-                item={item}
-                className="group flex items-start justify-between gap-4 px-5 py-5 transition hover:bg-[#fafbfc] sm:items-center sm:px-6"
-              >
-                <div className="min-w-0 flex-1">
+        {featured ? (
+          <div className="grid gap-6 lg:grid-cols-12 lg:gap-8">
+            <UpdateLink
+              item={featured}
+              className="group relative overflow-hidden rounded-2xl border border-[#e5e7eb] lg:col-span-7"
+            >
+              <div className="relative aspect-[16/10] overflow-hidden bg-[#eef2f7] sm:aspect-[16/9]">
+                {featured.image ? (
+                  <CollegeCampusImage
+                    id={featured.imageId || `update-${featured.id}`}
+                    name={featured.title}
+                    src={featured.image}
+                    className="h-full w-full"
+                    imgClassName="h-full w-full object-cover transition duration-500 group-hover:scale-[1.03]"
+                  />
+                ) : (
+                  <div className="h-full w-full bg-gradient-to-br from-[#1e3a5f] to-[#f27921]/80" />
+                )}
+                <div className="absolute inset-0 bg-gradient-to-t from-[#0f172a]/85 via-[#0f172a]/25 to-transparent" />
+                <div className="absolute bottom-0 left-0 right-0 p-6 sm:p-8">
                   <div className="flex flex-wrap items-center gap-2">
-                    {item.tag ? (
+                    {featured.tag ? (
                       <span
-                        className={`rounded-md px-1.5 py-0.5 text-[10px] font-bold uppercase tracking-wide ${tagStyles(item.tag)}`}
+                        className={`rounded-md px-2 py-0.5 text-[10px] font-bold uppercase tracking-wide ${tagStyles(featured.tag)}`}
                       >
-                        {item.tag}
+                        {featured.tag}
                       </span>
                     ) : null}
-                    <span className="text-[11px] text-[#999]">{item.date}</span>
+                    <span className="inline-flex items-center gap-1 text-xs text-white/70">
+                      <LuCalendar className="h-3.5 w-3.5" aria-hidden />
+                      {featured.date}
+                    </span>
                   </div>
-                  <p className="mt-1.5 text-sm font-semibold leading-snug text-[#1a1a1a] transition group-hover:text-[#f27921] sm:text-[15px]">
-                    {item.title}
-                  </p>
+                  <h3 className="mt-3 text-lg font-semibold leading-snug text-white sm:text-xl">
+                    {featured.title}
+                  </h3>
                 </div>
-                <LuArrowRight
-                  className="mt-1 h-4 w-4 shrink-0 text-[#d1d5db] transition group-hover:translate-x-0.5 group-hover:text-[#f27921] sm:mt-0"
-                  aria-hidden
-                />
-              </UpdateLink>
-            </li>
-          ))}
-        </ul>
+              </div>
+            </UpdateLink>
+
+            <ul className="flex flex-col divide-y divide-[#eef0f3] overflow-hidden rounded-2xl border border-[#e5e7eb] bg-[#fafbfc] lg:col-span-5">
+              {sideItems.map((item) => (
+                <li key={item.id} className="flex-1">
+                  <UpdateLink
+                    item={item}
+                    className="group flex h-full gap-4 px-5 py-5 transition hover:bg-white sm:px-6"
+                  >
+                    <div className="relative h-16 w-20 shrink-0 overflow-hidden rounded-lg bg-[#eef2f7]">
+                      {item.image ? (
+                        <CollegeCampusImage
+                          id={item.imageId || `update-${item.id}`}
+                          name={item.title}
+                          src={item.image}
+                          className="h-full w-full"
+                          imgClassName="h-full w-full object-cover"
+                        />
+                      ) : null}
+                    </div>
+                    <div className="min-w-0 flex-1">
+                      <div className="flex flex-wrap items-center gap-2">
+                        {item.tag ? (
+                          <span
+                            className={`rounded-md px-1.5 py-0.5 text-[10px] font-bold uppercase tracking-wide ${tagStyles(item.tag)}`}
+                          >
+                            {item.tag}
+                          </span>
+                        ) : null}
+                        <span className="text-[11px] text-[#999]">{item.date}</span>
+                      </div>
+                      <p className="mt-1.5 line-clamp-2 text-sm font-semibold leading-snug text-[#1a1a1a] transition group-hover:text-[#f27921]">
+                        {item.title}
+                      </p>
+                    </div>
+                  </UpdateLink>
+                </li>
+              ))}
+            </ul>
+          </div>
+        ) : null}
       </div>
     </section>
   );
@@ -115,41 +171,57 @@ export function Careers360NewsSection() {
 
 export function Careers360CounsellingSection({ onBookCounselling }) {
   return (
-    <section id="career-counselling" className="border-b border-[#e8eaed] bg-[#faf8f5] py-12 sm:py-16">
-      <div className={`${LAYOUT.container} max-w-3xl text-center`}>
-        <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-[#f27921]">
-          Career counselling
-        </p>
-        <h2 className="mt-3 text-2xl font-bold tracking-tight text-[#1a1a1a] sm:text-3xl sm:leading-tight">
-          Still unsure about colleges, branches, or what to choose next?
-        </h2>
-        <p className="mx-auto mt-4 text-[15px] leading-relaxed text-[#555]">
-          Book a free one-on-one session with an IITian mentor — personalised guidance on admissions,
-          campus fit, and shortlist decisions.
-        </p>
+    <section
+      id="career-counselling"
+      className="relative overflow-hidden border-b border-[#e8eaed] py-12 sm:py-16"
+      style={{
+        background: 'linear-gradient(165deg, #faf7f2 0%, #fff8f1 45%, #ffffff 100%)',
+      }}
+    >
+      <div className={`${LAYOUT.container} grid items-center gap-10 lg:grid-cols-2 lg:gap-14`}>
+        <div className="order-2 text-center lg:order-1 lg:text-left">
+          <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-[#f27921]">
+            Career counselling
+          </p>
+          <h2 className="mt-3 text-2xl font-bold tracking-tight text-[#1a1a1a] sm:text-3xl sm:leading-tight">
+            Still unsure about colleges, branches, or what to choose next?
+          </h2>
+          <p className="mx-auto mt-4 max-w-xl text-[15px] leading-relaxed text-[#555] lg:mx-0">
+            Need guidance on admissions, want to understand campus options, or simply talk through your
+            shortlist with someone who has done it? Book a free one-on-one session with an IITian
+            mentor — personalised, calm, and focused on your goals.
+          </p>
 
-        <ul className="mx-auto mt-8 max-w-xl space-y-3 text-left">
-          {[
-            'Confused between colleges or branches after seeing your predicted rank?',
-            'Want campuses that fit your budget, category, and preferences?',
-            'Ready to plan counselling with someone who has walked this path?',
-          ].map((q) => (
-            <li key={q} className="flex gap-3 text-sm leading-relaxed text-[#444]">
-              <span className="mt-2 h-1.5 w-1.5 shrink-0 rounded-full bg-[#f27921]" aria-hidden />
-              {q}
-            </li>
-          ))}
-        </ul>
+          <ul className="mx-auto mt-8 flex max-w-lg flex-col gap-3 text-left sm:max-w-md lg:mx-0">
+            {[
+              'Confused between colleges or branches after seeing your predicted rank?',
+              'Want to know which campuses fit your budget, category, and preferences?',
+              'Ready to plan counselling with help from someone who has walked this path?',
+            ].map((q) => (
+              <li
+                key={q}
+                className="flex gap-3 border-b border-[#f0e6da] pb-3 text-sm leading-relaxed text-[#444] last:border-0 last:pb-0"
+              >
+                <span className="mt-1.5 h-1.5 w-1.5 shrink-0 rounded-full bg-[#f27921]" aria-hidden />
+                {q}
+              </li>
+            ))}
+          </ul>
 
-        <div className="mt-9 flex flex-col items-center gap-3">
-          <button
-            type="button"
-            onClick={onBookCounselling}
-            className="inline-flex items-center justify-center rounded-lg bg-[#f27921] px-7 py-3.5 text-sm font-semibold text-white transition hover:bg-[#e06810]"
-          >
-            Book free IITian 1-on-1 counselling
-          </button>
-          <p className="text-xs text-[#888]">100% free · Live session with an IITian mentor</p>
+          <div className="mt-9 flex flex-col items-center gap-3 lg:items-start">
+            <button
+              type="button"
+              onClick={onBookCounselling}
+              className="inline-flex items-center justify-center rounded-lg bg-[#f27921] px-7 py-3.5 text-sm font-semibold text-white shadow-sm transition hover:bg-[#e06810]"
+            >
+              Book free IITian 1-on-1 counselling
+            </button>
+            <p className="text-xs text-[#888]">100% free · Live session with an IITian mentor</p>
+          </div>
+        </div>
+
+        <div className="order-1 lg:order-2">
+          <CounsellingIllustration className="shadow-sm" />
         </div>
       </div>
     </section>

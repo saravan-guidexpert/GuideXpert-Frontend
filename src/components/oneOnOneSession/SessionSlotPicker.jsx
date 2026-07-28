@@ -49,11 +49,11 @@ export default function SessionSlotPicker({
     <div className="sm:col-span-2">
       <p className={neoLabelClass} id={`${name}-label`}>
         {label}
-        {required ? <span className="text-red-700"> *</span> : null}
+        {required ? <span className="text-[#f27921]"> *</span> : null}
       </p>
       <div
-        className={`rounded-[10px] border-2 bg-[#F8FAFC] p-3 sm:p-4 ${
-          error ? 'border-red-800' : 'border-[#0F172A]'
+        className={`rounded-xl border bg-[#f8f9fc] p-3 sm:p-4 ${
+          error ? 'border-red-400' : 'border-[#e5e7eb]'
         }`}
         role="radiogroup"
         aria-required={required ? 'true' : undefined}
@@ -63,7 +63,7 @@ export default function SessionSlotPicker({
         <div className="space-y-5">
           {dayGroups.map((day) => (
             <div key={day.key}>
-              <p className="mb-2 text-xs font-black uppercase tracking-wide text-[#0F172A]/80">
+              <p className="mb-2 text-xs font-semibold uppercase tracking-[0.12em] text-[#667085]">
                 {day.dateLabel}
               </p>
               <div className="grid grid-cols-2 gap-2 sm:grid-cols-4 sm:gap-3">
@@ -76,16 +76,16 @@ export default function SessionSlotPicker({
                       name={name}
                       aria-pressed={selected}
                       onClick={() => onChange(slot.value)}
-                      className={`min-h-[72px] rounded-[10px] border-2 px-2 py-3 text-center transition-all focus:outline-none focus-visible:ring-2 focus-visible:ring-[#0F172A] focus-visible:ring-offset-2 ${
+                      className={`min-h-[68px] rounded-xl border px-2 py-3 text-center transition focus:outline-none focus-visible:ring-2 focus-visible:ring-[#f27921]/35 ${
                         selected
-                          ? 'border-[#0F172A] bg-[#c7f36b] text-[#0F172A] shadow-[3px_3px_0px_#0F172A] -translate-y-0.5'
-                          : 'border-[#0F172A] bg-white text-[#0F172A] hover:-translate-y-0.5 hover:bg-white hover:shadow-[2px_2px_0px_#0F172A]'
+                          ? 'border-[#f27921] bg-[#fff4ed] text-[#c45a0c] shadow-[0_6px_16px_-12px_rgba(242,121,33,0.55)]'
+                          : 'border-[#e5e7eb] bg-white text-[#041e30] hover:border-[#f27921]/40 hover:bg-[#fffaf6]'
                       }`}
                     >
-                      <span className="block text-xs font-black uppercase leading-tight tracking-wide">
+                      <span className="block text-xs font-semibold leading-tight tracking-wide">
                         {slot.timeLabel}
                       </span>
-                      <span className="mt-1 block text-[10px] font-semibold text-[#0F172A]/70">
+                      <span className="mt-1 block text-[10px] font-medium text-[#8a94a0]">
                         3 slots
                       </span>
                     </button>

@@ -70,7 +70,7 @@ export default function StudentsDashboard() {
 
   return (
     <>
-      <StudentsDashboardHero {...searchProps} onBookCounselling={openOneOnOneBooking} />
+      <StudentsDashboardHero {...searchProps} />
       <Careers360StyleHome
         organicLead={organicLead}
         hasSearch={hasSearch}
