@@ -46,8 +46,8 @@ export const ONE_ON_ONE_STEP_CONFIG = {
     'interestedBranch',
     'collegeBudget',
     'preferredLanguage',
-    'preferredTimeSlot',
   ],
+  3: ['preferredTimeSlot'],
 };
 
 export function validateOneOnOneFormStep(form, step) {

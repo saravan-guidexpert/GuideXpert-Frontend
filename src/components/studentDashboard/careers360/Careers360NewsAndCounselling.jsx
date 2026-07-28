@@ -173,46 +173,39 @@ export function Careers360CounsellingSection({ onBookCounselling }) {
   return (
     <section
       id="career-counselling"
-      className="relative overflow-hidden border-b border-[#e8eaed] py-12 sm:py-16"
+      className="relative overflow-hidden border-b border-[#e8eaed] py-10 sm:py-14"
       style={{
         background: 'linear-gradient(165deg, #faf7f2 0%, #fff8f1 45%, #ffffff 100%)',
       }}
     >
-      <div className={`${LAYOUT.container} grid items-center gap-10 lg:grid-cols-2 lg:gap-14`}>
+      <div className={`${LAYOUT.container} grid items-center gap-8 lg:grid-cols-2 lg:gap-12`}>
         <div className="order-2 text-center lg:order-1 lg:text-left">
           <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-[#f27921]">
             Career counselling
           </p>
-          <h2 className="mt-3 text-2xl font-bold tracking-tight text-[#1a1a1a] sm:text-3xl sm:leading-tight">
-            Still unsure about colleges, branches, or what to choose next?
+          <h2 className="mt-2 text-2xl font-bold tracking-tight text-[#1a1a1a] sm:text-[1.75rem] sm:leading-tight">
+            Still unsure about colleges or branches?
           </h2>
-          <p className="mx-auto mt-4 max-w-xl text-[15px] leading-relaxed text-[#555] lg:mx-0">
-            Need guidance on admissions, want to understand campus options, or simply talk through your
-            shortlist with someone who has done it? Book a free one-on-one session with an IITian
-            mentor — personalised, calm, and focused on your goals.
+          <p className="mx-auto mt-2 max-w-md text-sm leading-snug text-[#555] lg:mx-0">
+            Book a free 1-on-1 with an IITian mentor — personalised and focused on your goals.
           </p>
 
-          <ul className="mx-auto mt-8 flex max-w-lg flex-col gap-3 text-left sm:max-w-md lg:mx-0">
-            {[
-              'Confused between colleges or branches after seeing your predicted rank?',
-              'Want to know which campuses fit your budget, category, and preferences?',
-              'Ready to plan counselling with help from someone who has walked this path?',
-            ].map((q) => (
-              <li
-                key={q}
-                className="flex gap-3 border-b border-[#f0e6da] pb-3 text-sm leading-relaxed text-[#444] last:border-0 last:pb-0"
+          <div className="mx-auto mt-5 flex max-w-md flex-wrap justify-center gap-2 lg:mx-0 lg:justify-start">
+            {['College fit', 'Branch choices', 'Counselling plan'].map((tag) => (
+              <span
+                key={tag}
+                className="rounded-full border border-[#f0e6da] bg-white px-3 py-1 text-[11px] font-medium text-[#667085]"
               >
-                <span className="mt-1.5 h-1.5 w-1.5 shrink-0 rounded-full bg-[#f27921]" aria-hidden />
-                {q}
-              </li>
+                {tag}
+              </span>
             ))}
-          </ul>
+          </div>
 
-          <div className="mt-9 flex flex-col items-center gap-3 lg:items-start">
+          <div className="mt-7 flex flex-col items-center gap-2 lg:items-start">
             <button
               type="button"
               onClick={onBookCounselling}
-              className="inline-flex items-center justify-center rounded-lg bg-[#f27921] px-7 py-3.5 text-sm font-semibold text-white shadow-sm transition hover:bg-[#e06810]"
+              className="inline-flex items-center justify-center rounded-lg bg-[#f27921] px-6 py-3 text-sm font-semibold text-white shadow-sm transition hover:bg-[#e06810]"
             >
               Book free IITian 1-on-1 counselling
             </button>

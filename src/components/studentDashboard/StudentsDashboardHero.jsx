@@ -72,7 +72,7 @@ function HeroCounsellingForm() {
           Book free IITian 1-on-1 counselling
         </h2>
       </div>
-      <div className="max-h-[min(34rem,70vh)] overflow-y-auto px-3 py-4 sm:px-5 sm:py-5">
+      <div className="max-h-[min(28rem,62vh)] overflow-y-auto px-3 py-4 sm:px-5 sm:py-5">
         <OneOnOneSessionBookingForm showIntro={false} />
       </div>
     </motion.div>

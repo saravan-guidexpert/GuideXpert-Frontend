@@ -2,7 +2,7 @@ import { Link } from 'react-router-dom';
 import { LuArrowRight } from 'react-icons/lu';
 import { Careers360NewsSection, Careers360CounsellingSection } from './Careers360NewsAndCounselling';
 import { Careers360DataSection } from './Careers360DataSection';
-import { Careers360PredictionSection, Careers360OtherProducts } from './Careers360PredictionSection';
+import Careers360ToolsIconSection from './Careers360ToolsIconSection';
 import Careers360ImpactSection, { Careers360CommunityCTA } from './Careers360ImpactSection';
 import Careers360BecomeCounsellorSection from './Careers360BecomeCounsellorSection';
 import Careers360ExamStrip from './Careers360Shared';
@@ -139,13 +139,12 @@ export default function Careers360StyleHome({
         />
       ) : (
         <>
-          <Careers360PredictionSection />
+          <Careers360ToolsIconSection />
           <Careers360CounsellingSection onBookCounselling={onBookCounselling} />
           <Careers360ImpactSection />
           <StudentSuccessCarousel />
           <Careers360NewsSection />
           <Careers360DataSection />
-          <Careers360OtherProducts />
           <Careers360BecomeCounsellorSection />
           <Careers360CommunityCTA />
         </>

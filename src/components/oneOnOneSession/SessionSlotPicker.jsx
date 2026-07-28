@@ -76,7 +76,7 @@ export default function SessionSlotPicker({
                       name={name}
                       aria-pressed={selected}
                       onClick={() => onChange(slot.value)}
-                      className={`min-h-[68px] rounded-xl border px-2 py-3 text-center transition focus:outline-none focus-visible:ring-2 focus-visible:ring-[#f27921]/35 ${
+                      className={`min-h-[56px] rounded-xl border px-2 py-2.5 text-center transition focus:outline-none focus-visible:ring-2 focus-visible:ring-[#f27921]/35 ${
                         selected
                           ? 'border-[#f27921] bg-[#fff4ed] text-[#c45a0c] shadow-[0_6px_16px_-12px_rgba(242,121,33,0.55)]'
                           : 'border-[#e5e7eb] bg-white text-[#041e30] hover:border-[#f27921]/40 hover:bg-[#fffaf6]'
@@ -85,8 +85,8 @@ export default function SessionSlotPicker({
                       <span className="block text-xs font-semibold leading-tight tracking-wide">
                         {slot.timeLabel}
                       </span>
-                      <span className="mt-1 block text-[10px] font-medium text-[#8a94a0]">
-                        3 slots
+                      <span className="mt-0.5 block text-[10px] font-medium text-[#8a94a0]">
+                        3 hrs
                       </span>
                     </button>
                   );

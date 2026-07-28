@@ -101,34 +101,31 @@ export const DATA_STATS = [
 export const SECTION_COPY = {
   updates: {
     title: 'Education updates',
-    subtitle: 'Exam news, admission windows, deadlines, and tool refreshes — kept current for every session.',
+    subtitle: 'Exam news, deadlines, and tool refreshes.',
   },
   guidance: {
     title: 'Guidance & discovery',
-    description:
-      'Start with short assessments when you are unsure about course or campus fit — then move to predictors with a clearer profile.',
+    description: 'Fit tests first when you are unsure — then predictors.',
   },
   data: {
     title: 'Colleges & cutoffs',
-    description:
-      'Browse institutes students shortlist most often, backed by indexed cutoff data across major entrance exams.',
+    description: 'Institutes students shortlist most, with indexed cutoff data.',
   },
   predictors: {
     title: 'Tools that turn scores into decisions',
-    description:
-      'Each predictor answers a different admissions question—rank first, then colleges and branches—so you move from uncertainty to a clear plan.',
+    description: 'Rank first, then colleges and branches — in one flow.',
   },
   moreTools: {
     title: 'Alongside your predictions',
-    description: 'Compare colleges, track deadlines, and run fit tests when you need more than a shortlist.',
+    description: 'Compare, track deadlines, and run fit tests.',
   },
   outcomes: {
     title: 'Student outcomes',
-    description: 'How GuideXpert predictions lined up with the colleges students ultimately joined.',
+    description: 'Where predicted shortlists met real admissions.',
   },
   helpCta: {
     title: 'Not sure where to begin?',
-    description: 'Take a fit test to narrow your options, or open the predictor hub for your exam.',
+    description: 'Take a fit test, or open the predictor hub for your exam.',
     cta: 'Open tool hub',
   },
 };
@@ -163,28 +160,28 @@ export const OTHER_PRODUCTS = [
   {
     id: 'compare',
     title: 'College compare',
-    description: 'Fees, placements, and campus metrics side by side.',
+    description: 'Fees, placements, campus — side by side.',
     to: '/students/college-comparison',
     icon: 'compare',
   },
   {
     id: 'fit-course',
     title: 'Course fit test',
-    description: 'Match programs to aptitude and interests.',
+    description: 'Match programs to your interests.',
     to: '/students/course-fit-test',
     icon: 'fit',
   },
   {
     id: 'fit-college',
     title: 'College fit test',
-    description: 'Filter campuses by budget, location, and goals.',
+    description: 'Filter by budget, location, goals.',
     to: '/students/college-fit-test',
     icon: 'fit',
   },
   {
     id: 'deadline',
     title: 'Deadline manager',
-    description: 'Keep exam and admission dates in one list.',
+    description: 'Exam and admission dates in one list.',
     to: '/students/deadline-manager',
     icon: 'calendar',
   },

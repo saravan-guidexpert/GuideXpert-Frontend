@@ -1,7 +1,6 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import MobileOtpField from '../forms/MobileOtpField';
 import {
-  ChoiceGroup,
   FormInput,
   FormSelect,
   NeoField,
@@ -15,7 +14,11 @@ import {
   PREFERRED_LANGUAGE_OPTIONS,
   SESSION_ATTENDEE_OPTIONS,
 } from '../../constants/oneOnOneCounselingForm';
-import { saveOneOnOneSection1, saveOneOnOneSection2 } from '../../utils/api';
+import {
+  saveOneOnOneSection1,
+  saveOneOnOneSection2,
+  saveOneOnOneSection3,
+} from '../../utils/api';
 import { getApiBaseUrl } from '../../utils/apiBaseUrl';
 import {
   getOneOnOneCounselingSlots,
@@ -28,9 +31,18 @@ import {
   validateOneOnOneFormStep,
 } from '../../utils/oneOnOneCounselingValidation';
 
+const TOTAL_STEPS = 3;
+
 const STEP_TITLES = {
   1: 'Name & verification',
-  2: 'Session preferences',
+  2: 'Your preferences',
+  3: 'Pick a slot',
+};
+
+const STEP_HINTS = {
+  1: 'Verify your number to continue.',
+  2: 'A few details so we can match the right counsellor.',
+  3: "We'll confirm your slot on WhatsApp.",
 };
 
 function SuccessView() {
@@ -180,7 +192,7 @@ export default function OneOnOneSessionBookingForm({
     if (currentStep === 1 && !otpVerified) {
       nextErrors.mobileNumber = 'Please verify your mobile number with OTP first.';
     }
-    if (currentStep === 2) {
+    if (currentStep === 3) {
       if (!form.preferredTimeSlot?.trim()) {
         nextErrors.preferredTimeSlot =
           nextErrors.preferredTimeSlot || 'Please select a session slot';
@@ -191,7 +203,83 @@ export default function OneOnOneSessionBookingForm({
     return nextErrors;
   };
 
-  const handleNext = async (e) => {
+  const handleStep1Next = async () => {
+    const utmPayload = resolveUtmAttribution();
+    let fingerprint = visitorFingerprint;
+    if (!fingerprint) {
+      fingerprint = await trackOneOnOneSessionVisit(apiBase, utmPayload);
+      if (fingerprint) setVisitorFingerprint(fingerprint);
+    }
+
+    const result = await saveOneOnOneSection1({
+      studentName: form.studentName.trim(),
+      mobileNumber: form.mobileNumber.replace(/\D/g, ''),
+      otpVerified: true,
+      ...utmPayload,
+      ...(fingerprint ? { visitorFingerprint: fingerprint } : {}),
+    });
+    if (!result.success) {
+      setSubmitError(result.message || 'Could not save this step. Please try again.');
+      return false;
+    }
+    const savedLeadId = result.data?.data?.leadId;
+    if (savedLeadId) setLeadId(savedLeadId);
+    return true;
+  };
+
+  const handleStep2Next = async () => {
+    if (!leadId) {
+      setSubmitError('Session expired. Please go back to step 1 and try again.');
+      return false;
+    }
+    const result = await saveOneOnOneSection2({
+      leadId,
+      currentClass: form.currentClass,
+      sessionAttendee: form.sessionAttendee,
+      interestedBranch: form.interestedBranch,
+      collegeBudget: form.collegeBudget,
+      preferredLanguage: form.preferredLanguage,
+    });
+    if (!result.success) {
+      setSubmitError(result.message || 'Could not save this step. Please try again.');
+      return false;
+    }
+    return true;
+  };
+
+  const handleFinalSubmit = async () => {
+    if (!leadId) {
+      setSubmitError('Session expired. Please go back to step 1 and try again.');
+      return false;
+    }
+    if (!parentAttendanceConfirmed) {
+      setSubmitError('Please confirm that you will mandatorily attend the session with your parent.');
+      return false;
+    }
+
+    const result = await saveOneOnOneSection3({
+      leadId,
+      preferredTimeSlot: form.preferredTimeSlot,
+      parentAttendanceConfirmed: true,
+    });
+    if (!result.success) {
+      setSubmitError(result.message || 'Unable to submit. Please try again.');
+      return false;
+    }
+    setSubmitted(true);
+    return true;
+  };
+
+  const handleBack = () => {
+    if (currentStep <= 1) return;
+    setErrors({});
+    setSubmitError('');
+    if (currentStep === 3) setParentAttendanceConfirmed(false);
+    setCurrentStep((prev) => prev - 1);
+    scrollToTop();
+  };
+
+  const handleSubmit = async (e) => {
     e.preventDefault();
     setSubmitError('');
     const nextErrors = validateCurrentStep();
@@ -204,99 +292,40 @@ export default function OneOnOneSessionBookingForm({
 
     setSubmitting(true);
     try {
-      const utmPayload = resolveUtmAttribution();
-      let fingerprint = visitorFingerprint;
-      if (!fingerprint) {
-        fingerprint = await trackOneOnOneSessionVisit(apiBase, utmPayload);
-        if (fingerprint) setVisitorFingerprint(fingerprint);
-      }
-
-      const result = await saveOneOnOneSection1({
-        studentName: form.studentName.trim(),
-        mobileNumber: form.mobileNumber.replace(/\D/g, ''),
-        otpVerified: true,
-        ...utmPayload,
-        ...(fingerprint ? { visitorFingerprint: fingerprint } : {}),
-      });
-      if (!result.success) {
-        setSubmitError(result.message || 'Could not save this step. Please try again.');
-        return;
-      }
-      const savedLeadId = result.data?.data?.leadId;
-      if (savedLeadId) setLeadId(savedLeadId);
-
-      setErrors({});
-      setCurrentStep(2);
-      scrollToTop();
-    } catch {
-      setSubmitError('Connection issue. Please check your network and try again.');
-    } finally {
-      setSubmitting(false);
-    }
-  };
-
-  const handleBack = () => {
-    if (currentStep <= 1) return;
-    setErrors({});
-    setSubmitError('');
-    setParentAttendanceConfirmed(false);
-    setCurrentStep((prev) => prev - 1);
-    scrollToTop();
-  };
-
-  const handleSubmit = async (e) => {
-    e.preventDefault();
-    if (currentStep === 1) {
-      await handleNext(e);
-      return;
-    }
-
-    setSubmitError('');
-    const nextErrors = validateOneOnOneForm(form);
-    if (!otpVerified) {
-      nextErrors.mobileNumber = 'Please verify your mobile number with OTP first.';
-    }
-    if (!form.preferredTimeSlot?.trim()) {
-      nextErrors.preferredTimeSlot =
-        nextErrors.preferredTimeSlot || 'Please select a session slot';
-    } else if (!sessionSlotOptions.some((o) => o.value === form.preferredTimeSlot)) {
-      nextErrors.preferredTimeSlot = 'Please select a valid session slot (next 2 days, IST).';
-    }
-    setErrors(nextErrors);
-    if (hasValidationErrors(nextErrors)) {
-      setSubmitError('Please complete all required fields before submitting.');
-      scrollToFirstError();
-      return;
-    }
-
-    if (!parentAttendanceConfirmed) {
-      setSubmitError('Please confirm that you will mandatorily attend the session with your parent.');
-      return;
-    }
-
-    if (!leadId) {
-      setSubmitError('Session expired. Please go back to step 1 and try again.');
-      return;
-    }
-
-    setSubmitting(true);
-    try {
-      const result = await saveOneOnOneSection2({
-        leadId,
-        currentClass: form.currentClass,
-        sessionAttendee: form.sessionAttendee,
-        interestedBranch: form.interestedBranch,
-        collegeBudget: form.collegeBudget,
-        preferredLanguage: form.preferredLanguage,
-        preferredTimeSlot: form.preferredTimeSlot,
-        parentAttendanceConfirmed: true,
-      });
-
-      if (result.success) {
-        setSubmitted(true);
-        scrollToTop();
+      let ok = false;
+      if (currentStep === 1) {
+        ok = await handleStep1Next();
+        if (ok) {
+          setErrors({});
+          setCurrentStep(2);
+          scrollToTop();
+        }
+      } else if (currentStep === 2) {
+        ok = await handleStep2Next();
+        if (ok) {
+          setErrors({});
+          setCurrentStep(3);
+          scrollToTop();
+        }
       } else {
-        setSubmitError(result.message || 'Unable to submit. Please try again.');
+        const allErrors = validateOneOnOneForm(form);
+        if (!otpVerified) {
+          allErrors.mobileNumber = 'Please verify your mobile number with OTP first.';
+        }
+        if (!form.preferredTimeSlot?.trim()) {
+          allErrors.preferredTimeSlot =
+            allErrors.preferredTimeSlot || 'Please select a session slot';
+        } else if (!sessionSlotOptions.some((o) => o.value === form.preferredTimeSlot)) {
+          allErrors.preferredTimeSlot = 'Please select a valid session slot (next 2 days, IST).';
+        }
+        setErrors(allErrors);
+        if (hasValidationErrors(allErrors)) {
+          setSubmitError('Please complete all required fields before submitting.');
+          scrollToFirstError();
+          return;
+        }
+        ok = await handleFinalSubmit();
+        if (ok) scrollToTop();
       }
     } catch {
       setSubmitError('Connection issue. Please check your network and try again.');
@@ -318,7 +347,7 @@ export default function OneOnOneSessionBookingForm({
                 Book Your 1-on-1 IITian Career Counseling Session
               </h1>
               <p className="mt-2 text-sm font-medium text-white/70">
-                Step {currentStep} of 2 — {STEP_TITLES[currentStep]}
+                Step {currentStep} of {TOTAL_STEPS} — {STEP_TITLES[currentStep]}
               </p>
               <p className="mt-1 text-sm leading-relaxed text-white/55">
                 Get clarity on college selection, branch selection, placements, fees, and future career
@@ -335,7 +364,7 @@ export default function OneOnOneSessionBookingForm({
             </div>
           ) : (
             <p className="mb-3 text-sm font-medium text-[#5a6570]">
-              Step {currentStep} of 2 — {STEP_TITLES[currentStep]}
+              Step {currentStep} of {TOTAL_STEPS} — {STEP_TITLES[currentStep]}
             </p>
           )}
 
@@ -343,7 +372,7 @@ export default function OneOnOneSessionBookingForm({
             <div className="h-1.5 overflow-hidden rounded-full bg-[#eef0f4]">
               <div
                 className="h-full rounded-full bg-[#f27921] transition-all duration-300"
-                style={{ width: `${(currentStep / 2) * 100}%` }}
+                style={{ width: `${(currentStep / TOTAL_STEPS) * 100}%` }}
               />
             </div>
           </div>
@@ -354,7 +383,7 @@ export default function OneOnOneSessionBookingForm({
             </p>
 
             {currentStep === 1 ? (
-              <div className="grid grid-cols-1 gap-4">
+              <div className="grid grid-cols-1 gap-3.5">
                 <NeoField label="Student Name" error={errors.studentName} required>
                   <FormInput
                     id="studentName"
@@ -383,24 +412,21 @@ export default function OneOnOneSessionBookingForm({
             ) : null}
 
             {currentStep === 2 ? (
-              <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-                <ChoiceGroup
-                  label="Current Class"
-                  name="currentClass"
-                  options={CURRENT_CLASS_OPTIONS}
-                  value={form.currentClass}
-                  onChange={(value) => setField('currentClass', value)}
-                  error={errors.currentClass}
-                  required
-                  className="sm:col-span-2"
-                />
+              <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 sm:gap-x-3 sm:gap-y-3">
+                <NeoField label="Current Class" error={errors.currentClass} required>
+                  <FormSelect
+                    id="currentClass"
+                    name="currentClass"
+                    required
+                    value={form.currentClass}
+                    onChange={(e) => setField('currentClass', e.target.value)}
+                    error={errors.currentClass}
+                    options={CURRENT_CLASS_OPTIONS}
+                    placeholder="Select class"
+                  />
+                </NeoField>
 
-                <NeoField
-                  label="Who Will Attend the Session?"
-                  error={errors.sessionAttendee}
-                  className="sm:col-span-2"
-                  required
-                >
+                <NeoField label="Who will attend?" error={errors.sessionAttendee} required>
                   <FormSelect
                     id="sessionAttendee"
                     name="sessionAttendee"
@@ -409,7 +435,7 @@ export default function OneOnOneSessionBookingForm({
                     onChange={(e) => setField('sessionAttendee', e.target.value)}
                     error={errors.sessionAttendee}
                     options={SESSION_ATTENDEE_OPTIONS}
-                    placeholder="Select who will attend"
+                    placeholder="Select attendee"
                   />
                 </NeoField>
 
@@ -439,16 +465,28 @@ export default function OneOnOneSessionBookingForm({
                   />
                 </NeoField>
 
-                <ChoiceGroup
+                <NeoField
                   label="Preferred Language"
-                  name="preferredLanguage"
-                  options={PREFERRED_LANGUAGE_OPTIONS}
-                  value={form.preferredLanguage}
-                  onChange={(value) => setField('preferredLanguage', value)}
                   error={errors.preferredLanguage}
+                  className="sm:col-span-2"
                   required
-                />
+                >
+                  <FormSelect
+                    id="preferredLanguage"
+                    name="preferredLanguage"
+                    required
+                    value={form.preferredLanguage}
+                    onChange={(e) => setField('preferredLanguage', e.target.value)}
+                    error={errors.preferredLanguage}
+                    options={PREFERRED_LANGUAGE_OPTIONS}
+                    placeholder="Select language"
+                  />
+                </NeoField>
+              </div>
+            ) : null}
 
+            {currentStep === 3 ? (
+              <div className="grid grid-cols-1 gap-3.5">
                 <SessionSlotPicker
                   label="Preferred Session Slot"
                   name="preferredTimeSlot"
@@ -458,16 +496,15 @@ export default function OneOnOneSessionBookingForm({
                   error={errors.preferredTimeSlot}
                   required
                 />
-                <p className="-mt-1 text-xs font-medium text-[#667085] sm:col-span-2">
-                  3-hour slots from 9 AM–9 PM (IST) for the next 2 calendar days. Slots update at
-                  12:00 AM IST.
+                <p className="-mt-1 text-xs font-medium text-[#667085]">
+                  3-hour slots from 9 AM–9 PM (IST) for the next 2 calendar days.
                 </p>
 
-                <div className="sm:col-span-2">
+                <div>
                   <p className="mb-2 text-[13px] font-semibold text-[#041e30]">
                     Confirmation <span className="text-[#f27921]">*</span>
                   </p>
-                  <label className="flex cursor-pointer items-start gap-3 rounded-xl border border-[#e5e7eb] bg-[#f8f9fc] p-3.5 transition hover:border-[#f27921]/35">
+                  <label className="flex cursor-pointer items-start gap-3 rounded-xl border border-[#e5e7eb] bg-[#f8f9fc] p-3 transition hover:border-[#f27921]/35">
                     <input
                       type="checkbox"
                       checked={parentAttendanceConfirmed}
@@ -491,12 +528,8 @@ export default function OneOnOneSessionBookingForm({
               </p>
             ) : null}
 
-            <div className="mt-6 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-              <p className="text-xs font-medium text-[#8a94a0]">
-                {currentStep === 2
-                  ? "We'll contact you on WhatsApp to confirm your session."
-                  : 'Verify your number to continue.'}
-              </p>
+            <div className="mt-5 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+              <p className="text-xs font-medium text-[#8a94a0]">{STEP_HINTS[currentStep]}</p>
               <div className="flex items-center gap-2.5">
                 <button
                   type="button"
@@ -511,22 +544,22 @@ export default function OneOnOneSessionBookingForm({
                   disabled={
                     submitting ||
                     (currentStep === 1 && !otpVerified) ||
-                    (currentStep === 2 && !parentAttendanceConfirmed)
+                    (currentStep === 3 && !parentAttendanceConfirmed)
                   }
                   title={
                     currentStep === 1 && !otpVerified
                       ? 'Verify your mobile number with OTP to continue'
-                      : currentStep === 2 && !parentAttendanceConfirmed
+                      : currentStep === 3 && !parentAttendanceConfirmed
                         ? 'Please confirm parent attendance to book your session'
                         : undefined
                   }
                   className="rounded-xl bg-[#f27921] px-5 py-2.5 text-sm font-semibold text-white shadow-[0_8px_20px_-12px_rgba(242,121,33,0.7)] transition hover:bg-[#e06810] disabled:cursor-not-allowed disabled:opacity-70"
                 >
                   {submitting
-                    ? currentStep === 2
+                    ? currentStep === 3
                       ? 'Booking…'
                       : 'Saving…'
-                    : currentStep === 2
+                    : currentStep === 3
                       ? 'Book free session'
                       : 'Continue'}
                 </button>
