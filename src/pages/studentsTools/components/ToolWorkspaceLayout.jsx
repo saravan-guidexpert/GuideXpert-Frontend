@@ -16,12 +16,21 @@ import ToolPageVisual, { ToolFactsVector } from './ToolPageVisual';
 
 const FEATURE_ICONS = [FiLayers, FiFilter, FiTarget];
 const FEATURE_ICON_STYLES = [
-  'bg-[#fce7f3] text-[#be185d]',
-  'bg-[#dbeafe] text-[#1d4ed8]',
-  'bg-[#ffedd5] text-[#c2410c]',
+  'bg-[#fff4ed] text-[#f27921]',
+  'bg-[#eef2f7] text-[#041e30]',
+  'bg-[#e8f1f8] text-[#0b3a5c]',
 ];
 
 const DEFAULT_STEP_TITLES = ['Match criteria', 'Apply filters', 'Score chances'];
+
+/** Shared title scale across DualCards + Features heroes */
+const HERO_TITLE =
+  'font-sw-display text-[1.65rem] font-bold leading-[1.18] tracking-tight text-[#041e30] sm:text-3xl sm:leading-[1.15] lg:text-[2.15rem]';
+const HERO_SUBTITLE =
+  'mt-2 max-w-xl text-[15px] leading-relaxed text-[#5a6570] sm:mt-2.5 sm:text-base';
+/** Shared form column width */
+const HERO_GRID =
+  'grid items-start gap-5 lg:grid-cols-[minmax(0,24rem)_minmax(0,1fr)] lg:gap-6 xl:gap-8';
 
 const BREADCRUMB_CATEGORY = {
   '/students/college-predictor': {
@@ -121,22 +130,22 @@ function predictionSteps(howItWorks) {
 function BreadcrumbNav({ category, title }) {
   return (
     <nav
-      className="sw-fade-up mb-8 flex flex-wrap items-center gap-1.5 text-[13px] !text-white/70 sm:mb-10"
+      className="sw-fade-up mb-6 flex flex-wrap items-center gap-1.5 text-[13px] text-[#667085] sm:mb-8"
       aria-label="Breadcrumb"
     >
       <Link
         to="/"
-        className="inline-flex items-center gap-1 !text-white/70 transition hover:!text-white"
+        className="inline-flex items-center gap-1 text-[#667085] transition hover:text-[#f27921]"
       >
         <FiHome className="h-3.5 w-3.5" aria-hidden />
         <span className="sr-only">Home</span>
       </Link>
-      <FiChevronRight className="h-3.5 w-3.5 opacity-50" aria-hidden />
-      <Link to={category.to} className="!text-white/70 transition hover:!text-white">
+      <FiChevronRight className="h-3.5 w-3.5 opacity-40" aria-hidden />
+      <Link to={category.to} className="text-[#667085] transition hover:text-[#f27921]">
         {category.label}
       </Link>
-      <FiChevronRight className="h-3.5 w-3.5 opacity-50" aria-hidden />
-      <span className="font-medium !text-white">{title}</span>
+      <FiChevronRight className="h-3.5 w-3.5 opacity-40" aria-hidden />
+      <span className="font-medium text-[#041e30]">{title}</span>
     </nav>
   );
 }
@@ -160,7 +169,7 @@ function ToolInfoSection({ title, whatThisToolDoes, inputGuide, preview, pathnam
 
   return (
     <section className="sw-fade-up" aria-labelledby="tool-info-heading">
-      <div className="grid gap-8 border-b border-[#d5dde8] pb-8 sm:gap-10 sm:pb-10 lg:grid-cols-[minmax(0,1.2fr)_minmax(0,18rem)] lg:items-end lg:gap-12">
+      <div className="grid gap-8 border-b border-[#e8eaed] pb-8 sm:gap-10 sm:pb-10 lg:grid-cols-[minmax(0,1.2fr)_minmax(0,18rem)] lg:items-end lg:gap-12">
         <header className="min-w-0">
           <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-[#f27921]">
             About this tool
@@ -177,7 +186,7 @@ function ToolInfoSection({ title, whatThisToolDoes, inputGuide, preview, pathnam
         </header>
 
         {hasPreview ? (
-          <aside className="min-w-0 border-t border-[#e4e9f0] pt-5 lg:border-t-0 lg:border-l lg:pl-8 lg:pt-0">
+          <aside className="min-w-0 border-t border-[#e8eaed] pt-5 lg:border-t-0 lg:border-l lg:pl-8 lg:pt-0">
             <div className="mb-3">
               <ToolFactsVector pathname={pathname} />
             </div>
@@ -191,7 +200,7 @@ function ToolInfoSection({ title, whatThisToolDoes, inputGuide, preview, pathnam
 
       {bodyCols > 0 ? (
         <div
-          className={`mt-8 grid items-start gap-10 sm:mt-10 sm:gap-12 lg:grid-cols-[minmax(0,1fr)_minmax(0,18rem)] lg:gap-12 xl:gap-16`}
+          className="mt-8 grid items-start gap-10 sm:mt-10 sm:gap-12 lg:grid-cols-[minmax(0,1fr)_minmax(0,18rem)] lg:gap-12 xl:gap-16"
         >
           <div
             className={`min-w-0 grid gap-10 sm:gap-12 ${
@@ -208,11 +217,11 @@ function ToolInfoSection({ title, whatThisToolDoes, inputGuide, preview, pathnam
                     What this tool does
                   </h3>
                 </div>
-                <ul className="mt-6 space-y-5 border-l border-[#e4e9f0] pl-5">
+                <ul className="mt-6 space-y-5 border-l border-[#e8eaed] pl-5">
                   {whatThisToolDoes.map((item) => (
                     <li key={item} className="relative">
                       <span
-                        className="absolute -left-[1.41rem] top-2.5 h-2 w-2 rounded-full bg-[#f27921] ring-4 ring-[#f3f5f8]"
+                        className="absolute -left-[1.41rem] top-2.5 h-2 w-2 rounded-full bg-[#f27921] ring-4 ring-[#f7f8fc]"
                         aria-hidden
                       />
                       <p className="text-[15px] leading-[1.7] text-[#3d4754]">{item}</p>
@@ -237,7 +246,7 @@ function ToolInfoSection({ title, whatThisToolDoes, inputGuide, preview, pathnam
                     const { label, detail } = splitGuideItem(item);
                     return (
                       <li key={item} className="grid grid-cols-[2rem_minmax(0,1fr)] gap-4">
-                        <span className="flex h-8 w-8 items-center justify-center rounded-full border border-[#d5dde8] bg-white text-xs font-bold tabular-nums text-[#041e30]">
+                        <span className="flex h-8 w-8 items-center justify-center rounded-full border border-[#e5e7eb] bg-white text-xs font-bold tabular-nums text-[#041e30]">
                           {index + 1}
                         </span>
                         <div className="min-w-0 pt-1">
@@ -288,48 +297,42 @@ function DualCardsHero({
     <>
       <BreadcrumbNav category={category} title={title} />
 
-      <div className="sw-fade-up mb-7 flex flex-col gap-4 sm:mb-10 sm:gap-5 lg:mb-12 lg:flex-row lg:items-end lg:justify-between lg:gap-10">
+      <div className="sw-fade-up mb-6 flex flex-col gap-4 sm:mb-8 sm:gap-5 lg:mb-10 lg:flex-row lg:items-end lg:justify-between lg:gap-10">
         <div className="min-w-0 max-w-2xl">
           <div className="flex gap-3 sm:gap-4">
             <span
-              className="mt-1.5 h-[2.5rem] w-1 shrink-0 rounded-full bg-[#f27921] sm:h-[3.25rem]"
+              className="mt-1.5 h-[2.5rem] w-1 shrink-0 rounded-full bg-[#f27921] sm:h-[3rem]"
               aria-hidden
             />
             <div className="min-w-0">
-              <h1 className="font-sw-display text-[1.7rem] font-bold leading-[1.18] tracking-tight !text-white sm:text-4xl sm:leading-[1.15] lg:text-[2.45rem]">
-                {title}
-              </h1>
-              {subtitle ? (
-                <p className="mt-2 max-w-xl text-[15px] leading-relaxed !text-white/75 sm:mt-2.5 sm:text-base">
-                  {subtitle}
-                </p>
-              ) : null}
+              <h1 className={HERO_TITLE}>{title}</h1>
+              {subtitle ? <p className={HERO_SUBTITLE}>{subtitle}</p> : null}
             </div>
           </div>
         </div>
 
         {trustBadge ? (
-          <div className="shrink-0 border-t border-white/10 pt-3 text-left sm:border-0 sm:pt-0 lg:max-w-[14rem] lg:pb-1 lg:text-right">
-            <p className="text-sm font-semibold !text-white/90">{trustBadge}</p>
+          <div className="shrink-0 border-t border-[#e8eaed] pt-3 text-left sm:border-0 sm:pt-0 lg:max-w-[14rem] lg:pb-1 lg:text-right">
+            <p className="text-sm font-semibold text-[#041e30]">{trustBadge}</p>
             {trustSubline ? (
-              <p className="mt-1 text-xs leading-relaxed !text-white/55">{trustSubline}</p>
+              <p className="mt-1 text-xs leading-relaxed text-[#667085]">{trustSubline}</p>
             ) : null}
           </div>
         ) : null}
       </div>
 
-      <div className="grid items-start gap-5 lg:grid-cols-[minmax(0,22.5rem)_minmax(0,1fr)] xl:grid-cols-[minmax(0,24rem)_minmax(0,1fr)] lg:gap-6 xl:gap-8">
+      <div className={HERO_GRID}>
         <div className="order-1 sw-fade-up sw-fade-up-delay-1 w-full min-w-0">
-          <div className="sw-gx-form-rail w-full min-w-0 rounded-xl bg-white">
+          <div className="sw-gx-form-rail w-full min-w-0">
             <div className="w-full min-w-0">{children}</div>
           </div>
         </div>
 
         <aside className="order-2 sw-fade-up sw-fade-up-delay-2 w-full min-w-0 self-start">
-          <p className="mb-3 text-[11px] font-semibold uppercase tracking-[0.16em] !text-white/55">
+          <p className="mb-3 text-[11px] font-semibold uppercase tracking-[0.16em] text-[#8a94a0]">
             How predictions work
           </p>
-          <div className="sw-gx-signal-steps overflow-hidden rounded-xl">
+          <div className="sw-gx-signal-steps overflow-hidden">
             {steps.map((step, index) => (
               <div key={`${step.title}-${index}`} className="sw-gx-signal-step">
                 <span className="font-sw-display text-2xl font-bold tabular-nums leading-none text-[#f27921] sm:text-[1.65rem]">
@@ -355,72 +358,62 @@ function FeaturesHero({ title, subtitle, trustBadge, features, children, categor
     <>
       <BreadcrumbNav category={category} title={title} />
 
-      <div className="grid items-start gap-8 sm:gap-10 lg:grid-cols-[minmax(0,1.1fr)_minmax(0,24rem)] xl:grid-cols-[minmax(0,1.15fr)_minmax(0,26rem)] lg:gap-12 xl:gap-16">
-        <div className="order-1 sw-fade-up min-w-0 text-white lg:order-1 lg:pr-4">
-          {trustBadge ? (
-            <p className="mb-4 inline-flex items-center gap-1.5 rounded-full bg-[#16a34a]/20 px-3.5 py-1.5 text-xs font-semibold !text-[#86efac] ring-1 ring-[#4ade80]/35 sm:mb-5">
-              <FiCheck className="h-3.5 w-3.5" strokeWidth={3} aria-hidden />
-              {trustBadge}
-            </p>
-          ) : null}
+      <div className="sw-fade-up mb-6 flex flex-col gap-4 sm:mb-8 sm:gap-5 lg:mb-10 lg:flex-row lg:items-end lg:justify-between lg:gap-10">
+        <div className="min-w-0 max-w-2xl">
+          <div className="flex gap-3 sm:gap-4">
+            <span
+              className="mt-1.5 h-[2.5rem] w-1 shrink-0 rounded-full bg-[#f27921] sm:h-[3rem]"
+              aria-hidden
+            />
+            <div className="min-w-0">
+              {trustBadge ? (
+                <p className="mb-2 inline-flex items-center gap-1.5 rounded-full bg-[#ecfdf5] px-2.5 py-1 text-[11px] font-semibold text-[#047857]">
+                  <FiCheck className="h-3 w-3" strokeWidth={3} aria-hidden />
+                  {trustBadge}
+                </p>
+              ) : null}
+              <h1 className={HERO_TITLE}>{title}</h1>
+              {subtitle ? <p className={HERO_SUBTITLE}>{subtitle}</p> : null}
+            </div>
+          </div>
+        </div>
+      </div>
 
-          <h1 className="font-sw-display text-[1.7rem] font-bold leading-[1.18] tracking-tight !text-white sm:text-4xl sm:leading-[1.15] lg:text-[2.55rem]">
-            {title}
-          </h1>
-          {subtitle ? (
-            <p className="mt-3 max-w-xl text-[15px] leading-relaxed !text-white/80 sm:mt-4 sm:text-base">
-              {subtitle}
-            </p>
-          ) : null}
+      <div className={HERO_GRID}>
+        <div className="order-1 sw-fade-up sw-fade-up-delay-1 w-full min-w-0">
+          <div className="sw-gx-form-rail w-full min-w-0">
+            <div className="w-full min-w-0">{children}</div>
+          </div>
+        </div>
 
-          <ul className="mt-8 hidden space-y-5 sm:mt-10 lg:block">
+        <aside className="order-2 sw-fade-up sw-fade-up-delay-2 w-full min-w-0 self-start">
+          <p className="mb-3 text-[11px] font-semibold uppercase tracking-[0.16em] text-[#8a94a0]">
+            Highlights
+          </p>
+          <ul className="sw-gx-signal-steps overflow-hidden">
             {features.map((feature, index) => {
               const Icon = FEATURE_ICONS[index % FEATURE_ICONS.length];
               const iconStyle = FEATURE_ICON_STYLES[index % FEATURE_ICON_STYLES.length];
               return (
-                <li key={`${feature.title}-${index}`} className="flex gap-4">
+                <li key={`${feature.title}-${index}`} className="sw-gx-signal-step">
                   <span
-                    className={`mt-0.5 flex h-11 w-11 shrink-0 items-center justify-center rounded-xl ${iconStyle}`}
+                    className={`mt-0.5 flex h-10 w-10 shrink-0 items-center justify-center rounded-xl ${iconStyle}`}
                   >
                     <Icon className="h-4 w-4" aria-hidden />
                   </span>
-                  <div className="min-w-0 pt-1">
-                    <p className="text-sm font-semibold !text-white sm:text-[15px]">
+                  <div className="min-w-0 pt-0.5">
+                    <p className="sw-gx-step-title text-[15px] font-semibold sm:text-base">
                       {feature.title}
                     </p>
-                    <p className="mt-1 text-sm leading-relaxed !text-white/65">{feature.detail}</p>
+                    <p className="sw-gx-step-detail mt-1.5 text-sm leading-relaxed">
+                      {feature.detail}
+                    </p>
                   </div>
                 </li>
               );
             })}
           </ul>
-        </div>
-
-        <div className="order-2 sw-fade-up sw-fade-up-delay-1 w-full min-w-0 max-w-full justify-self-stretch lg:order-2 lg:justify-self-end">
-          <div className="w-full min-w-0 max-w-full rounded-2xl border border-white/40 bg-white p-5 shadow-[0_24px_60px_-28px_rgba(0,0,0,0.55)] sm:rounded-[1.25rem] sm:p-8">
-            <div className="w-full min-w-0 max-w-full">{children}</div>
-          </div>
-        </div>
-
-        <ul className="order-3 mt-2 space-y-4 lg:hidden">
-          {features.map((feature, index) => {
-            const Icon = FEATURE_ICONS[index % FEATURE_ICONS.length];
-            const iconStyle = FEATURE_ICON_STYLES[index % FEATURE_ICON_STYLES.length];
-            return (
-              <li key={`mobile-${feature.title}-${index}`} className="flex gap-3.5">
-                <span
-                  className={`mt-0.5 flex h-10 w-10 shrink-0 items-center justify-center rounded-xl ${iconStyle}`}
-                >
-                  <Icon className="h-4 w-4" aria-hidden />
-                </span>
-                <div className="min-w-0 pt-0.5">
-                  <p className="text-sm font-semibold !text-white">{feature.title}</p>
-                  <p className="mt-1 text-sm leading-relaxed !text-white/65">{feature.detail}</p>
-                </div>
-              </li>
-            );
-          })}
-        </ul>
+        </aside>
       </div>
     </>
   );
@@ -440,7 +433,7 @@ export default function ToolWorkspaceLayout({
   showRelatedTools = true,
   preview = null,
   inputGuide = null,
-  compactHero = false,
+  compactHero = true,
   afterHero = null,
 }) {
   const { pathname } = useLocation();
@@ -464,18 +457,9 @@ export default function ToolWorkspaceLayout({
   );
 
   return (
-    <main className={`${swPageShell} !bg-[#f3f5f8]`}>
+    <main className={`${swPageShell} !bg-[#f7f8fc]`}>
       <section className="sw-c360-tool-hero relative overflow-hidden !py-0">
-        <div
-          className="pointer-events-none absolute inset-0 opacity-40"
-          style={{
-            backgroundImage:
-              'radial-gradient(circle at 18% 22%, rgba(242,121,33,0.18), transparent 42%), radial-gradient(circle at 82% 18%, rgba(56,189,248,0.12), transparent 38%)',
-          }}
-          aria-hidden
-        />
-
-        <div className={`relative ${LAYOUT.container} py-10 sm:py-12 lg:py-14`}>
+        <div className={`relative ${LAYOUT.container} py-8 sm:py-10 lg:py-12`}>
           {compactHero ? (
             <DualCardsHero
               title={title}
@@ -502,7 +486,7 @@ export default function ToolWorkspaceLayout({
       </section>
 
       {hasBelowHero ? (
-        <div className={`${LAYOUT.container} space-y-14 py-14 sm:space-y-16 sm:py-16 lg:space-y-20 lg:py-20`}>
+        <div className={`${LAYOUT.container} space-y-10 py-10 sm:space-y-12 sm:py-12 lg:space-y-14 lg:py-14`}>
           {afterHero}
           {results}
           {insights}

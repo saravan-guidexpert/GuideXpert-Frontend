@@ -22,19 +22,19 @@ import {
 import { getRankPredictorExams } from '../utils/rankPredictor';
 
 const RANK_EXAM_ICON_MAP = {
-  apeamcet: { Icon: FiBookOpen, iconClass: 'bg-sky-50 text-sky-600' },
-  jeeadvanced: { Icon: FiZap, iconClass: 'bg-rose-50 text-rose-600' },
-  jeemainpercentile: { Icon: FiBarChart2, iconClass: 'bg-emerald-50 text-emerald-600' },
-  jeemainmarks: { Icon: FiTarget, iconClass: 'bg-rose-50 text-rose-600' },
-  kcet: { Icon: FiCpu, iconClass: 'bg-sky-50 text-sky-600' },
-  keam: { Icon: FiAward, iconClass: 'bg-emerald-50 text-emerald-600' },
-  mhcet: { Icon: FiActivity, iconClass: 'bg-rose-50 text-rose-600' },
-  tnea: { Icon: FiTrendingUp, iconClass: 'bg-sky-50 text-sky-600' },
-  tseamcet: { Icon: FiFileText, iconClass: 'bg-emerald-50 text-emerald-600' },
-  wbjee: { Icon: FiGrid, iconClass: 'bg-violet-50 text-violet-600' },
+  apeamcet: { Icon: FiBookOpen, iconClass: 'bg-[#eef2f7] text-[#041e30]' },
+  jeeadvanced: { Icon: FiZap, iconClass: 'bg-[#fff4ed] text-[#f27921]' },
+  jeemainpercentile: { Icon: FiBarChart2, iconClass: 'bg-[#e8f1f8] text-[#0b3a5c]' },
+  jeemainmarks: { Icon: FiTarget, iconClass: 'bg-[#fff4ed] text-[#f27921]' },
+  kcet: { Icon: FiCpu, iconClass: 'bg-[#eef2f7] text-[#041e30]' },
+  keam: { Icon: FiAward, iconClass: 'bg-[#fff8ed] text-[#c45a0c]' },
+  mhcet: { Icon: FiActivity, iconClass: 'bg-[#fff4ed] text-[#f27921]' },
+  tnea: { Icon: FiTrendingUp, iconClass: 'bg-[#e8f1f8] text-[#0b3a5c]' },
+  tseamcet: { Icon: FiFileText, iconClass: 'bg-[#fff8ed] text-[#c45a0c]' },
+  wbjee: { Icon: FiGrid, iconClass: 'bg-[#eef2f7] text-[#041e30]' },
 };
 
-const DEFAULT_EXAM_ICON = { Icon: FiBarChart2, iconClass: 'bg-emerald-50 text-emerald-600' };
+const DEFAULT_EXAM_ICON = { Icon: FiBarChart2, iconClass: 'bg-[#fff4ed] text-[#f27921]' };
 
 export const ADMISSION_PREDICTOR_TOOLS = [
   {
@@ -43,7 +43,7 @@ export const ADMISSION_PREDICTOR_TOOLS = [
     description: 'Shortlist colleges that match your rank, category, and preferences.',
     to: '/students/college-predictor',
     icon: LuSearch,
-    iconClass: 'bg-rose-50 text-rose-600',
+    iconClass: 'bg-[#fff4ed] text-[#f27921]',
     tags: ['college', 'predictor', 'admission', 'cutoff', 'matches', 'state', 'category'],
   },
   {
@@ -52,7 +52,7 @@ export const ADMISSION_PREDICTOR_TOOLS = [
     description: 'See which branches you can get at your target institutions.',
     to: '/students/branch-predictor',
     icon: LuRocket,
-    iconClass: 'bg-violet-50 text-violet-600',
+    iconClass: 'bg-[#eef2f7] text-[#041e30]',
     tags: ['branch', 'predictor', 'academic', 'pathway', 'iit', 'nit', 'seat'],
   },
   {
@@ -61,7 +61,7 @@ export const ADMISSION_PREDICTOR_TOOLS = [
     description: 'Suggest suitable exams based on your profile and strengths.',
     to: '/students/exam-predictor',
     icon: LuZap,
-    iconClass: 'bg-amber-50 text-amber-600',
+    iconClass: 'bg-[#fff8ed] text-[#c45a0c]',
     tags: ['exam', 'predictor', 'suitable', 'profile', 'strengths'],
   },
   {
@@ -70,7 +70,7 @@ export const ADMISSION_PREDICTOR_TOOLS = [
     description: 'Track important exam and admission deadlines at a glance.',
     to: '/students/deadline-manager',
     icon: LuCalendar,
-    iconClass: 'bg-indigo-50 text-indigo-600',
+    iconClass: 'bg-[#e8f1f8] text-[#0b3a5c]',
     tags: ['deadline', 'calendar', 'exam', 'admission', 'dates', 'reminder'],
   },
 ];
@@ -82,7 +82,7 @@ export const FIT_TEST_TOOLS = [
     description: 'Discover courses aligned with your interests and learning style.',
     to: '/students/course-fit-test',
     icon: LuGraduationCap,
-    iconClass: 'bg-emerald-50 text-emerald-600',
+    iconClass: 'bg-[#fff4ed] text-[#f27921]',
     tags: ['course', 'fit', 'test', 'career', 'interest', 'subject'],
   },
   {
@@ -91,7 +91,7 @@ export const FIT_TEST_TOOLS = [
     description: 'Find campuses that match your lifestyle, budget, and goals.',
     to: '/students/college-fit-test',
     icon: LuMapPin,
-    iconClass: 'bg-sky-50 text-sky-600',
+    iconClass: 'bg-[#eef2f7] text-[#041e30]',
     tags: ['culture', 'college', 'fit', 'test', 'budget', 'campus', 'fees'],
   },
 ];
@@ -103,7 +103,7 @@ export const COMPARE_TOOLS = [
     description: 'Compare institutions side-by-side on key admission metrics.',
     to: '/students/college-comparison',
     icon: LuScale,
-    iconClass: 'bg-indigo-50 text-indigo-600',
+    iconClass: 'bg-[#e8f1f8] text-[#0b3a5c]',
     tags: ['compare', 'comparison', 'college', 'vs', 'metrics'],
   },
 ];

@@ -25,17 +25,17 @@ import {
 } from './components/studentWorkspaceUi';
 
 const EXAM_ICON_MAP = {
-  KCET: { Icon: FiCpu, iconClass: 'bg-sky-50 text-sky-600' },
-  MHT_CET: { Icon: FiActivity, iconClass: 'bg-rose-50 text-rose-600' },
-  KEAM: { Icon: FiAward, iconClass: 'bg-orange-50 text-orange-600' },
-  AP_EAMCET: { Icon: FiBookOpen, iconClass: 'bg-sky-50 text-sky-600' },
-  TS_EAMCET: { Icon: FiFileText, iconClass: 'bg-orange-50 text-orange-600' },
-  TNEA: { Icon: FiTrendingUp, iconClass: 'bg-sky-50 text-sky-600' },
-  JEE: { Icon: FiZap, iconClass: 'bg-rose-50 text-rose-600' },
-  WBJEE: { Icon: FiGrid, iconClass: 'bg-violet-50 text-violet-600' },
+  KCET: { Icon: FiCpu, iconClass: 'bg-[#eef2f7] text-[#041e30]' },
+  MHT_CET: { Icon: FiActivity, iconClass: 'bg-[#fff4ed] text-[#f27921]' },
+  KEAM: { Icon: FiAward, iconClass: 'bg-[#fff8ed] text-[#c45a0c]' },
+  AP_EAMCET: { Icon: FiBookOpen, iconClass: 'bg-[#e8f1f8] text-[#0b3a5c]' },
+  TS_EAMCET: { Icon: FiFileText, iconClass: 'bg-[#fff8ed] text-[#c45a0c]' },
+  TNEA: { Icon: FiTrendingUp, iconClass: 'bg-[#eef2f7] text-[#041e30]' },
+  JEE: { Icon: FiZap, iconClass: 'bg-[#fff4ed] text-[#f27921]' },
+  WBJEE: { Icon: FiGrid, iconClass: 'bg-[#e8f1f8] text-[#0b3a5c]' },
 };
 
-const DEFAULT_ICON = { Icon: FiBarChart2, iconClass: 'bg-orange-50 text-orange-600' };
+const DEFAULT_ICON = { Icon: FiBarChart2, iconClass: 'bg-[#fff4ed] text-[#f27921]' };
 const VALID_EXAMS = new Set(ENTRANCE_EXAMS.map((e) => e.value));
 
 export default function StudentCollegePredictorPredictPage() {

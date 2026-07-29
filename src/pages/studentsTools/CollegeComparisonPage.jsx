@@ -42,28 +42,28 @@ const RELATED = [
     description: 'Shortlist colleges that match your rank, category, and preferences.',
     to: '/students/college-predictor',
     icon: LuSearch,
-    iconClass: 'bg-rose-50 text-rose-600',
+    iconClass: 'bg-[#fff4ed] text-[#f27921]',
   },
   {
     title: 'Branch Predictor',
     description: 'See which branches you can get at your target institutions.',
     to: '/students/branch-predictor',
     icon: LuRocket,
-    iconClass: 'bg-violet-50 text-violet-600',
+    iconClass: 'bg-[#eef2f7] text-[#041e30]',
   },
   {
     title: 'Exam Predictor',
     description: 'Suggest suitable exams based on your profile and strengths.',
     to: '/students/exam-predictor',
     icon: LuZap,
-    iconClass: 'bg-amber-50 text-amber-600',
+    iconClass: 'bg-[#fff8ed] text-[#c45a0c]',
   },
   {
     title: 'College Fit Test',
     description: 'Find campuses that match your lifestyle, budget, and goals.',
     to: '/students/college-fit-test',
     icon: LuMapPin,
-    iconClass: 'bg-sky-50 text-sky-600',
+    iconClass: 'bg-[#e8f1f8] text-[#0b3a5c]',
   },
 ];
 

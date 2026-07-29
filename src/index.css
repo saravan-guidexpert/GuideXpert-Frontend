@@ -68,12 +68,12 @@
   --gx-student-tool-dot: rgba(4, 30, 48, 0.07);
   --gx-student-tool-dot-lime: rgba(4, 30, 48, 0.05);
   --gx-student-tool-page-dot: rgba(4, 30, 48, 0.06);
-  /* Career360-style deep teal tool hero */
-  --gx-tool-hero-from: #1a1240;
-  --gx-tool-hero-mid: #163a5c;
-  --gx-tool-hero-to: #0c3a42;
-  --gx-tool-hero-teal: #0f4550;
-  --gx-tool-form-rail: #f7f8fb;
+  /* Light tool hero — matches home GuideXpert atmosphere */
+  --gx-tool-hero-from: #f3f0f8;
+  --gx-tool-hero-mid: #eef1f8;
+  --gx-tool-hero-to: #ffffff;
+  --gx-tool-hero-teal: #f7f8fc;
+  --gx-tool-form-rail: #ffffff;
   --font-sw-display: 'Sora', 'Satoshi', system-ui, sans-serif;
   --font-sw-body: 'Source Sans 3', 'Satoshi', system-ui, sans-serif;
 }
@@ -98,10 +98,10 @@
  * Student tool / hub pages: soft GuideXpert blue atmosphere + fine grid.
  */
 .student-tool-page-shell {
-  background-color: #eef3f8;
+  background-color: #f7f8fc;
   background-image:
-    radial-gradient(ellipse 80% 50% at 10% -10%, rgba(242, 121, 33, 0.08), transparent 55%),
-    radial-gradient(ellipse 70% 45% at 95% 5%, rgba(4, 30, 48, 0.08), transparent 50%),
+    radial-gradient(ellipse 80% 50% at 10% -10%, rgba(242, 121, 33, 0.06), transparent 55%),
+    radial-gradient(ellipse 70% 45% at 95% 5%, rgba(4, 30, 48, 0.04), transparent 50%),
     radial-gradient(var(--gx-student-tool-page-dot) 1px, transparent 1px);
   background-size: auto, auto, 22px 22px;
   background-repeat: no-repeat, no-repeat, repeat;
@@ -141,60 +141,59 @@
     radial-gradient(ellipse 90% 80% at 0% 0%, rgba(242, 121, 33, 0.07), transparent 55%);
 }
 
-/* GuideXpert tool hero — Career360-style deep teal/navy band */
+/* GuideXpert tool hero — light band aligned with home */
 .sw-gx-tool-masthead,
 .sw-gx-tool-hero-band {
   background:
-    radial-gradient(ellipse 70% 55% at 12% 20%, rgba(242, 121, 33, 0.22), transparent 48%),
-    radial-gradient(ellipse 55% 50% at 88% 10%, rgba(56, 189, 248, 0.14), transparent 42%),
+    radial-gradient(ellipse 70% 55% at 12% 20%, rgba(242, 121, 33, 0.1), transparent 48%),
+    radial-gradient(ellipse 55% 50% at 88% 10%, rgba(30, 58, 95, 0.05), transparent 42%),
     linear-gradient(
-      118deg,
+      165deg,
       var(--gx-tool-hero-from) 0%,
-      #1c2858 26%,
-      var(--gx-tool-hero-mid) 50%,
-      var(--gx-tool-hero-teal) 76%,
+      var(--gx-tool-hero-mid) 42%,
+      var(--gx-tool-hero-teal) 72%,
       var(--gx-tool-hero-to) 100%
     );
-  border-bottom: 0;
-  color: #ffffff;
+  border-bottom: 1px solid #e8eaed;
+  color: #041e30;
 }
 
 .sw-c360-tool-hero {
   background:
-    radial-gradient(ellipse 70% 55% at 12% 20%, rgba(242, 121, 33, 0.22), transparent 48%),
-    radial-gradient(ellipse 55% 50% at 88% 10%, rgba(56, 189, 248, 0.14), transparent 42%),
+    radial-gradient(ellipse 70% 55% at 12% 20%, rgba(242, 121, 33, 0.1), transparent 48%),
+    radial-gradient(ellipse 55% 50% at 88% 10%, rgba(30, 58, 95, 0.05), transparent 42%),
     linear-gradient(
-      118deg,
+      165deg,
       var(--gx-tool-hero-from) 0%,
-      #1c2858 26%,
-      var(--gx-tool-hero-mid) 50%,
-      var(--gx-tool-hero-teal) 76%,
+      var(--gx-tool-hero-mid) 42%,
+      var(--gx-tool-hero-teal) 72%,
       var(--gx-tool-hero-to) 100%
     );
+  border-bottom: 1px solid #e8eaed;
 }
 
 .sw-gx-form-rail {
-  border: 1px solid rgba(255, 255, 255, 0.35);
+  border: 1px solid #e5e7eb;
   border-left: 3px solid #f27921;
   background: #ffffff;
-  box-shadow: 0 22px 50px -28px rgba(0, 0, 0, 0.55);
-  padding: 1.35rem 1.25rem 1.5rem;
-  border-radius: 0.75rem;
+  box-shadow: 0 16px 40px -24px rgba(15, 23, 42, 0.28);
+  padding: 1.25rem 1.15rem 1.35rem;
+  border-radius: 1rem;
 }
 
 @media (min-width: 640px) {
   .sw-gx-form-rail {
-    padding: 1.65rem 1.5rem 1.75rem;
+    padding: 1.5rem 1.35rem 1.55rem;
   }
 }
 
 .sw-gx-signal-steps {
   display: grid;
   gap: 0;
-  border: 1px solid rgba(255, 255, 255, 0.18);
-  background: rgba(255, 255, 255, 0.08);
-  backdrop-filter: blur(8px);
-  border-radius: 0.75rem;
+  border: 1px solid #e5e7eb;
+  background: #ffffff;
+  border-radius: 1rem;
+  box-shadow: 0 12px 32px -24px rgba(15, 23, 42, 0.2);
 }
 
 .sw-gx-signal-step {
@@ -202,8 +201,8 @@
   grid-template-columns: auto 1fr;
   gap: 0.85rem 1rem;
   align-items: start;
-  padding: 1.25rem 1.25rem;
-  border-bottom: 1px solid rgba(255, 255, 255, 0.12);
+  padding: 1.15rem 1.2rem;
+  border-bottom: 1px solid #eef0f3;
 }
 
 .sw-gx-signal-step:last-child {
@@ -211,11 +210,11 @@
 }
 
 .sw-gx-signal-step .sw-gx-step-title {
-  color: #ffffff;
+  color: #041e30;
 }
 
 .sw-gx-signal-step .sw-gx-step-detail {
-  color: rgba(255, 255, 255, 0.68);
+  color: #5a6570;
 }
 
 .sw-preview-panel {

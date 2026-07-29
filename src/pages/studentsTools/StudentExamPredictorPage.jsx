@@ -27,19 +27,19 @@ import {
 } from './components/studentWorkspaceUi';
 
 const EXAM_ICON_MAP = {
-  apeamcet: { Icon: FiBookOpen, iconClass: 'bg-sky-50 text-sky-600' },
-  jeeadvanced: { Icon: FiZap, iconClass: 'bg-rose-50 text-rose-600' },
-  jeemainpercentile: { Icon: FiBarChart2, iconClass: 'bg-emerald-50 text-emerald-600' },
-  jeemainmarks: { Icon: FiTarget, iconClass: 'bg-rose-50 text-rose-600' },
-  kcet: { Icon: FiCpu, iconClass: 'bg-sky-50 text-sky-600' },
-  keam: { Icon: FiAward, iconClass: 'bg-emerald-50 text-emerald-600' },
-  mhcet: { Icon: FiActivity, iconClass: 'bg-rose-50 text-rose-600' },
-  tnea: { Icon: FiTrendingUp, iconClass: 'bg-sky-50 text-sky-600' },
-  tseamcet: { Icon: FiFileText, iconClass: 'bg-emerald-50 text-emerald-600' },
-  wbjee: { Icon: FiGrid, iconClass: 'bg-violet-50 text-violet-600' },
+  apeamcet: { Icon: FiBookOpen, iconClass: 'bg-[#eef2f7] text-[#041e30]' },
+  jeeadvanced: { Icon: FiZap, iconClass: 'bg-[#fff4ed] text-[#f27921]' },
+  jeemainpercentile: { Icon: FiBarChart2, iconClass: 'bg-[#e8f1f8] text-[#0b3a5c]' },
+  jeemainmarks: { Icon: FiTarget, iconClass: 'bg-[#fff4ed] text-[#f27921]' },
+  kcet: { Icon: FiCpu, iconClass: 'bg-[#eef2f7] text-[#041e30]' },
+  keam: { Icon: FiAward, iconClass: 'bg-[#fff8ed] text-[#c45a0c]' },
+  mhcet: { Icon: FiActivity, iconClass: 'bg-[#fff4ed] text-[#f27921]' },
+  tnea: { Icon: FiTrendingUp, iconClass: 'bg-[#e8f1f8] text-[#0b3a5c]' },
+  tseamcet: { Icon: FiFileText, iconClass: 'bg-[#fff8ed] text-[#c45a0c]' },
+  wbjee: { Icon: FiGrid, iconClass: 'bg-[#eef2f7] text-[#041e30]' },
 };
 
-const DEFAULT_ICON = { Icon: FiBarChart2, iconClass: 'bg-emerald-50 text-emerald-600' };
+const DEFAULT_ICON = { Icon: FiBarChart2, iconClass: 'bg-[#fff4ed] text-[#f27921]' };
 
 function formatResultRange(range) {
   if (range == null || range === '') return '\u2014';

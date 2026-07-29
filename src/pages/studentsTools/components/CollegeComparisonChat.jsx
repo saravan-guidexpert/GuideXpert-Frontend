@@ -86,23 +86,23 @@ export default function CollegeComparisonChat({ comparison }) {
   return (
     <div
       id="comparison-doubts"
-      className="mt-6 overflow-hidden rounded-2xl border-2 border-[#0b3a5c]/25 bg-white shadow-[0_12px_40px_rgba(4,30,48,0.08)] ring-4 ring-[#e8f1f8]"
+      className="mt-6 overflow-hidden rounded-2xl border border-[#e5e7eb] bg-white shadow-[0_12px_28px_-20px_rgba(15,23,42,0.2)]"
     >
-      <div className="border-b border-[#d7e6f2] bg-gradient-to-r from-[#041e30] via-[#0b3a5c] to-[#124a6e] px-4 py-5 text-white sm:px-6">
+      <div className="border-b border-[#e8eaed] bg-[#fbfcfe] px-4 py-5 sm:px-6">
         <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
           <div className="flex items-start gap-3">
-            <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-white/12 text-white ring-1 ring-white/20">
+            <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-[#fff4ed] text-[#f27921]">
               <FiMessageCircle className="h-5 w-5" aria-hidden />
             </div>
             <div className="min-w-0">
-              <p className="inline-flex items-center gap-1.5 rounded-full bg-[#f27921] px-2.5 py-1 text-[10px] font-bold uppercase tracking-[0.14em] text-white">
+              <p className="inline-flex items-center gap-1.5 rounded-full bg-[#fff4ed] px-2.5 py-1 text-[10px] font-bold uppercase tracking-[0.14em] text-[#f27921]">
                 <FiStar className="h-3 w-3" aria-hidden />
                 Doubts based on this comparison
               </p>
-              <h3 className="mt-2.5 font-sw-display text-lg font-bold tracking-tight text-white sm:text-xl">
+              <h3 className="mt-2.5 font-sw-display text-lg font-bold tracking-tight text-[#041e30] sm:text-xl">
                 Ask anything about {aName} vs {bName}
               </h3>
-              <p className="mt-1.5 max-w-xl text-sm leading-relaxed text-white/75">
+              <p className="mt-1.5 max-w-xl text-sm leading-relaxed text-[#5a6570]">
                 Answers stay grounded in the comparison table above — placements, fees, ROI, and fit.
               </p>
             </div>

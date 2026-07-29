@@ -2,11 +2,12 @@ import { FiBookOpen, FiZap, FiBarChart2, FiTarget, FiCpu, FiAward, FiActivity, F
 import { getRankPredictorExams } from '../../utils/rankPredictor';
 import HubPageLayout from './components/HubPageLayout';
 
+/** GuideXpert palette only — navy / orange tones */
 const EXAM_ICON_MAP = {
-  apeamcet: { Icon: FiBookOpen, iconClass: 'bg-[#e8f1f8] text-[#0b3a5c]' },
+  apeamcet: { Icon: FiBookOpen, iconClass: 'bg-[#eef2f7] text-[#041e30]' },
   jeeadvanced: { Icon: FiZap, iconClass: 'bg-[#fff4ed] text-[#f27921]' },
-  jeemainpercentile: { Icon: FiBarChart2, iconClass: 'bg-[#041e30] text-white' },
-  jeemainmarks: { Icon: FiTarget, iconClass: 'bg-[#fff4ed] text-[#e06810]' },
+  jeemainpercentile: { Icon: FiBarChart2, iconClass: 'bg-[#e8f1f8] text-[#0b3a5c]' },
+  jeemainmarks: { Icon: FiTarget, iconClass: 'bg-[#fff4ed] text-[#f27921]' },
   kcet: { Icon: FiCpu, iconClass: 'bg-[#eef2f7] text-[#041e30]' },
   keam: { Icon: FiAward, iconClass: 'bg-[#fff8ed] text-[#c45a0c]' },
   mhcet: { Icon: FiActivity, iconClass: 'bg-[#fff4ed] text-[#f27921]' },

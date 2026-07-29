@@ -216,7 +216,12 @@ export default function WebsiteChatWidget() {
           isWelcome,
         });
         if (!response.success) {
-          throw new Error(response?.data?.response || response?.message || 'Chat unavailable');
+          throw new Error(
+            response?.data?.response ||
+              response?.data?.message ||
+              response?.message ||
+              'Chat unavailable'
+          );
         }
         const data = response.data || {};
         if (data.sessionId) {
@@ -229,11 +234,43 @@ export default function WebsiteChatWidget() {
         });
         setQuickReplies(Array.isArray(data.quickReplies) ? data.quickReplies : []);
       } catch (err) {
-        setError(err.message);
-        appendMessage(
-          'assistant',
-          'Sorry, I could not respond right now. Please try again in a moment.'
-        );
+        const msg = err.message || 'Chat unavailable';
+        // Stale session + empty welcome used to return "Message is required" — clear and retry once.
+        if (isWelcome && /message is required/i.test(msg)) {
+          try {
+            localStorage.removeItem(SESSION_KEY);
+          } catch {
+            // ignore
+          }
+          setSessionId('');
+          const retry = await sendWebChatMessage({
+            sessionId: '',
+            message: '',
+            phone: identity.phone,
+            fullName: identity.fullName,
+            isWelcome: true,
+          });
+          if (retry.success) {
+            const data = retry.data || {};
+            if (data.sessionId) {
+              setSessionId(data.sessionId);
+              saveSessionId(data.sessionId);
+            }
+            appendMessage('assistant', data.reply || '—', {
+              toolResult: data.toolResult || null,
+              source: data.source,
+            });
+            setQuickReplies(Array.isArray(data.quickReplies) ? data.quickReplies : []);
+            return;
+          }
+        }
+        setError(msg);
+        if (!isWelcome) {
+          appendMessage(
+            'assistant',
+            'Sorry, I could not respond right now. Please try again in a moment.'
+          );
+        }
       } finally {
         setLoading(false);
         requestAnimationFrame(() => inputRef.current?.focus());

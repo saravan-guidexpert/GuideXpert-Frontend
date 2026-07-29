@@ -13,10 +13,10 @@ export const C360 = {
   bgSectionAlt: '#ffffff',
   link: '#2563eb',
   live: '#dc2626',
-  /** Deep teal/navy tool hero (Career360-style atmosphere) */
-  bgToolHero: '#0f4550',
-  bgToolHeroFrom: '#1a1240',
-  bgToolHeroTo: '#0c3a42',
+  /** Light tool hero — matches GuideXpert home */
+  bgToolHero: '#f7f8fc',
+  bgToolHeroFrom: '#f3f0f8',
+  bgToolHeroTo: '#ffffff',
 };
 
 /** Shared layout classes for consistent vertical rhythm */
