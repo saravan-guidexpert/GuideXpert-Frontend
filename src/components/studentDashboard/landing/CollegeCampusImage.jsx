@@ -16,7 +16,6 @@ const FALLBACK_GRADIENTS = {
   'campus-niat': 'from-emerald-900 via-slate-800 to-slate-900',
   rank: 'from-sky-900 via-slate-800 to-slate-900',
   college: 'from-amber-900 via-slate-800 to-slate-900',
-  niat: 'from-emerald-900 via-slate-800 to-slate-900',
   'update-jee': 'from-indigo-900 via-slate-800 to-slate-900',
   'update-eamcet': 'from-sky-900 via-slate-800 to-slate-900',
   'update-compare': 'from-rose-900 via-slate-800 to-slate-900',

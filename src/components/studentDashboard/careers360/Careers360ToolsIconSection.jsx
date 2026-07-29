@@ -7,7 +7,7 @@ import {
   LuGraduationCap,
   LuMapPin,
   LuCalendar,
-  LuBarChart2,
+  LuChartBar,
 } from 'react-icons/lu';
 import { LAYOUT } from './careers360Theme';
 import './studentsSectionMotion.css';
@@ -18,7 +18,7 @@ const HOME_TOOLS = [
     id: 'rank',
     title: 'Rank Predictor',
     to: '/students/rank-predictor',
-    Icon: LuBarChart2,
+    Icon: LuChartBar,
     tone: 'bg-[#eef2f7] text-[#1e3a5f]',
   },
   {
