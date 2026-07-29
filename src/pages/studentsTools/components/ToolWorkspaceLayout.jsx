@@ -12,7 +12,7 @@ import {
   swPageShell,
 } from './studentWorkspaceUi';
 import RelatedToolsSection from './RelatedToolsSection';
-import ToolPageVisual, { ToolFactsVector } from './ToolPageVisual';
+import ToolPageVisual from './ToolPageVisual';
 
 const FEATURE_ICONS = [FiLayers, FiFilter, FiTarget];
 const FEATURE_ICON_STYLES = [
@@ -169,115 +169,154 @@ function ToolInfoSection({ title, whatThisToolDoes, inputGuide, preview, pathnam
 
   return (
     <section className="sw-fade-up" aria-labelledby="tool-info-heading">
-      <div className="grid gap-8 border-b border-[#e8eaed] pb-8 sm:gap-10 sm:pb-10 lg:grid-cols-[minmax(0,1.2fr)_minmax(0,18rem)] lg:items-end lg:gap-12">
-        <header className="min-w-0">
-          <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-[#f27921]">
-            About this tool
-          </p>
-          <h2
-            id="tool-info-heading"
-            className="mt-3 font-sw-display text-2xl font-bold tracking-tight text-[#041e30] sm:text-[1.75rem]"
-          >
-            {title || 'How this predictor works'}
-          </h2>
-          <p className="mt-3 max-w-xl text-[15px] leading-relaxed text-[#5a6570]">
-            What the tool covers, the inputs it needs, and the score bounds it uses.
-          </p>
-        </header>
-
-        {hasPreview ? (
-          <aside className="min-w-0 border-t border-[#e8eaed] pt-5 lg:border-t-0 lg:border-l lg:pl-8 lg:pt-0">
-            <div className="mb-3">
-              <ToolFactsVector pathname={pathname} />
-            </div>
-            <p className="text-[11px] font-semibold uppercase tracking-[0.14em] text-[#8a94a0]">
-              Tool facts
-            </p>
-            <div className="mt-3 text-sm leading-relaxed text-[#2c3640]">{preview}</div>
-          </aside>
-        ) : null}
-      </div>
-
-      {bodyCols > 0 ? (
-        <div
-          className="mt-8 grid items-start gap-10 sm:mt-10 sm:gap-12 lg:grid-cols-[minmax(0,1fr)_minmax(0,18rem)] lg:gap-12 xl:gap-16"
-        >
+      <div className="overflow-hidden rounded-[1.35rem] border border-[#e5e7eb] bg-white shadow-[0_18px_40px_-28px_rgba(15,23,42,0.28)]">
+        {/* Masthead */}
+        <div className="relative overflow-hidden border-b border-[#eef0f3] bg-gradient-to-br from-[#fff8f3] via-[#fbfcfe] to-white px-5 py-6 sm:px-7 sm:py-7 lg:px-8">
           <div
-            className={`min-w-0 grid gap-10 sm:gap-12 ${
-              bodyCols === 2 ? 'lg:grid-cols-2 lg:gap-12' : ''
-            }`}
-          >
-            {hasWhat ? (
-              <div className="min-w-0">
-                <div className="flex items-baseline gap-3">
-                  <span className="font-sw-display text-sm font-bold tabular-nums text-[#f27921]">
-                    01
-                  </span>
-                  <h3 className="text-base font-semibold tracking-tight text-[#041e30]">
-                    What this tool does
-                  </h3>
-                </div>
-                <ul className="mt-6 space-y-5 border-l border-[#e8eaed] pl-5">
-                  {whatThisToolDoes.map((item) => (
-                    <li key={item} className="relative">
-                      <span
-                        className="absolute -left-[1.41rem] top-2.5 h-2 w-2 rounded-full bg-[#f27921] ring-4 ring-[#f7f8fc]"
-                        aria-hidden
-                      />
-                      <p className="text-[15px] leading-[1.7] text-[#3d4754]">{item}</p>
-                    </li>
-                  ))}
-                </ul>
+            className="pointer-events-none absolute -right-10 -top-12 h-40 w-40 rounded-full bg-[#f27921]/10 blur-2xl"
+            aria-hidden
+          />
+          <div className="relative grid gap-6 lg:grid-cols-[minmax(0,1.35fr)_minmax(0,18rem)] lg:items-start lg:gap-10">
+            <header className="min-w-0">
+              <div className="inline-flex items-center gap-2 rounded-full border border-[#f27921]/20 bg-white/80 px-3 py-1">
+                <span className="h-1.5 w-1.5 rounded-full bg-[#f27921]" aria-hidden />
+                <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-[#f27921]">
+                  About this tool
+                </p>
               </div>
-            ) : null}
+              <h2
+                id="tool-info-heading"
+                className="mt-4 font-sw-display text-2xl font-bold tracking-tight text-[#041e30] sm:text-[1.85rem]"
+              >
+                {title || 'How this predictor works'}
+              </h2>
+              <p className="mt-2.5 max-w-xl text-[15px] leading-relaxed text-[#5a6570]">
+                Coverage, inputs, and score bounds — so you know exactly what this predictor delivers.
+              </p>
+              <div className="mt-5 flex flex-wrap gap-2">
+                {hasWhat ? (
+                  <span className="rounded-full border border-[#e5e7eb] bg-white px-3 py-1 text-[11px] font-semibold text-[#667085]">
+                    Capabilities
+                  </span>
+                ) : null}
+                {hasGuide ? (
+                  <span className="rounded-full border border-[#e5e7eb] bg-white px-3 py-1 text-[11px] font-semibold text-[#667085]">
+                    Step-by-step use
+                  </span>
+                ) : null}
+                {hasPreview ? (
+                  <span className="rounded-full border border-[#e5e7eb] bg-white px-3 py-1 text-[11px] font-semibold text-[#667085]">
+                    Score bounds
+                  </span>
+                ) : null}
+              </div>
+            </header>
 
-            {hasGuide ? (
-              <div className="min-w-0">
-                <div className="flex items-baseline gap-3">
-                  <span className="font-sw-display text-sm font-bold tabular-nums text-[#f27921]">
-                    {hasWhat ? '02' : '01'}
-                  </span>
-                  <h3 className="text-base font-semibold tracking-tight text-[#041e30]">
-                    How to use it
-                  </h3>
-                </div>
-                <ol className="mt-6 space-y-6">
-                  {inputGuide.map((item, index) => {
-                    const { label, detail } = splitGuideItem(item);
-                    return (
-                      <li key={item} className="grid grid-cols-[2rem_minmax(0,1fr)] gap-4">
-                        <span className="flex h-8 w-8 items-center justify-center rounded-full border border-[#e5e7eb] bg-white text-xs font-bold tabular-nums text-[#041e30]">
-                          {index + 1}
-                        </span>
-                        <div className="min-w-0 pt-1">
-                          {label ? (
-                            <>
-                              <p className="text-sm font-semibold text-[#041e30]">{label}</p>
-                              <p className="mt-1.5 text-[15px] leading-[1.7] text-[#3d4754]">
-                                {detail}
-                              </p>
-                            </>
-                          ) : (
-                            <p className="text-[15px] leading-[1.7] text-[#3d4754]">{detail}</p>
-                          )}
-                        </div>
-                      </li>
-                    );
-                  })}
-                </ol>
-              </div>
+            {hasPreview ? (
+              <aside className="min-w-0 lg:pt-1">{preview}</aside>
             ) : null}
           </div>
+        </div>
 
-          <aside className="min-w-0 lg:sticky lg:top-24">
-            <ToolPageVisual pathname={pathname} />
-          </aside>
-        </div>
-      ) : (
-        <div className="mt-8 sm:mt-10">
-          <ToolPageVisual pathname={pathname} className="max-w-md" />
-        </div>
-      )}
+        {/* Body */}
+        {bodyCols > 0 ? (
+          <div className="grid items-stretch gap-0 lg:grid-cols-[minmax(0,1fr)_minmax(0,17rem)]">
+            <div
+              className={`min-w-0 grid gap-0 ${
+                bodyCols === 2 ? 'md:grid-cols-2' : ''
+              }`}
+            >
+              {hasWhat ? (
+                <div className="min-w-0 border-b border-[#eef0f3] p-5 sm:p-6 md:border-b-0 md:border-r md:border-[#eef0f3]">
+                  <div className="mb-5 flex items-center gap-3">
+                    <span className="flex h-9 w-9 items-center justify-center rounded-xl bg-[#fff4ed] font-sw-display text-sm font-bold tabular-nums text-[#f27921]">
+                      01
+                    </span>
+                    <div>
+                      <h3 className="text-sm font-semibold tracking-tight text-[#041e30] sm:text-base">
+                        What this tool does
+                      </h3>
+                      <p className="mt-0.5 text-xs text-[#8a94a0]">Core outcomes</p>
+                    </div>
+                  </div>
+                  <ul className="space-y-3">
+                    {whatThisToolDoes.map((item, index) => (
+                      <li
+                        key={item}
+                        className="rounded-xl border border-[#eef0f3] bg-[#fafbfc] px-3.5 py-3.5 transition hover:border-[#f27921]/25 hover:bg-white"
+                      >
+                        <div className="flex gap-3">
+                          <span
+                            className="mt-0.5 flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-[#041e30] text-[10px] font-bold tabular-nums text-white"
+                            aria-hidden
+                          >
+                            {index + 1}
+                          </span>
+                          <p className="text-sm leading-relaxed text-[#3d4754]">{item}</p>
+                        </div>
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+              ) : null}
+
+              {hasGuide ? (
+                <div className="min-w-0 border-b border-[#eef0f3] p-5 sm:p-6 lg:border-b-0">
+                  <div className="mb-5 flex items-center gap-3">
+                    <span className="flex h-9 w-9 items-center justify-center rounded-xl bg-[#eef2f7] font-sw-display text-sm font-bold tabular-nums text-[#041e30]">
+                      {hasWhat ? '02' : '01'}
+                    </span>
+                    <div>
+                      <h3 className="text-sm font-semibold tracking-tight text-[#041e30] sm:text-base">
+                        How to use it
+                      </h3>
+                      <p className="mt-0.5 text-xs text-[#8a94a0]">Quick workflow</p>
+                    </div>
+                  </div>
+                  <ol className="relative space-y-0 border-l border-[#e8eaed] pl-5">
+                    {inputGuide.map((item, index) => {
+                      const { label, detail } = splitGuideItem(item);
+                      return (
+                        <li key={item} className="relative pb-5 last:pb-0">
+                          <span
+                            className="absolute -left-[1.55rem] top-0 flex h-6 w-6 items-center justify-center rounded-full border-2 border-white bg-[#f27921] text-[10px] font-bold tabular-nums text-white shadow-sm"
+                            aria-hidden
+                          >
+                            {index + 1}
+                          </span>
+                          <div className="min-w-0 rounded-xl border border-[#eef0f3] bg-white px-3.5 py-3 shadow-[0_1px_0_rgba(15,23,42,0.03)]">
+                            {label ? (
+                              <>
+                                <p className="text-sm font-semibold text-[#041e30]">{label}</p>
+                                <p className="mt-1 text-sm leading-relaxed text-[#5a6570]">
+                                  {detail}
+                                </p>
+                              </>
+                            ) : (
+                              <p className="text-sm leading-relaxed text-[#5a6570]">{detail}</p>
+                            )}
+                          </div>
+                        </li>
+                      );
+                    })}
+                  </ol>
+                </div>
+              ) : null}
+            </div>
+
+            <aside className="min-w-0 border-t border-[#eef0f3] bg-[#fafbfc] p-5 sm:p-6 lg:border-t-0 lg:border-l lg:border-[#eef0f3]">
+              <p className="mb-3 text-[11px] font-semibold uppercase tracking-[0.14em] text-[#8a94a0]">
+                Visual guide
+              </p>
+              <ToolPageVisual pathname={pathname} />
+            </aside>
+          </div>
+        ) : (
+          <div className="bg-[#fafbfc] p-5 sm:p-6">
+            <ToolPageVisual pathname={pathname} className="max-w-md" />
+          </div>
+        )}
+      </div>
     </section>
   );
 }
