@@ -28,11 +28,11 @@ function HeroRotatingWord({ words, interval = 2100 }) {
   }, [words, interval]);
 
   return (
-    <span className="relative mt-1 block min-h-[1.15em]" aria-hidden>
+    <span className="relative inline-block align-baseline" aria-hidden>
       <AnimatePresence mode="wait" initial={false}>
         <motion.span
           key={words[index]}
-          className="inline-block whitespace-nowrap text-[1.22em] font-extrabold leading-none tracking-[-0.035em] text-[#f27921]"
+          className="inline-block whitespace-nowrap font-normal text-[#f27921]"
           initial={{ opacity: 0, y: '0.3em' }}
           animate={{ opacity: 1, y: 0 }}
           exit={{ opacity: 0, y: '-0.3em' }}
