@@ -4,6 +4,16 @@ import { TRENDING_COLLEGES } from '../landing/landingPageData';
 import { WORKSPACE_IMAGES } from './studentWorkspaceImages';
 
 export const HOME_TAGLINE = 'Guiding Every Choice. Shaping Every Future.';
+export const HOME_TAGLINE_LEAD = 'Guiding Every Choice.';
+export const HOME_TAGLINE_PREFIX = 'Shaping Every';
+export const HOME_TAGLINE_ROTATING = [
+  'Future!',
+  'Student!',
+  'Dream!',
+  'Rank!',
+  'Branch!',
+  'Career!',
+];
 export const HOME_SUBTITLE =
   'Rank predictors, college shortlists, and fit tests — one workspace for Indian entrance exams.';
 

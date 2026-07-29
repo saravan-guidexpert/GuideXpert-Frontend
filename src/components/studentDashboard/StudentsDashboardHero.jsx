@@ -1,8 +1,12 @@
+import { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
-import { motion } from 'framer-motion';
+import { AnimatePresence, motion } from 'framer-motion';
 import { FiSearch, FiX } from 'react-icons/fi';
 import {
   HOME_TAGLINE,
+  HOME_TAGLINE_LEAD,
+  HOME_TAGLINE_PREFIX,
+  HOME_TAGLINE_ROTATING,
   HERO_TRUST_STATS,
   POPULAR_PREDICTORS,
 } from './careers360/careers360HomeData';
@@ -11,6 +15,35 @@ import { useCountUp } from './landing/useCountUp';
 import { fadeUp, staggerContainer, defaultViewport, smoothTransition } from './landing/motion';
 import HeroLiveActivityToasts from './HeroLiveActivityToasts';
 import OneOnOneSessionBookingForm from '../oneOnOneSession/OneOnOneSessionBookingForm';
+
+function HeroRotatingWord({ words, interval = 2100 }) {
+  const [index, setIndex] = useState(0);
+
+  useEffect(() => {
+    if (words.length < 2) return undefined;
+    const timer = window.setInterval(() => {
+      setIndex((prev) => (prev + 1) % words.length);
+    }, interval);
+    return () => window.clearInterval(timer);
+  }, [words, interval]);
+
+  return (
+    <span className="relative mt-1 block min-h-[1.15em]" aria-hidden>
+      <AnimatePresence mode="wait" initial={false}>
+        <motion.span
+          key={words[index]}
+          className="inline-block whitespace-nowrap text-[1.22em] font-extrabold leading-none tracking-[-0.035em] text-[#f27921]"
+          initial={{ opacity: 0, y: '0.3em' }}
+          animate={{ opacity: 1, y: 0 }}
+          exit={{ opacity: 0, y: '-0.3em' }}
+          transition={{ duration: 0.4, ease: [0.22, 1, 0.36, 1] }}
+        >
+          {words[index]}
+        </motion.span>
+      </AnimatePresence>
+    </span>
+  );
+}
 
 function HeroStatItem({ stat, index }) {
   const { ref, display } = useCountUp(stat.value, {
@@ -108,7 +141,13 @@ export default function StudentsDashboardHero({
               animate={{ opacity: 1, y: 0 }}
               transition={smoothTransition}
             >
-              {HOME_TAGLINE}
+              <span className="sr-only">{HOME_TAGLINE}</span>
+              <span aria-hidden>
+                {HOME_TAGLINE_LEAD}
+                <br />
+                {HOME_TAGLINE_PREFIX}{' '}
+                <HeroRotatingWord words={HOME_TAGLINE_ROTATING} />
+              </span>
             </motion.h1>
 
             <motion.div
