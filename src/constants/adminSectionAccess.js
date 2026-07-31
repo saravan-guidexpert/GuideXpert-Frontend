@@ -38,6 +38,7 @@ export const ADMIN_SECTION_OPTIONS = [
   { sectionKey: 'student-workspace-updates', label: 'Student panel (updates, legacy)' },
   { sectionKey: 'student-testimonials', label: 'Student panel (testimonials, legacy)' },
   { sectionKey: 'settings', label: 'Settings' },
+  { sectionKey: 'system-prompt', label: 'System Prompt' },
 ];
 
 export const ADMIN_SECTION_KEYS = ADMIN_SECTION_OPTIONS.map((o) => o.sectionKey);
@@ -86,6 +87,7 @@ export const ADMIN_SECTION_GROUPS = [
       'lead-intelligence',
       'human-copilot',
       'student-workspace',
+      'system-prompt',
     ],
   },
   {

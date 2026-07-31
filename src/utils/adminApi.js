@@ -1149,6 +1149,22 @@ export const setOsviSetting = async (input, token = getStoredToken()) => {
   return adminRequest('/app-settings/osvi', { method: 'PATCH', body: JSON.stringify(body) }, token);
 };
 
+/** GET /admin/system-prompt — Flow V3 chatbot system prompt. */
+export const getSystemPrompt = async (token = getStoredToken()) => {
+  return adminRequest('/system-prompt', { method: 'GET' }, token);
+};
+
+/**
+ * PUT /admin/system-prompt — update Flow V3 system prompt (super-admin only).
+ * @param {string} text
+ */
+export const setSystemPrompt = async (text, token = getStoredToken()) => {
+  return adminRequest('/system-prompt', {
+    method: 'PUT',
+    body: JSON.stringify({ text: typeof text === 'string' ? text : '' }),
+  }, token);
+};
+
 /** GET /osvi/call-sessions — list CRM-stored OSVI call sessions (admin auth, no /admin prefix). */
 export const getOsviCallSessionsData = async (params = {}, token = getStoredToken()) => {
   const search = new URLSearchParams();

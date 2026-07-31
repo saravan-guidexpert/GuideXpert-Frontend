@@ -2,7 +2,7 @@ import { createElement, useState, useMemo, useEffect, useCallback, useRef } from
 import { useSidebarScrollbarActivity } from '../../hooks/useSidebarScrollbarActivity';
 import { Link, NavLink, Outlet, useLocation, useNavigate } from 'react-router-dom';
 import { HiMenu, HiX } from 'react-icons/hi';
-import { FiLayout, FiUsers, FiBarChart2, FiDownload, FiSettings, FiCalendar, FiClock, FiVideo, FiFileText, FiBell, FiLink, FiClipboard, FiMessageSquare, FiBookOpen, FiImage, FiPhone, FiLayers, FiTarget, FiUserPlus, FiSend, FiDatabase, FiHeadphones, FiChevronLeft, FiChevronRight, FiLogOut, FiGlobe, FiColumns } from 'react-icons/fi';
+import { FiLayout, FiUsers, FiBarChart2, FiDownload, FiSettings, FiCalendar, FiClock, FiVideo, FiFileText, FiBell, FiLink, FiClipboard, FiMessageSquare, FiBookOpen, FiImage, FiPhone, FiLayers, FiTarget, FiUserPlus, FiSend, FiDatabase, FiHeadphones, FiChevronLeft, FiChevronRight, FiLogOut, FiGlobe, FiColumns, FiEdit3 } from 'react-icons/fi';
 import { useAuth } from '../../hooks/useAuth';
 import { AdminDashboardProvider } from '../../contexts/AdminDashboardContext';
 import { useAdminDateRange } from '../../hooks/useAdminDateRange';
@@ -63,6 +63,7 @@ const navItems = [
   { to: '/admin/lead-intelligence', label: 'Chatbot Lead Intelligence', icon: FiMessageSquare, sectionKey: 'lead-intelligence', sidebarPlacement: 'students' },
   { to: '/admin/human-copilot', label: 'Human Copilot', icon: FiHeadphones, sectionKey: 'human-copilot', sidebarPlacement: 'students' },
   { to: '/admin/student-panel', label: 'Student panel', icon: FiLayers, sectionKey: 'student-workspace', sidebarPlacement: 'students' },
+  { to: '/admin/system-prompt', label: 'System Prompt', icon: FiEdit3, sectionKey: 'system-prompt', sidebarPlacement: 'students' },
   { to: '/admin/calling-team', label: 'Calling Team', icon: FiPhone, sectionKey: 'calling-team', hideInSidebar: true },
   { to: '/admin/calling-data', label: 'Calling Data', icon: FiDatabase, sectionKey: 'calling-data', hideInSidebar: true },
   { to: '/admin/calling-team/leads', label: 'Calling Team Leads', icon: FiUsers, sectionKey: 'calling-team', hideInSidebar: true },

@@ -50,6 +50,7 @@ import Slots from './pages/admin/Slots';
 import DemoMeetSchedule from './pages/admin/DemoMeetSchedule';
 import Export from './pages/admin/Export';
 import Settings from './pages/admin/Settings';
+import SystemPrompt from './pages/admin/SystemPrompt';
 import MeetingAttendance from './pages/admin/MeetingAttendance';
 import IitMeetAttendance from './pages/admin/IitMeetAttendance';
 import InfluencerTracking from './pages/admin/InfluencerTracking';
@@ -518,6 +519,7 @@ function App() {
             <Route path="demo-meet-schedule" element={<DemoMeetSchedule />} />
             <Route path="export" element={<Export />} />
             <Route path="settings" element={<Settings />} />
+            <Route path="system-prompt" element={<SystemPrompt />} />
             <Route path="meeting-attendance" element={<MeetingAttendance />} />
             <Route path="iit-meet-attendance" element={<IitMeetAttendance />} />
             <Route path="training-feedback" element={<TrainingFeedback />} />
