@@ -1165,6 +1165,21 @@ export const setSystemPrompt = async (text, token = getStoredToken()) => {
   }, token);
 };
 
+/**
+ * POST /admin/chatbot/clear-profile — clear WhatsApp bot profile for one phone (super-admin).
+ * @param {string} phone
+ */
+export const clearChatbotProfile = async (phone, token = getStoredToken()) => {
+  return adminRequest(
+    '/chatbot/clear-profile',
+    {
+      method: 'POST',
+      body: JSON.stringify({ phone: String(phone ?? '') }),
+    },
+    token
+  );
+};
+
 /** GET /osvi/call-sessions — list CRM-stored OSVI call sessions (admin auth, no /admin prefix). */
 export const getOsviCallSessionsData = async (params = {}, token = getStoredToken()) => {
   const search = new URLSearchParams();
