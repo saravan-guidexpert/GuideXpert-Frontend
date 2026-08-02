@@ -212,6 +212,15 @@ export default function SystemPrompt() {
     setDetailLoading(false);
   };
 
+  useEffect(() => {
+    if (!selectedId) return undefined;
+    const onKeyDown = (e) => {
+      if (e.key === 'Escape') closeHistoryModal();
+    };
+    window.addEventListener('keydown', onKeyDown);
+    return () => window.removeEventListener('keydown', onKeyDown);
+  }, [selectedId]);
+
   const handleCopy = async () => {
     const value = selectedItem?.text || '';
     if (!value) return;
@@ -387,21 +396,23 @@ export default function SystemPrompt() {
         ) : null}
       </form>
 
-      <section className="bg-white rounded-xl border border-gray-200 shadow-sm p-5 space-y-4">
+      <section className="bg-white rounded-xl border border-gray-200 shadow-sm p-5 sm:p-6 space-y-5">
         <div className="flex flex-wrap items-start justify-between gap-3">
           <div>
-            <h2 className="text-base font-semibold text-primary-navy">System prompt history</h2>
-            <p className="mt-1 text-sm text-gray-600">
-              Saved versions with date and time. Tap a row to view, copy, or load into the editor.
+            <h2 className="text-base font-semibold text-primary-navy tracking-tight">
+              System prompt history
+            </h2>
+            <p className="mt-1 text-sm text-gray-600 max-w-xl">
+              Browse saved versions by date. Open a card to view the full prompt, copy it, or load it into the editor.
             </p>
           </div>
           <button
             type="button"
             onClick={loadHistory}
             disabled={historyLoading}
-            className="px-3 py-2 text-sm rounded-lg border border-gray-300 text-gray-700 hover:bg-gray-50 disabled:opacity-50"
+            className="inline-flex items-center gap-2 px-3.5 py-2 text-sm font-medium rounded-lg border border-gray-300 text-gray-700 bg-white hover:bg-gray-50 hover:border-gray-400 disabled:opacity-50 transition-colors"
           >
-            {historyLoading ? 'Loading…' : 'Refresh'}
+            {historyLoading ? 'Refreshing…' : 'Refresh'}
           </button>
         </div>
 
@@ -412,89 +423,129 @@ export default function SystemPrompt() {
         ) : null}
 
         {historyLoading && history.length === 0 ? (
-          <p className="text-sm text-gray-500">Loading history…</p>
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+            {[0, 1, 2].map((i) => (
+              <div
+                key={i}
+                className="rounded-xl border border-gray-200 bg-gray-50/80 p-4 animate-pulse space-y-3 min-h-[11rem]"
+              >
+                <div className="h-4 w-2/3 rounded bg-gray-200" />
+                <div className="h-3 w-1/3 rounded bg-gray-200" />
+                <div className="flex gap-2">
+                  <div className="h-5 w-14 rounded-full bg-gray-200" />
+                  <div className="h-5 w-20 rounded-full bg-gray-200" />
+                </div>
+                <div className="h-16 rounded-lg bg-gray-200" />
+              </div>
+            ))}
+          </div>
         ) : null}
 
         {!historyLoading && history.length === 0 && !historyError ? (
-          <p className="text-sm text-gray-500">
-            No history yet — versions appear after the next Save (current prompt is seeded on first open).
-          </p>
+          <div className="rounded-xl border border-dashed border-gray-300 bg-gray-50 px-6 py-10 text-center">
+            <p className="text-sm font-medium text-gray-700">No versions yet</p>
+            <p className="mt-1 text-sm text-gray-500">
+              History appears after you save a prompt. The current prompt is seeded on first open when available.
+            </p>
+          </div>
         ) : null}
 
         {history.length > 0 ? (
-          <ul className="divide-y divide-gray-100 border border-gray-200 rounded-lg overflow-hidden">
-            {history.map((item) => (
-              <li key={item.id}>
-                <button
-                  type="button"
-                  onClick={() => openHistoryItem(item.id)}
-                  className="w-full text-left px-4 py-3 hover:bg-gray-50 focus:outline-none focus:bg-gray-50 transition-colors"
-                >
-                  <div className="flex flex-wrap items-center justify-between gap-2">
-                    <span className="text-sm font-semibold text-primary-navy">
-                      {formatWhen(item.updatedAt)}
-                    </span>
-                    <span className="text-xs text-gray-500">
-                      {formatBytes(item.bytes)}
-                      {item.hash ? ` · ${item.hash}` : ''}
-                    </span>
-                  </div>
-                  <p className="mt-0.5 text-xs text-gray-500">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+            {history.map((item, index) => (
+              <button
+                key={item.id}
+                type="button"
+                onClick={() => openHistoryItem(item.id)}
+                className="group relative flex flex-col text-left rounded-xl border border-gray-200 bg-white p-4 shadow-sm transition-all duration-150 hover:-translate-y-0.5 hover:border-primary-navy/40 hover:shadow-md focus:outline-none focus-visible:ring-2 focus-visible:ring-primary-navy/50 focus-visible:ring-offset-2"
+              >
+                {index === 0 ? (
+                  <span className="absolute top-3 right-3 inline-flex items-center rounded-full bg-primary-navy/10 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-primary-navy">
+                    Latest
+                  </span>
+                ) : null}
+                <div className={index === 0 ? 'pr-14' : ''}>
+                  <h3 className="text-sm font-semibold text-primary-navy leading-snug">
+                    {formatWhen(item.updatedAt)}
+                  </h3>
+                  <p className="mt-1 text-xs text-gray-500">
                     {item.updatedByEmail ? `by ${item.updatedByEmail}` : 'Unknown editor'}
                   </p>
-                  {item.textPreview ? (
-                    <p className="mt-1 text-xs text-gray-600 line-clamp-2 font-mono">
-                      {item.textPreview}
-                    </p>
+                </div>
+                <div className="mt-3 flex flex-wrap gap-1.5">
+                  <span className="inline-flex items-center rounded-full bg-gray-100 px-2 py-0.5 text-[11px] font-medium text-gray-700">
+                    {formatBytes(item.bytes)}
+                  </span>
+                  {item.hash ? (
+                    <span className="inline-flex items-center rounded-full bg-gray-100 px-2 py-0.5 text-[11px] font-mono text-gray-600">
+                      {item.hash.slice(0, 8)}
+                    </span>
                   ) : null}
-                </button>
-              </li>
+                </div>
+                <div className="mt-3 flex-1 rounded-lg bg-slate-50 border border-slate-100 px-2.5 py-2 min-h-[4.5rem]">
+                  <p className="text-[11px] leading-relaxed text-gray-600 font-mono line-clamp-3">
+                    {item.textPreview || 'No preview'}
+                  </p>
+                </div>
+                <p className="mt-3 text-[11px] font-medium text-primary-navy/70 group-hover:text-primary-navy transition-colors">
+                  View &amp; copy →
+                </p>
+              </button>
             ))}
-          </ul>
+          </div>
         ) : null}
       </section>
 
       {selectedId ? (
         <div
-          className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/40"
+          className="fixed inset-0 z-50 flex items-center justify-center p-4 sm:p-6 bg-slate-900/50 backdrop-blur-[2px]"
           role="dialog"
           aria-modal="true"
           aria-labelledby="prompt-history-title"
           onClick={closeHistoryModal}
         >
           <div
-            className="bg-white rounded-xl shadow-xl w-full max-w-4xl max-h-[90vh] flex flex-col"
+            className="bg-white rounded-2xl shadow-2xl w-full max-w-4xl max-h-[90vh] flex flex-col border border-gray-200/80"
             onClick={(e) => e.stopPropagation()}
           >
-            <div className="px-5 py-4 border-b border-gray-200 flex flex-wrap items-start justify-between gap-3">
-              <div>
-                <h3 id="prompt-history-title" className="text-base font-semibold text-primary-navy">
-                  Prompt version
+            <div className="px-5 sm:px-6 py-4 border-b border-gray-100 flex flex-wrap items-start justify-between gap-3">
+              <div className="min-w-0">
+                <h3 id="prompt-history-title" className="text-lg font-semibold text-primary-navy tracking-tight">
+                  {selectedItem ? formatWhen(selectedItem.updatedAt) : detailLoading ? 'Loading…' : 'Prompt version'}
                 </h3>
-                <p className="mt-1 text-xs text-gray-500">
-                  {selectedItem
-                    ? `${formatWhen(selectedItem.updatedAt)}${
-                        selectedItem.updatedByEmail ? ` · ${selectedItem.updatedByEmail}` : ''
-                      } · ${formatBytes(selectedItem.bytes)}${
-                        selectedItem.hash ? ` · ${selectedItem.hash}` : ''
-                      }`
-                    : detailLoading
-                      ? 'Loading…'
-                      : '—'}
-                </p>
+                {selectedItem ? (
+                  <div className="mt-2 flex flex-wrap gap-1.5">
+                    {selectedItem.updatedByEmail ? (
+                      <span className="inline-flex items-center rounded-full bg-gray-100 px-2.5 py-0.5 text-xs text-gray-700">
+                        {selectedItem.updatedByEmail}
+                      </span>
+                    ) : null}
+                    <span className="inline-flex items-center rounded-full bg-gray-100 px-2.5 py-0.5 text-xs text-gray-700">
+                      {formatBytes(selectedItem.bytes)}
+                    </span>
+                    {selectedItem.hash ? (
+                      <span className="inline-flex items-center rounded-full bg-gray-100 px-2.5 py-0.5 text-xs font-mono text-gray-600">
+                        {selectedItem.hash}
+                      </span>
+                    ) : null}
+                  </div>
+                ) : null}
               </div>
               <button
                 type="button"
                 onClick={closeHistoryModal}
-                className="px-3 py-1.5 text-sm rounded-lg border border-gray-300 text-gray-700 hover:bg-gray-50"
+                className="shrink-0 px-3 py-1.5 text-sm font-medium rounded-lg border border-gray-300 text-gray-700 hover:bg-gray-50"
               >
                 Close
               </button>
             </div>
 
-            <div className="flex-1 overflow-auto px-5 py-4">
+            <div className="flex-1 overflow-auto px-5 sm:px-6 py-4">
               {detailLoading ? (
-                <p className="text-sm text-gray-500">Loading prompt text…</p>
+                <div className="space-y-3 animate-pulse">
+                  <div className="h-4 w-1/3 rounded bg-gray-200" />
+                  <div className="h-48 rounded-xl bg-gray-100" />
+                </div>
               ) : null}
               {detailError ? (
                 <div className="rounded-lg px-4 py-3 text-sm bg-red-50 text-red-800 border border-red-200">
@@ -506,19 +557,21 @@ export default function SystemPrompt() {
                   readOnly
                   value={selectedItem.text}
                   spellCheck={false}
-                  className="w-full min-h-[20rem] h-[55vh] font-mono text-sm leading-relaxed rounded-lg border border-gray-300 px-3 py-2 bg-gray-50 text-gray-900 select-text"
+                  className="w-full min-h-[20rem] h-[52vh] font-mono text-sm leading-relaxed rounded-xl border border-gray-200 px-4 py-3 bg-slate-50 text-gray-900 select-text focus:outline-none focus:ring-2 focus:ring-primary-navy/30"
                 />
               ) : null}
             </div>
 
-            <div className="px-5 py-4 border-t border-gray-200 flex flex-wrap items-center justify-between gap-3">
-              <p className="text-xs text-gray-500">{copyStatus || 'Select text or use Copy all'}</p>
+            <div className="px-5 sm:px-6 py-4 border-t border-gray-100 flex flex-wrap items-center justify-between gap-3 bg-gray-50/80 rounded-b-2xl">
+              <p className="text-xs text-gray-500">
+                {copyStatus || 'Press Esc to close · Select text or use Copy all'}
+              </p>
               <div className="flex items-center gap-2">
                 <button
                   type="button"
                   onClick={handleCopy}
                   disabled={!selectedItem?.text}
-                  className="px-3 py-2 text-sm rounded-lg border border-gray-300 text-gray-700 hover:bg-gray-50 disabled:opacity-50"
+                  className="px-3.5 py-2 text-sm font-medium rounded-lg border border-gray-300 bg-white text-gray-700 hover:bg-gray-50 disabled:opacity-50"
                 >
                   Copy all
                 </button>
