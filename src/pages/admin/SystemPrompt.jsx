@@ -27,6 +27,50 @@ function formatWhen(iso) {
   }
 }
 
+function startOfLocalDay(value) {
+  const d = new Date(value);
+  d.setHours(0, 0, 0, 0);
+  return d;
+}
+
+function endOfLocalDay(value) {
+  const d = new Date(value);
+  d.setHours(23, 59, 59, 999);
+  return d;
+}
+
+function getHistoryRangeBounds(range, fromStr, toStr) {
+  const now = new Date();
+  if (range === 'today') {
+    return { from: startOfLocalDay(now), to: endOfLocalDay(now) };
+  }
+  if (range === '7d') {
+    const from = startOfLocalDay(now);
+    from.setDate(from.getDate() - 6);
+    return { from, to: endOfLocalDay(now) };
+  }
+  if (range === '30d') {
+    const from = startOfLocalDay(now);
+    from.setDate(from.getDate() - 29);
+    return { from, to: endOfLocalDay(now) };
+  }
+  if (range === 'custom') {
+    return {
+      from: fromStr ? startOfLocalDay(fromStr) : null,
+      to: toStr ? endOfLocalDay(toStr) : null,
+    };
+  }
+  return { from: null, to: null };
+}
+
+const HISTORY_RANGE_OPTIONS = [
+  { id: 'all', label: 'All time' },
+  { id: 'today', label: 'Today' },
+  { id: '7d', label: 'Last 7 days' },
+  { id: '30d', label: 'Last 30 days' },
+  { id: 'custom', label: 'Custom' },
+];
+
 export default function SystemPrompt() {
   const { user } = useAuth();
   const isSuperAdmin = user?.isSuperAdmin === true;
@@ -51,6 +95,10 @@ export default function SystemPrompt() {
   const [history, setHistory] = useState([]);
   const [historyLoading, setHistoryLoading] = useState(true);
   const [historyError, setHistoryError] = useState('');
+  const [historyRange, setHistoryRange] = useState('all');
+  const [historyFrom, setHistoryFrom] = useState('');
+  const [historyTo, setHistoryTo] = useState('');
+  const [historyQuery, setHistoryQuery] = useState('');
   const [selectedId, setSelectedId] = useState(null);
   const [selectedItem, setSelectedItem] = useState(null);
   const [detailLoading, setDetailLoading] = useState(false);
@@ -243,6 +291,36 @@ export default function SystemPrompt() {
     window.scrollTo({ top: 0, behavior: 'smooth' });
   };
 
+  const { from: historyBoundFrom, to: historyBoundTo } = getHistoryRangeBounds(
+    historyRange,
+    historyFrom,
+    historyTo
+  );
+  const historyQueryNormalized = historyQuery.trim().toLowerCase();
+  const filteredHistory = history.filter((item) => {
+    const ts = item.updatedAt ? new Date(item.updatedAt).getTime() : NaN;
+    if (historyBoundFrom && (!Number.isFinite(ts) || ts < historyBoundFrom.getTime())) return false;
+    if (historyBoundTo && (!Number.isFinite(ts) || ts > historyBoundTo.getTime())) return false;
+    if (historyQueryNormalized) {
+      const hay = [item.updatedByEmail, item.hash, item.textPreview, formatWhen(item.updatedAt)]
+        .filter(Boolean)
+        .join(' ')
+        .toLowerCase();
+      if (!hay.includes(historyQueryNormalized)) return false;
+    }
+    return true;
+  });
+  const latestHistoryId = history[0]?.id || null;
+  const filtersActive =
+    historyRange !== 'all' || Boolean(historyQueryNormalized) || Boolean(historyFrom) || Boolean(historyTo);
+
+  const clearHistoryFilters = () => {
+    setHistoryRange('all');
+    setHistoryFrom('');
+    setHistoryTo('');
+    setHistoryQuery('');
+  };
+
   return (
     <div className="max-w-5xl mx-auto space-y-6">
       <div>
@@ -403,7 +481,7 @@ export default function SystemPrompt() {
               System prompt history
             </h2>
             <p className="mt-1 text-sm text-gray-600 max-w-xl">
-              Browse saved versions by date. Open a card to view the full prompt, copy it, or load it into the editor.
+              Browse saved versions by date range or search. Open a card to view the full prompt, copy it, or load it into the editor.
             </p>
           </div>
           <button
@@ -419,6 +497,80 @@ export default function SystemPrompt() {
         {historyError ? (
           <div className="rounded-lg px-4 py-3 text-sm bg-red-50 text-red-800 border border-red-200">
             {historyError}
+          </div>
+        ) : null}
+
+        {history.length > 0 || historyLoading ? (
+          <div className="rounded-xl border border-gray-200 bg-gray-50/70 p-3.5 sm:p-4 space-y-3">
+            <div className="flex flex-wrap items-center gap-2" role="group" aria-label="Filter by date range">
+              {HISTORY_RANGE_OPTIONS.map((opt) => {
+                const active = historyRange === opt.id;
+                return (
+                  <button
+                    key={opt.id}
+                    type="button"
+                    onClick={() => setHistoryRange(opt.id)}
+                    className={`px-3 py-1.5 text-xs font-medium rounded-lg border transition-colors ${
+                      active
+                        ? 'bg-primary-navy text-white border-primary-navy'
+                        : 'bg-white text-gray-700 border-gray-300 hover:border-gray-400 hover:bg-white'
+                    }`}
+                  >
+                    {opt.label}
+                  </button>
+                );
+              })}
+            </div>
+
+            {historyRange === 'custom' ? (
+              <div className="flex flex-wrap items-end gap-3">
+                <label className="flex flex-col gap-1 text-xs text-gray-600">
+                  From
+                  <input
+                    type="date"
+                    value={historyFrom}
+                    onChange={(e) => setHistoryFrom(e.target.value)}
+                    className="rounded-lg border border-gray-300 bg-white px-2.5 py-1.5 text-sm text-gray-900 focus:outline-none focus:ring-2 focus:ring-primary-navy/30"
+                  />
+                </label>
+                <label className="flex flex-col gap-1 text-xs text-gray-600">
+                  To
+                  <input
+                    type="date"
+                    value={historyTo}
+                    onChange={(e) => setHistoryTo(e.target.value)}
+                    className="rounded-lg border border-gray-300 bg-white px-2.5 py-1.5 text-sm text-gray-900 focus:outline-none focus:ring-2 focus:ring-primary-navy/30"
+                  />
+                </label>
+              </div>
+            ) : null}
+
+            <div className="flex flex-wrap items-center gap-3">
+              <label className="relative flex-1 min-w-[12rem]">
+                <span className="sr-only">Search history</span>
+                <input
+                  type="search"
+                  value={historyQuery}
+                  onChange={(e) => setHistoryQuery(e.target.value)}
+                  placeholder="Search by admin, hash, or preview…"
+                  className="w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm text-gray-900 placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-primary-navy/30"
+                />
+              </label>
+              {filtersActive ? (
+                <button
+                  type="button"
+                  onClick={clearHistoryFilters}
+                  className="px-3 py-2 text-xs font-medium rounded-lg border border-gray-300 bg-white text-gray-700 hover:bg-gray-50"
+                >
+                  Clear filters
+                </button>
+              ) : null}
+              {!historyLoading && history.length > 0 ? (
+                <p className="text-xs text-gray-500 whitespace-nowrap">
+                  Showing {filteredHistory.length} of {history.length}
+                </p>
+              ) : null}
+            </div>
           </div>
         ) : null}
 
@@ -450,48 +602,65 @@ export default function SystemPrompt() {
           </div>
         ) : null}
 
-        {history.length > 0 ? (
+        {!historyLoading && history.length > 0 && filteredHistory.length === 0 ? (
+          <div className="rounded-xl border border-dashed border-gray-300 bg-gray-50 px-6 py-10 text-center">
+            <p className="text-sm font-medium text-gray-700">No versions match these filters</p>
+            <p className="mt-1 text-sm text-gray-500">Try a wider date range or clear search.</p>
+            <button
+              type="button"
+              onClick={clearHistoryFilters}
+              className="mt-4 px-3.5 py-2 text-sm font-medium rounded-lg border border-gray-300 bg-white text-gray-700 hover:bg-gray-50"
+            >
+              Clear filters
+            </button>
+          </div>
+        ) : null}
+
+        {filteredHistory.length > 0 ? (
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-            {history.map((item, index) => (
-              <button
-                key={item.id}
-                type="button"
-                onClick={() => openHistoryItem(item.id)}
-                className="group relative flex flex-col text-left rounded-xl border border-gray-200 bg-white p-4 shadow-sm transition-all duration-150 hover:-translate-y-0.5 hover:border-primary-navy/40 hover:shadow-md focus:outline-none focus-visible:ring-2 focus-visible:ring-primary-navy/50 focus-visible:ring-offset-2"
-              >
-                {index === 0 ? (
-                  <span className="absolute top-3 right-3 inline-flex items-center rounded-full bg-primary-navy/10 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-primary-navy">
-                    Latest
-                  </span>
-                ) : null}
-                <div className={index === 0 ? 'pr-14' : ''}>
-                  <h3 className="text-sm font-semibold text-primary-navy leading-snug">
-                    {formatWhen(item.updatedAt)}
-                  </h3>
-                  <p className="mt-1 text-xs text-gray-500">
-                    {item.updatedByEmail ? `by ${item.updatedByEmail}` : 'Unknown editor'}
-                  </p>
-                </div>
-                <div className="mt-3 flex flex-wrap gap-1.5">
-                  <span className="inline-flex items-center rounded-full bg-gray-100 px-2 py-0.5 text-[11px] font-medium text-gray-700">
-                    {formatBytes(item.bytes)}
-                  </span>
-                  {item.hash ? (
-                    <span className="inline-flex items-center rounded-full bg-gray-100 px-2 py-0.5 text-[11px] font-mono text-gray-600">
-                      {item.hash.slice(0, 8)}
+            {filteredHistory.map((item) => {
+              const isLatest = item.id === latestHistoryId;
+              return (
+                <button
+                  key={item.id}
+                  type="button"
+                  onClick={() => openHistoryItem(item.id)}
+                  className="group relative flex flex-col text-left rounded-xl border border-gray-200 bg-white p-4 shadow-sm transition-all duration-150 hover:-translate-y-0.5 hover:border-primary-navy/40 hover:shadow-md focus:outline-none focus-visible:ring-2 focus-visible:ring-primary-navy/50 focus-visible:ring-offset-2"
+                >
+                  {isLatest ? (
+                    <span className="absolute top-3 right-3 inline-flex items-center rounded-full bg-primary-navy/10 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-primary-navy">
+                      Latest
                     </span>
                   ) : null}
-                </div>
-                <div className="mt-3 flex-1 rounded-lg bg-slate-50 border border-slate-100 px-2.5 py-2 min-h-[4.5rem]">
-                  <p className="text-[11px] leading-relaxed text-gray-600 font-mono line-clamp-3">
-                    {item.textPreview || 'No preview'}
+                  <div className={isLatest ? 'pr-14' : ''}>
+                    <h3 className="text-sm font-semibold text-primary-navy leading-snug">
+                      {formatWhen(item.updatedAt)}
+                    </h3>
+                    <p className="mt-1 text-xs text-gray-500">
+                      {item.updatedByEmail ? `by ${item.updatedByEmail}` : 'Unknown editor'}
+                    </p>
+                  </div>
+                  <div className="mt-3 flex flex-wrap gap-1.5">
+                    <span className="inline-flex items-center rounded-full bg-gray-100 px-2 py-0.5 text-[11px] font-medium text-gray-700">
+                      {formatBytes(item.bytes)}
+                    </span>
+                    {item.hash ? (
+                      <span className="inline-flex items-center rounded-full bg-gray-100 px-2 py-0.5 text-[11px] font-mono text-gray-600">
+                        {item.hash.slice(0, 8)}
+                      </span>
+                    ) : null}
+                  </div>
+                  <div className="mt-3 flex-1 rounded-lg bg-slate-50 border border-slate-100 px-2.5 py-2 min-h-[4.5rem]">
+                    <p className="text-[11px] leading-relaxed text-gray-600 font-mono line-clamp-3">
+                      {item.textPreview || 'No preview'}
+                    </p>
+                  </div>
+                  <p className="mt-3 text-[11px] font-medium text-primary-navy/70 group-hover:text-primary-navy transition-colors">
+                    View &amp; copy →
                   </p>
-                </div>
-                <p className="mt-3 text-[11px] font-medium text-primary-navy/70 group-hover:text-primary-navy transition-colors">
-                  View &amp; copy →
-                </p>
-              </button>
-            ))}
+                </button>
+              );
+            })}
           </div>
         ) : null}
       </section>
