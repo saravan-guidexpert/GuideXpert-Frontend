@@ -1,6 +1,12 @@
 import { useState, useEffect, useCallback } from 'react';
 import { useAuth } from '../../hooks/useAuth';
-import { getSystemPrompt, setSystemPrompt, clearChatbotProfile } from '../../utils/adminApi';
+import {
+  getSystemPrompt,
+  setSystemPrompt,
+  clearChatbotProfile,
+  getSystemPromptHistory,
+  getSystemPromptHistoryItem,
+} from '../../utils/adminApi';
 
 function formatBytes(n) {
   if (n == null || !Number.isFinite(n)) return '—';
@@ -10,6 +16,15 @@ function formatBytes(n) {
 
 function normalizePhoneInput(raw) {
   return String(raw || '').replace(/\D/g, '').slice(-10);
+}
+
+function formatWhen(iso) {
+  if (!iso) return '—';
+  try {
+    return new Date(iso).toLocaleString();
+  } catch {
+    return String(iso);
+  }
 }
 
 export default function SystemPrompt() {
@@ -32,6 +47,31 @@ export default function SystemPrompt() {
   const [clearPhone, setClearPhone] = useState('');
   const [clearingProfile, setClearingProfile] = useState(false);
   const [clearStatus, setClearStatus] = useState({ type: null, message: '' });
+
+  const [history, setHistory] = useState([]);
+  const [historyLoading, setHistoryLoading] = useState(true);
+  const [historyError, setHistoryError] = useState('');
+  const [selectedId, setSelectedId] = useState(null);
+  const [selectedItem, setSelectedItem] = useState(null);
+  const [detailLoading, setDetailLoading] = useState(false);
+  const [detailError, setDetailError] = useState('');
+  const [copyStatus, setCopyStatus] = useState('');
+
+  const loadHistory = useCallback(() => {
+    setHistoryLoading(true);
+    setHistoryError('');
+    return getSystemPromptHistory()
+      .then((res) => {
+        if (!res.success) {
+          setHistoryError(res.message || 'Failed to load prompt history.');
+          setHistory([]);
+          return;
+        }
+        const items = Array.isArray(res.data?.items) ? res.data.items : [];
+        setHistory(items);
+      })
+      .finally(() => setHistoryLoading(false));
+  }, []);
 
   const load = useCallback(() => {
     setLoading(true);
@@ -58,7 +98,8 @@ export default function SystemPrompt() {
 
   useEffect(() => {
     load();
-  }, [load]);
+    loadHistory();
+  }, [load, loadHistory]);
 
   const dirty = text !== savedText;
   const charCount = text.length;
@@ -99,6 +140,7 @@ export default function SystemPrompt() {
       type: 'success',
       message: `System prompt saved.${mirrorNote}`,
     });
+    loadHistory();
   };
 
   const handleReset = () => {
@@ -138,6 +180,58 @@ export default function SystemPrompt() {
         `Cleared profile for ${phone10} (bot states: ${deleted.botStates ?? 0}, lead profiles: ${deleted.leadProfiles ?? 0}).`,
     });
     setClearPhone('');
+  };
+
+  const openHistoryItem = async (id) => {
+    setSelectedId(id);
+    setSelectedItem(null);
+    setDetailError('');
+    setCopyStatus('');
+    setDetailLoading(true);
+    const res = await getSystemPromptHistoryItem(id);
+    setDetailLoading(false);
+    if (!res.success) {
+      setDetailError(res.message || 'Failed to load this version.');
+      return;
+    }
+    setSelectedItem({
+      id: res.data?.id || id,
+      text: typeof res.data?.text === 'string' ? res.data.text : '',
+      hash: res.data?.hash || null,
+      bytes: res.data?.bytes || 0,
+      updatedAt: res.data?.updatedAt || null,
+      updatedByEmail: res.data?.updatedByEmail || null,
+    });
+  };
+
+  const closeHistoryModal = () => {
+    setSelectedId(null);
+    setSelectedItem(null);
+    setDetailError('');
+    setCopyStatus('');
+    setDetailLoading(false);
+  };
+
+  const handleCopy = async () => {
+    const value = selectedItem?.text || '';
+    if (!value) return;
+    try {
+      await navigator.clipboard.writeText(value);
+      setCopyStatus('Copied to clipboard');
+    } catch {
+      setCopyStatus('Copy failed — select the text and copy manually');
+    }
+  };
+
+  const handleLoadIntoEditor = () => {
+    if (!selectedItem?.text) return;
+    setText(selectedItem.text);
+    setStatus({
+      type: 'success',
+      message: 'Loaded history version into the editor. Click Save prompt to make it live.',
+    });
+    closeHistoryModal();
+    window.scrollTo({ top: 0, behavior: 'smooth' });
   };
 
   return (
@@ -292,6 +386,155 @@ export default function SystemPrompt() {
           <p className="text-xs text-amber-700">Only super-admins can clear chatbot profiles.</p>
         ) : null}
       </form>
+
+      <section className="bg-white rounded-xl border border-gray-200 shadow-sm p-5 space-y-4">
+        <div className="flex flex-wrap items-start justify-between gap-3">
+          <div>
+            <h2 className="text-base font-semibold text-primary-navy">System prompt history</h2>
+            <p className="mt-1 text-sm text-gray-600">
+              Saved versions with date and time. Tap a row to view, copy, or load into the editor.
+            </p>
+          </div>
+          <button
+            type="button"
+            onClick={loadHistory}
+            disabled={historyLoading}
+            className="px-3 py-2 text-sm rounded-lg border border-gray-300 text-gray-700 hover:bg-gray-50 disabled:opacity-50"
+          >
+            {historyLoading ? 'Loading…' : 'Refresh'}
+          </button>
+        </div>
+
+        {historyError ? (
+          <div className="rounded-lg px-4 py-3 text-sm bg-red-50 text-red-800 border border-red-200">
+            {historyError}
+          </div>
+        ) : null}
+
+        {historyLoading && history.length === 0 ? (
+          <p className="text-sm text-gray-500">Loading history…</p>
+        ) : null}
+
+        {!historyLoading && history.length === 0 && !historyError ? (
+          <p className="text-sm text-gray-500">
+            No history yet — versions appear after the next Save (current prompt is seeded on first open).
+          </p>
+        ) : null}
+
+        {history.length > 0 ? (
+          <ul className="divide-y divide-gray-100 border border-gray-200 rounded-lg overflow-hidden">
+            {history.map((item) => (
+              <li key={item.id}>
+                <button
+                  type="button"
+                  onClick={() => openHistoryItem(item.id)}
+                  className="w-full text-left px-4 py-3 hover:bg-gray-50 focus:outline-none focus:bg-gray-50 transition-colors"
+                >
+                  <div className="flex flex-wrap items-center justify-between gap-2">
+                    <span className="text-sm font-semibold text-primary-navy">
+                      {formatWhen(item.updatedAt)}
+                    </span>
+                    <span className="text-xs text-gray-500">
+                      {formatBytes(item.bytes)}
+                      {item.hash ? ` · ${item.hash}` : ''}
+                    </span>
+                  </div>
+                  <p className="mt-0.5 text-xs text-gray-500">
+                    {item.updatedByEmail ? `by ${item.updatedByEmail}` : 'Unknown editor'}
+                  </p>
+                  {item.textPreview ? (
+                    <p className="mt-1 text-xs text-gray-600 line-clamp-2 font-mono">
+                      {item.textPreview}
+                    </p>
+                  ) : null}
+                </button>
+              </li>
+            ))}
+          </ul>
+        ) : null}
+      </section>
+
+      {selectedId ? (
+        <div
+          className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/40"
+          role="dialog"
+          aria-modal="true"
+          aria-labelledby="prompt-history-title"
+          onClick={closeHistoryModal}
+        >
+          <div
+            className="bg-white rounded-xl shadow-xl w-full max-w-4xl max-h-[90vh] flex flex-col"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="px-5 py-4 border-b border-gray-200 flex flex-wrap items-start justify-between gap-3">
+              <div>
+                <h3 id="prompt-history-title" className="text-base font-semibold text-primary-navy">
+                  Prompt version
+                </h3>
+                <p className="mt-1 text-xs text-gray-500">
+                  {selectedItem
+                    ? `${formatWhen(selectedItem.updatedAt)}${
+                        selectedItem.updatedByEmail ? ` · ${selectedItem.updatedByEmail}` : ''
+                      } · ${formatBytes(selectedItem.bytes)}${
+                        selectedItem.hash ? ` · ${selectedItem.hash}` : ''
+                      }`
+                    : detailLoading
+                      ? 'Loading…'
+                      : '—'}
+                </p>
+              </div>
+              <button
+                type="button"
+                onClick={closeHistoryModal}
+                className="px-3 py-1.5 text-sm rounded-lg border border-gray-300 text-gray-700 hover:bg-gray-50"
+              >
+                Close
+              </button>
+            </div>
+
+            <div className="flex-1 overflow-auto px-5 py-4">
+              {detailLoading ? (
+                <p className="text-sm text-gray-500">Loading prompt text…</p>
+              ) : null}
+              {detailError ? (
+                <div className="rounded-lg px-4 py-3 text-sm bg-red-50 text-red-800 border border-red-200">
+                  {detailError}
+                </div>
+              ) : null}
+              {selectedItem?.text ? (
+                <textarea
+                  readOnly
+                  value={selectedItem.text}
+                  spellCheck={false}
+                  className="w-full min-h-[20rem] h-[55vh] font-mono text-sm leading-relaxed rounded-lg border border-gray-300 px-3 py-2 bg-gray-50 text-gray-900 select-text"
+                />
+              ) : null}
+            </div>
+
+            <div className="px-5 py-4 border-t border-gray-200 flex flex-wrap items-center justify-between gap-3">
+              <p className="text-xs text-gray-500">{copyStatus || 'Select text or use Copy all'}</p>
+              <div className="flex items-center gap-2">
+                <button
+                  type="button"
+                  onClick={handleCopy}
+                  disabled={!selectedItem?.text}
+                  className="px-3 py-2 text-sm rounded-lg border border-gray-300 text-gray-700 hover:bg-gray-50 disabled:opacity-50"
+                >
+                  Copy all
+                </button>
+                <button
+                  type="button"
+                  onClick={handleLoadIntoEditor}
+                  disabled={!selectedItem?.text || !isSuperAdmin}
+                  className="px-4 py-2 text-sm font-semibold rounded-lg bg-primary-navy text-white hover:bg-primary-navy/90 disabled:opacity-50 disabled:cursor-not-allowed"
+                >
+                  Load into editor
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      ) : null}
     </div>
   );
 }

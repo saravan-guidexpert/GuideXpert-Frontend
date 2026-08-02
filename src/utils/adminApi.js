@@ -1180,6 +1180,16 @@ export const clearChatbotProfile = async (phone, token = getStoredToken()) => {
   );
 };
 
+/** GET /admin/system-prompt/history — recent system prompt versions (preview). */
+export const getSystemPromptHistory = async (token = getStoredToken()) => {
+  return adminRequest('/system-prompt/history', { method: 'GET' }, token);
+};
+
+/** GET /admin/system-prompt/history/:id — full prompt text for one version. */
+export const getSystemPromptHistoryItem = async (id, token = getStoredToken()) => {
+  return adminRequest(`/system-prompt/history/${encodeURIComponent(id)}`, { method: 'GET' }, token);
+};
+
 /** GET /osvi/call-sessions — list CRM-stored OSVI call sessions (admin auth, no /admin prefix). */
 export const getOsviCallSessionsData = async (params = {}, token = getStoredToken()) => {
   const search = new URLSearchParams();
