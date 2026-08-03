@@ -48,6 +48,7 @@ export const DEFAULT_ROUTE_PLACEMENTS = {
   '/admin/lead-intelligence': 'students',
   '/admin/human-copilot': 'students',
   '/admin/student-panel': 'students',
+  '/admin/resources': 'students',
   '/admin/system-prompt': 'students',
 };
 
@@ -89,6 +90,7 @@ export const SIDEBAR_SETTINGS_ITEMS = [
   { to: '/admin/lead-intelligence', label: 'Chatbot Lead Intelligence' },
   { to: '/admin/human-copilot', label: 'Human Copilot' },
   { to: '/admin/student-panel', label: 'Student panel' },
+  { to: '/admin/resources', label: 'Resources' },
   { to: '/admin/system-prompt', label: 'System Prompt' },
 ];
 

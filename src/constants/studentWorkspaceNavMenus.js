@@ -238,6 +238,36 @@ export function getWorkspaceMegaMenus() {
       ],
     },
     {
+      key: 'resources',
+      label: 'Resources',
+      hub: '/students/resources',
+      panels: [
+        {
+          id: 'browse',
+          label: 'Study Resources',
+          columns: [
+            [
+              { label: 'All Resources', to: '/students/resources' },
+              { label: 'Guides & PDFs', to: '/students/resources' },
+            ],
+          ],
+          viewAll: { label: 'Browse Resources', to: '/students/resources' },
+        },
+        {
+          id: 'related',
+          label: 'Related',
+          columns: [
+            [
+              { label: 'Education Updates', to: '/students/updates' },
+              { label: 'GuideXpert Blogs', to: '/blogs' },
+              { label: 'Predictors Hub', to: '/students/predictors' },
+            ],
+          ],
+          viewAll: { label: 'View Updates', to: '/students/updates' },
+        },
+      ],
+    },
+    {
       key: 'more',
       label: 'More',
       hub: '/students/predictors',

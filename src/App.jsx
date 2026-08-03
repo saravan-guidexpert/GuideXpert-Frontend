@@ -165,6 +165,7 @@ const PredictorsHubPage = lazy(() => import('./pages/studentsTools/PredictorsHub
 const TestsHubPage = lazy(() => import('./pages/studentsTools/TestsHubPage'));
 const StudentProfilePage = lazy(() => import('./components/studentAuth/StudentProfilePage'));
 const StudentUpdatesPage = lazy(() => import('./pages/studentsTools/StudentUpdatesPage'));
+const StudentResourcesPage = lazy(() => import('./pages/studentsTools/StudentResourcesPage'));
 import CollegePredictorPage from './pages/CollegePredictorPage';
 import RankPredictorHome from './pages/RankPredictorHome';
 import ExamPredictor from './pages/ExamPredictor';
@@ -172,6 +173,7 @@ import BlogDetails from './pages/BlogDetails';
 import BlogsPage from './pages/BlogsPage';
 import LegacyBlogRedirect from './pages/LegacyBlogRedirect';
 import AdminBlog from './pages/AdminBlog';
+import ResourcesAdmin from './pages/admin/ResourcesAdmin';
 import FeaturesPage from './pages/FeaturesPage';
 import { onAdminUnauthorized, onBdaUnauthorized, onCounsellorUnauthorized, onWebinarUnauthorized } from './utils/authSession';
 
@@ -390,6 +392,14 @@ function App() {
               }
             />
             <Route
+              path="resources"
+              element={
+                <Suspense fallback={<div className="flex min-h-screen items-center justify-center bg-slate-50 text-slate-500"><div className="animate-pulse text-sm font-medium">Loading…</div></div>}>
+                  <StudentResourcesPage />
+                </Suspense>
+              }
+            />
+            <Route
               path="college-predictor"
               element={
                 <RequireStudentAuth title="Login to use College Predictor">
@@ -551,6 +561,7 @@ function App() {
             <Route path="webinar-progress" element={<WebinarProgressAdmin />} />
             <Route path="bulk-certificates" element={<BulkCertificateDownload />} />
             <Route path="blogs" element={<AdminBlog />} />
+            <Route path="resources" element={<ResourcesAdmin />} />
             <Route path="osvi-calls" element={<OsviCalls />} />
             <Route path="osvi-calls-data" element={<OsviCallsData />} />
             <Route path="ai-calls" element={<AiCallsDashboard />} />

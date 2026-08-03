@@ -13,6 +13,7 @@ import {
   FiTarget,
   FiUser,
   FiX,
+  FiFileText,
 } from 'react-icons/fi';
 import { LuGraduationCap, LuScale } from 'react-icons/lu';
 import { getWorkspaceMegaMenus } from '../../../constants/studentWorkspaceNavMenus';
@@ -34,6 +35,7 @@ const MENU_ICONS = {
   fit: FiBookOpen,
   compare: LuScale,
   deadlines: FiCalendar,
+  resources: FiFileText,
   more: FiGrid,
 };
 

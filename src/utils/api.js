@@ -1251,6 +1251,50 @@ export const getStudentTestimonialsFeed = async (params = {}) => {
   return apiRequest(`/student-testimonials${query ? `?${query}` : ''}`, { method: 'GET' });
 };
 
+/** Published student resources (PDF metadata only) */
+export const getStudentResourcesFeed = async () =>
+  apiRequest('/resources', { method: 'GET' });
+
+export const requestResourceDownloadOtp = async (resourceId, fullName, phone) =>
+  apiRequest(`/resources/${encodeURIComponent(resourceId)}/request-download`, {
+    method: 'POST',
+    body: JSON.stringify({ fullName, phone }),
+  });
+
+export const verifyResourceDownload = async (resourceId, fullName, phone, otp) =>
+  apiRequest(`/resources/${encodeURIComponent(resourceId)}/verify-download`, {
+    method: 'POST',
+    body: JSON.stringify({ fullName, phone, otp }),
+  });
+
+export async function downloadResourceFile(resourceId, phone, downloadToken, fileName) {
+  const params = new URLSearchParams({
+    token: downloadToken,
+    phone,
+  });
+  const url = `${getApiBaseUrl()}/resources/${encodeURIComponent(resourceId)}/file?${params}`;
+  const response = await fetch(url);
+  if (!response.ok) {
+    let message = 'Download failed';
+    try {
+      const data = await response.json();
+      message = data.message || message;
+    } catch {
+      /* ignore */
+    }
+    throw new Error(message);
+  }
+  const blob = await response.blob();
+  const objectUrl = URL.createObjectURL(blob);
+  const anchor = document.createElement('a');
+  anchor.href = objectUrl;
+  anchor.download = fileName || 'resource.pdf';
+  document.body.appendChild(anchor);
+  anchor.click();
+  anchor.remove();
+  URL.revokeObjectURL(objectUrl);
+}
+
 /** Student's own 1-on-1 counselling bookings (by phone) */
 export const getMyOneOnOneBookings = async (phone) => {
   const digits = String(phone || '').replace(/\D/g, '');

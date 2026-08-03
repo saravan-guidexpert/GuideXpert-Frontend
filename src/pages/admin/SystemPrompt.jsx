@@ -1,5 +1,6 @@
 import { useState, useEffect, useCallback } from 'react';
 import { motion, AnimatePresence, useReducedMotion } from 'framer-motion';
+import { FiRefreshCw, FiSearch } from 'react-icons/fi';
 import { useAuth } from '../../hooks/useAuth';
 import {
   getSystemPrompt,
@@ -361,13 +362,17 @@ export default function SystemPrompt() {
     return false;
   };
 
+  const showHistoryControls = history.length > 0 || historyLoading;
+
   return (
-    <div className="max-w-5xl mx-auto space-y-6">
+    <div className="mx-auto max-w-[1280px] space-y-6 px-4 py-4 md:px-6 md:py-6">
       <div>
-        <h1 className="text-2xl font-bold text-primary-navy">System Prompt</h1>
-        <p className="mt-1 text-sm text-gray-600">
+        <h1 className="text-[28px] font-bold leading-tight text-[#111827]">System Prompt</h1>
+        <p className="mt-2 text-[15px] leading-relaxed text-[#6B7280]">
           Edit the Flow V3 chatbot system prompt. Saves update MongoDB (and the{' '}
-          <code className="text-xs bg-gray-100 px-1 rounded">prompts/system_prompt.v1.md</code>{' '}
+          <code className="rounded-md bg-[#F3F4F6] px-1.5 py-0.5 text-[13px] text-[#374151]">
+            prompts/system_prompt.v1.md
+          </code>{' '}
           file when writable) and apply to new chatbot replies immediately.
         </p>
       </div>
@@ -375,43 +380,46 @@ export default function SystemPrompt() {
       {status.message ? (
         <div
           role="status"
-          className={`rounded-lg px-4 py-3 text-sm ${
+          className={`rounded-[10px] border px-4 py-3 text-[14px] ${
             status.type === 'success'
-              ? 'bg-green-50 text-green-800 border border-green-200'
-              : 'bg-red-50 text-red-800 border border-red-200'
+              ? 'border-emerald-200 bg-emerald-50 text-emerald-800'
+              : 'border-red-200 bg-red-50 text-red-800'
           }`}
         >
           {status.message}
         </div>
       ) : null}
 
-      <form onSubmit={handleSave} className="bg-white rounded-xl border border-gray-200 shadow-sm p-5 space-y-4">
-        <div className="flex flex-wrap items-center gap-x-4 gap-y-1 text-xs text-gray-500">
+      <form
+        onSubmit={handleSave}
+        className="space-y-4 rounded-[14px] border border-[#E5E7EB] bg-white p-5 shadow-[0_1px_3px_rgba(0,0,0,0.05)] md:p-6"
+      >
+        <div className="flex flex-wrap items-center gap-x-4 gap-y-2 text-[13px] text-[#6B7280]">
           <span>
             Source:{' '}
-            <span className="font-medium text-gray-700">{meta.source || (loading ? '…' : '—')}</span>
+            <span className="font-medium text-[#111827]">{meta.source || (loading ? '…' : '—')}</span>
           </span>
           <span>
             Hash:{' '}
-            <span className="font-mono text-gray-700">{meta.hash || '—'}</span>
+            <span className="font-mono text-[#111827]">{meta.hash || '—'}</span>
           </span>
           <span>
             Size:{' '}
-            <span className="font-medium text-gray-700">
+            <span className="font-medium text-[#111827]">
               {loading ? '…' : `${formatBytes(meta.bytes)} · ${charCount.toLocaleString()} chars`}
             </span>
           </span>
           {meta.updatedAt ? (
             <span>
               Updated:{' '}
-              <span className="font-medium text-gray-700">
+              <span className="font-medium text-[#111827]">
                 {new Date(meta.updatedAt).toLocaleString()}
                 {meta.updatedByEmail ? ` by ${meta.updatedByEmail}` : ''}
               </span>
             </span>
           ) : null}
           {dirty ? (
-            <span className="text-amber-700 font-semibold">Unsaved changes</span>
+            <span className="font-semibold text-amber-700">Unsaved changes</span>
           ) : null}
         </div>
 
@@ -422,24 +430,24 @@ export default function SystemPrompt() {
             onChange={(e) => setText(e.target.value)}
             disabled={loading || !isSuperAdmin}
             spellCheck={false}
-            className="w-full min-h-[28rem] font-mono text-sm leading-relaxed rounded-lg border border-gray-300 px-3 py-2 focus:outline-none focus:ring-2 focus:ring-primary-navy/40 focus:border-primary-navy disabled:bg-gray-50 disabled:text-gray-500"
+            className="min-h-[28rem] w-full rounded-[10px] border border-[#D1D5DB] px-3 py-2.5 font-mono text-[14px] leading-relaxed text-[#111827] transition-all duration-200 focus:border-[#2563EB] focus:outline-none focus:ring-2 focus:ring-[#2563EB]/20 disabled:bg-[#F9FAFB] disabled:text-[#9CA3AF]"
             placeholder={loading ? 'Loading…' : 'System prompt markdown…'}
           />
         </label>
 
         <div className="flex flex-wrap items-center justify-between gap-3">
-          <p className="text-xs text-gray-500">
+          <p className="text-[13px] text-[#6B7280]">
             Draft size: {formatBytes(byteEstimate)} / 100 KB max
             {!isSuperAdmin ? (
               <span className="ml-2 text-amber-700">Only super-admins can save.</span>
             ) : null}
           </p>
-          <div className="flex items-center gap-2">
+          <div className="flex flex-wrap items-center gap-2">
             <button
               type="button"
               onClick={handleReset}
               disabled={!dirty || submitting || loading}
-              className="px-3 py-2 text-sm rounded-lg border border-gray-300 text-gray-700 hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
+              className="h-10 rounded-[10px] border border-[#D1D5DB] px-4 text-[14px] font-medium text-[#374151] transition-all duration-200 hover:bg-[#F9FAFB] disabled:cursor-not-allowed disabled:opacity-50"
             >
               Discard
             </button>
@@ -447,14 +455,14 @@ export default function SystemPrompt() {
               type="button"
               onClick={load}
               disabled={submitting || loading}
-              className="px-3 py-2 text-sm rounded-lg border border-gray-300 text-gray-700 hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
+              className="h-10 rounded-[10px] border border-[#D1D5DB] px-4 text-[14px] font-medium text-[#374151] transition-all duration-200 hover:bg-[#F9FAFB] disabled:cursor-not-allowed disabled:opacity-50"
             >
               Reload
             </button>
             <button
               type="submit"
               disabled={!isSuperAdmin || !dirty || submitting || loading || !text.trim()}
-              className="px-4 py-2 text-sm font-semibold rounded-lg bg-primary-navy text-white hover:bg-primary-navy/90 disabled:opacity-50 disabled:cursor-not-allowed"
+              className="h-10 rounded-[10px] bg-[#2563EB] px-5 text-[14px] font-semibold text-white transition-all duration-200 hover:bg-[#1D4ED8] disabled:cursor-not-allowed disabled:opacity-50"
             >
               {submitting ? 'Saving…' : 'Save prompt'}
             </button>
@@ -464,11 +472,11 @@ export default function SystemPrompt() {
 
       <form
         onSubmit={handleClearProfile}
-        className="bg-white rounded-xl border border-gray-200 shadow-sm p-5 space-y-4"
+        className="space-y-4 rounded-[14px] border border-[#E5E7EB] bg-white p-5 shadow-[0_1px_3px_rgba(0,0,0,0.05)] md:p-6"
       >
         <div>
-          <h2 className="text-base font-semibold text-primary-navy">Clear WhatsApp chatbot profile</h2>
-          <p className="mt-1 text-sm text-gray-600">
+          <h2 className="text-[20px] font-semibold text-[#111827]">Clear WhatsApp chatbot profile</h2>
+          <p className="mt-2 text-[15px] text-[#6B7280]">
             Reset saved profile details for one number (lead facts, predictor session, opt-out).
             Message history is not deleted.
           </p>
@@ -477,19 +485,19 @@ export default function SystemPrompt() {
         {clearStatus.message ? (
           <div
             role="status"
-            className={`rounded-lg px-4 py-3 text-sm ${
+            className={`rounded-[10px] border px-4 py-3 text-[14px] ${
               clearStatus.type === 'success'
-                ? 'bg-green-50 text-green-800 border border-green-200'
-                : 'bg-red-50 text-red-800 border border-red-200'
+                ? 'border-emerald-200 bg-emerald-50 text-emerald-800'
+                : 'border-red-200 bg-red-50 text-red-800'
             }`}
           >
             {clearStatus.message}
           </div>
         ) : null}
 
-        <div className="flex flex-col sm:flex-row sm:items-end gap-3">
+        <div className="flex flex-col gap-3 sm:flex-row sm:items-end">
           <label className="block flex-1">
-            <span className="block text-sm font-medium text-gray-700 mb-1">Mobile number</span>
+            <span className="mb-2 block text-[14px] font-medium text-[#374151]">Mobile number</span>
             <input
               type="tel"
               inputMode="numeric"
@@ -498,30 +506,30 @@ export default function SystemPrompt() {
               onChange={(e) => setClearPhone(e.target.value)}
               disabled={!isSuperAdmin || clearingProfile}
               placeholder="e.g. 9347763131"
-              className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary-navy/40 focus:border-primary-navy disabled:bg-gray-50 disabled:text-gray-500"
+              className="h-10 w-full rounded-[10px] border border-[#D1D5DB] px-3 text-[14px] text-[#111827] transition-all duration-200 focus:border-[#2563EB] focus:outline-none focus:ring-2 focus:ring-[#2563EB]/20 disabled:bg-[#F9FAFB] disabled:text-[#9CA3AF]"
             />
           </label>
           <button
             type="submit"
             disabled={!isSuperAdmin || clearingProfile || normalizePhoneInput(clearPhone).length !== 10}
-            className="px-4 py-2 text-sm font-semibold rounded-lg bg-red-700 text-white hover:bg-red-800 disabled:opacity-50 disabled:cursor-not-allowed whitespace-nowrap"
+            className="h-10 rounded-[10px] bg-red-600 px-5 text-[14px] font-semibold text-white transition-all duration-200 hover:bg-red-700 disabled:cursor-not-allowed disabled:opacity-50 sm:w-auto w-full"
           >
             {clearingProfile ? 'Clearing…' : 'Clear profile'}
           </button>
         </div>
         {!isSuperAdmin ? (
-          <p className="text-xs text-amber-700">Only super-admins can clear chatbot profiles.</p>
+          <p className="text-[13px] text-amber-700">Only super-admins can clear chatbot profiles.</p>
         ) : null}
       </form>
 
-      <section className="bg-white rounded-xl border border-gray-200 shadow-sm overflow-hidden">
-        <div className="px-4 py-2 border-b border-gray-100 flex flex-wrap items-center gap-x-3 gap-y-2">
-          <h2 className="text-sm font-semibold text-gray-900 shrink-0">Prompt history</h2>
+      <section className="rounded-[14px] border border-[#E5E7EB] bg-white p-5 shadow-[0_1px_3px_rgba(0,0,0,0.05)] md:p-5">
+        <div className="flex min-h-12 flex-col gap-4 lg:flex-row lg:items-center lg:justify-between lg:gap-6">
+          <h2 className="shrink-0 text-[20px] font-semibold text-[#111827]">Prompt history</h2>
 
-          {(history.length > 0 || historyLoading) ? (
-            <>
+          {showHistoryControls ? (
+            <div className="flex flex-col gap-4 xl:flex-row xl:flex-1 xl:items-center xl:justify-center xl:gap-6">
               <div
-                className="inline-flex items-center rounded-md bg-gray-100 p-0.5"
+                className="inline-flex h-[38px] items-center rounded-[10px] bg-[#F3F4F6] p-1"
                 role="group"
                 aria-label="Date range"
               >
@@ -532,10 +540,10 @@ export default function SystemPrompt() {
                       key={opt.id}
                       type="button"
                       onClick={() => setHistoryRange(opt.id)}
-                      className={`px-2.5 py-1 text-xs font-medium rounded transition-colors ${
+                      className={`h-full rounded-[8px] px-[14px] text-[14px] font-medium transition-all duration-200 ${
                         active
-                          ? 'bg-white text-gray-900 shadow-sm'
-                          : 'text-gray-600 hover:text-gray-900'
+                          ? 'bg-white text-[#111827] shadow-[0_1px_2px_rgba(0,0,0,0.06)]'
+                          : 'text-[#6B7280] hover:bg-[#E5E7EB]/60 hover:text-[#111827]'
                       }`}
                     >
                       {opt.label}
@@ -543,100 +551,110 @@ export default function SystemPrompt() {
                   );
                 })}
               </div>
+            </div>
+          ) : null}
 
-              <div className="relative min-w-[10rem] flex-1 max-w-xs">
+          {showHistoryControls ? (
+            <div className="flex flex-col gap-3 sm:flex-row sm:items-center lg:shrink-0 lg:gap-3">
+              <div className="relative w-full sm:w-[320px]">
+                <FiSearch className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-[#9CA3AF]" />
                 <input
                   type="search"
                   value={historyQuery}
                   onChange={(e) => setHistoryQuery(e.target.value)}
                   placeholder="Search admin, hash, text…"
                   aria-label="Search history"
-                  className="w-full rounded-md border border-gray-200 bg-white pl-2.5 pr-2 py-1.5 text-xs text-gray-800 placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-primary-navy/20 focus:border-primary-navy/40"
+                  className="h-10 w-full rounded-[10px] border border-[#D1D5DB] bg-white pl-9 pr-3 text-[14px] text-[#111827] placeholder:text-[#9CA3AF] transition-all duration-200 focus:border-[#2563EB] focus:outline-none focus:ring-2 focus:ring-[#2563EB]/20"
                 />
               </div>
 
-              {filtersActive ? (
+              <div className="flex items-center gap-3">
+                {filtersActive ? (
+                  <button
+                    type="button"
+                    onClick={clearHistoryFilters}
+                    className="text-[13px] font-medium text-[#6B7280] transition-colors duration-200 hover:text-[#111827]"
+                  >
+                    Clear filters
+                  </button>
+                ) : null}
+
+                {!historyLoading && history.length > 0 ? (
+                  <span className="min-w-[2.5rem] text-center text-[13px] tabular-nums text-[#6B7280]">
+                    {filteredHistory.length}/{history.length}
+                  </span>
+                ) : null}
+
                 <button
                   type="button"
-                  onClick={clearHistoryFilters}
-                  className="text-xs text-gray-500 hover:text-gray-800 transition-colors"
+                  onClick={loadHistory}
+                  disabled={historyLoading}
+                  className="inline-flex h-10 items-center gap-2 rounded-[10px] border border-[#D1D5DB] bg-white px-4 text-[14px] font-medium text-[#374151] transition-all duration-200 hover:bg-[#F9FAFB] disabled:cursor-not-allowed disabled:opacity-50 sm:w-auto w-full justify-center"
                 >
-                  Clear filters
+                  <FiRefreshCw className={`h-4 w-4 ${historyLoading ? 'animate-spin' : ''}`} />
+                  {historyLoading ? 'Loading…' : 'Refresh'}
                 </button>
-              ) : null}
-            </>
+              </div>
+            </div>
           ) : null}
-
-          <div className="ml-auto flex items-center gap-2 shrink-0">
-            {!historyLoading && history.length > 0 ? (
-              <span className="text-xs text-gray-500 tabular-nums">
-                {filteredHistory.length}/{history.length}
-              </span>
-            ) : null}
-            <button
-              type="button"
-              onClick={loadHistory}
-              disabled={historyLoading}
-              className="px-2.5 py-1.5 text-xs font-medium rounded-md border border-gray-200 text-gray-700 bg-white hover:bg-gray-50 disabled:opacity-50 transition-colors"
-            >
-              {historyLoading ? 'Loading…' : 'Refresh'}
-            </button>
-          </div>
         </div>
 
-        {historyRange === 'custom' && (history.length > 0 || historyLoading) ? (
-          <div className="px-4 py-1.5 border-b border-gray-100 flex flex-wrap items-center gap-2 bg-gray-50/60">
+        {historyRange === 'custom' && showHistoryControls ? (
+          <div className="mt-4 flex flex-wrap items-center gap-3 rounded-[10px] bg-[#F8FAFC] px-3 py-3">
             <input
               type="date"
               value={historyFrom}
               onChange={(e) => setHistoryFrom(e.target.value)}
               aria-label="From date"
-              className="rounded-md border border-gray-200 bg-white px-2 py-1 text-xs focus:outline-none focus:ring-2 focus:ring-primary-navy/20"
+              className="h-10 rounded-[10px] border border-[#D1D5DB] bg-white px-3 text-[14px] transition-all duration-200 focus:border-[#2563EB] focus:outline-none focus:ring-2 focus:ring-[#2563EB]/20"
             />
-            <span className="text-xs text-gray-400">to</span>
+            <span className="text-[13px] text-[#9CA3AF]">to</span>
             <input
               type="date"
               value={historyTo}
               onChange={(e) => setHistoryTo(e.target.value)}
               aria-label="To date"
-              className="rounded-md border border-gray-200 bg-white px-2 py-1 text-xs focus:outline-none focus:ring-2 focus:ring-primary-navy/20"
+              className="h-10 rounded-[10px] border border-[#D1D5DB] bg-white px-3 text-[14px] transition-all duration-200 focus:border-[#2563EB] focus:outline-none focus:ring-2 focus:ring-[#2563EB]/20"
             />
           </div>
         ) : null}
 
-        <div className="p-3">
+        <div className="mt-5">
           {historyError ? (
-            <div className="mb-3 rounded-lg px-3 py-2 text-xs bg-red-50 text-red-800 border border-red-200">
+            <div className="mb-4 rounded-[10px] border border-red-200 bg-red-50 px-4 py-3 text-[13px] text-red-800">
               {historyError}
             </div>
           ) : null}
 
           {historyLoading && history.length === 0 ? (
-            <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-3">
+            <div className="grid grid-cols-1 gap-5 sm:grid-cols-[repeat(auto-fill,minmax(340px,1fr))]">
               {[0, 1, 2].map((i) => (
-                <div key={i} className="rounded-lg border border-gray-200 p-3 animate-pulse space-y-2.5">
-                  <div className="h-3.5 w-2/5 rounded bg-gray-100" />
-                  <div className="h-3 w-3/5 rounded bg-gray-100" />
-                  <div className="h-14 rounded-md bg-gray-100" />
+                <div
+                  key={i}
+                  className="animate-pulse rounded-[14px] border border-[#E5E7EB] bg-white p-[18px] shadow-[0_1px_3px_rgba(0,0,0,0.05)]"
+                >
+                  <div className="h-4 w-2/5 rounded bg-[#F3F4F6]" />
+                  <div className="mt-3 h-3 w-3/5 rounded bg-[#F3F4F6]" />
+                  <div className="mt-4 h-[72px] rounded-[10px] bg-[#F3F4F6]" />
                 </div>
               ))}
             </div>
           ) : null}
 
           {!historyLoading && history.length === 0 && !historyError ? (
-            <div className="py-8 text-center">
-              <p className="text-sm font-medium text-gray-800">No versions yet</p>
-              <p className="mt-1 text-xs text-gray-500">Versions appear after you save a prompt.</p>
+            <div className="rounded-[14px] border border-dashed border-[#E5E7EB] bg-[#F8FAFC] px-6 py-12 text-center">
+              <p className="text-[15px] font-medium text-[#111827]">No versions yet</p>
+              <p className="mt-2 text-[13px] text-[#6B7280]">Versions appear after you save a prompt.</p>
             </div>
           ) : null}
 
           {!historyLoading && history.length > 0 && filteredHistory.length === 0 ? (
-            <div className="py-8 text-center">
-              <p className="text-sm font-medium text-gray-800">No matches</p>
+            <div className="rounded-[14px] border border-dashed border-[#E5E7EB] bg-[#F8FAFC] px-6 py-12 text-center">
+              <p className="text-[15px] font-medium text-[#111827]">No matches</p>
               <button
                 type="button"
                 onClick={clearHistoryFilters}
-                className="mt-2 text-xs font-medium text-primary-navy hover:underline"
+                className="mt-3 text-[14px] font-medium text-[#2563EB] transition-colors duration-200 hover:text-[#1D4ED8]"
               >
                 Clear filters
               </button>
@@ -644,68 +662,63 @@ export default function SystemPrompt() {
           ) : null}
 
           {filteredHistory.length > 0 ? (
-            <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-3">
+            <div
+              className={`grid grid-cols-1 gap-5 sm:grid-cols-[repeat(auto-fill,minmax(340px,340px))] ${
+                filteredHistory.length === 1 ? 'sm:justify-center' : 'sm:justify-start'
+              }`}
+            >
               {filteredHistory.map((item) => {
                 const isLive = isHistoryItemLive(item);
                 const timeLabel = formatHistoryTime(item.updatedAt);
+                const metaLine = [
+                  timeLabel,
+                  item.updatedByEmail || 'Unknown',
+                  formatBytes(item.bytes),
+                  item.hash ? item.hash.slice(0, 10) : null,
+                ]
+                  .filter(Boolean)
+                  .join(' • ');
+
                 return (
                   <button
                     key={item.id}
                     type="button"
                     onClick={() => openHistoryItem(item.id)}
-                    className={`group relative flex flex-col text-left rounded-lg border bg-white p-3 transition-all focus:outline-none focus-visible:ring-2 focus-visible:ring-primary-navy/30 focus-visible:ring-offset-1 hover:shadow-sm ${
-                      isLive
-                        ? 'border-emerald-200/80 bg-emerald-50/30 hover:border-emerald-300'
-                        : 'border-gray-200 hover:border-gray-300'
+                    className={`group flex w-full flex-col rounded-[14px] border bg-white p-[18px] text-left shadow-[0_1px_3px_rgba(0,0,0,0.05)] transition-all duration-200 focus:outline-none focus-visible:ring-2 focus-visible:ring-[#2563EB]/30 focus-visible:ring-offset-2 hover:-translate-y-0.5 hover:shadow-[0_8px_24px_rgba(0,0,0,0.06)] sm:w-[340px] ${
+                      isLive ? 'border-emerald-200' : 'border-[#E5E7EB]'
                     }`}
                   >
-                    <div className="flex items-start justify-between gap-2">
-                      <div className="min-w-0">
-                        <p className="text-sm font-semibold text-gray-900 leading-tight">
-                          {formatHistoryDate(item.updatedAt)}
-                        </p>
-                        {timeLabel ? (
-                          <p className="mt-0.5 text-xs text-gray-500 tabular-nums">{timeLabel}</p>
-                        ) : null}
-                      </div>
+                    <div className="flex items-start justify-between gap-3">
+                      <p className="text-[18px] font-semibold leading-tight text-[#111827]">
+                        {formatHistoryDate(item.updatedAt)}
+                      </p>
                       {isLive ? (
-                        <span className="inline-flex shrink-0 items-center gap-1 rounded-full bg-emerald-100 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-emerald-700">
+                        <span className="inline-flex h-6 shrink-0 items-center gap-1.5 rounded-full bg-emerald-50 px-2.5 text-[11px] font-bold uppercase tracking-wide text-emerald-700">
                           <span className="h-1.5 w-1.5 rounded-full bg-emerald-500" aria-hidden="true" />
                           Live
                         </span>
                       ) : null}
                     </div>
 
-                    <p className="mt-2 text-xs text-gray-500 truncate">
-                      {[
-                        item.updatedByEmail || 'Unknown',
-                        formatBytes(item.bytes),
-                        item.hash ? item.hash.slice(0, 10) : null,
-                      ]
-                        .filter(Boolean)
-                        .join(' · ')}
-                    </p>
+                    <p className="mt-2 truncate text-[13px] text-[#6B7280]">{metaLine}</p>
 
-                    <div className="mt-2 flex-1 rounded-md overflow-hidden ring-1 ring-gray-900/10">
-                      <div className="flex items-center justify-between px-2.5 py-1 bg-slate-800">
-                        <span className="text-[10px] font-medium uppercase tracking-wider text-slate-400">
-                          Preview
-                        </span>
-                      </div>
-                      <div className="bg-slate-900 px-2.5 py-2 min-h-[3rem]">
-                        <p className="text-[11px] leading-relaxed text-slate-300 font-mono line-clamp-2">
-                          {item.textPreview || 'No preview'}
-                        </p>
-                      </div>
+                    <div className="relative mt-4 h-[72px] overflow-hidden rounded-[10px] bg-[#111827] p-3">
+                      <p className="font-mono text-[13px] leading-relaxed text-slate-300">
+                        {item.textPreview || 'No preview'}
+                      </p>
+                      <div
+                        className="pointer-events-none absolute inset-x-0 bottom-0 h-10 bg-gradient-to-t from-[#111827] to-transparent"
+                        aria-hidden="true"
+                      />
                     </div>
 
-                    <div className="mt-2.5 flex items-center justify-between text-xs">
-                      <span className="font-medium text-gray-500 group-hover:text-primary-navy transition-colors">
+                    <div className="mt-4 flex items-center justify-between text-[13px] transition-colors duration-200">
+                      <span className="font-medium text-[#6B7280] group-hover:text-[#2563EB]">
                         {isLive ? 'Currently in use' : 'View version'}
                       </span>
                       <span
                         aria-hidden="true"
-                        className="text-gray-400 group-hover:text-primary-navy transition-colors"
+                        className="text-[#9CA3AF] transition-colors duration-200 group-hover:text-[#2563EB]"
                       >
                         →
                       </span>
@@ -721,7 +734,7 @@ export default function SystemPrompt() {
       <AnimatePresence>
         {selectedId ? (
           <motion.div
-            className="fixed inset-0 z-50 flex items-center justify-center p-4 sm:p-6 bg-slate-900/40"
+            className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/40 p-4 sm:p-6"
             role="dialog"
             aria-modal="true"
             aria-labelledby="prompt-history-title"
@@ -732,17 +745,17 @@ export default function SystemPrompt() {
             transition={{ duration: reduceMotion ? 0 : 0.18, ease: historyCardEase }}
           >
             <motion.div
-              className="bg-white rounded-lg shadow-xl w-full max-w-4xl max-h-[90vh] flex flex-col border border-gray-200"
+              className="flex max-h-[90vh] w-full max-w-4xl flex-col rounded-[14px] border border-[#E5E7EB] bg-white shadow-[0_8px_24px_rgba(0,0,0,0.12)]"
               onClick={(e) => e.stopPropagation()}
               initial={reduceMotion ? false : { opacity: 0, y: 10 }}
               animate={{ opacity: 1, y: 0 }}
               exit={reduceMotion ? undefined : { opacity: 0, y: 6 }}
               transition={{ duration: reduceMotion ? 0 : 0.22, ease: historyCardEase }}
             >
-              <div className="px-4 sm:px-5 py-3 border-b border-gray-100 flex items-start justify-between gap-3">
+              <div className="flex items-start justify-between gap-3 border-b border-[#E5E7EB] px-5 py-4">
                 <div className="min-w-0">
                   <div className="flex items-center gap-2">
-                    <h3 id="prompt-history-title" className="text-base font-semibold text-primary-navy">
+                    <h3 id="prompt-history-title" className="text-[20px] font-semibold text-[#111827]">
                       {selectedItem
                         ? formatHistoryDate(selectedItem.updatedAt)
                         : detailLoading
@@ -750,14 +763,14 @@ export default function SystemPrompt() {
                           : 'Prompt version'}
                     </h3>
                     {selectedItem && isHistoryItemLive(selectedItem) ? (
-                      <span className="inline-flex items-center gap-1 text-[10px] font-semibold uppercase tracking-wide text-emerald-700">
+                      <span className="inline-flex h-6 items-center gap-1.5 rounded-full bg-emerald-50 px-2.5 text-[11px] font-bold uppercase tracking-wide text-emerald-700">
                         <span className="h-1.5 w-1.5 rounded-full bg-emerald-500" />
                         In use
                       </span>
                     ) : null}
                   </div>
                   {selectedItem ? (
-                    <p className="mt-1 text-xs text-gray-500 truncate">
+                    <p className="mt-2 truncate text-[13px] text-[#6B7280]">
                       {[
                         formatHistoryTime(selectedItem.updatedAt),
                         selectedItem.updatedByEmail,
@@ -765,29 +778,29 @@ export default function SystemPrompt() {
                         selectedItem.hash,
                       ]
                         .filter(Boolean)
-                        .join(' · ')}
+                        .join(' • ')}
                     </p>
                   ) : null}
                 </div>
                 <button
                   type="button"
                   onClick={closeHistoryModal}
-                  className="shrink-0 h-7 w-7 inline-flex items-center justify-center rounded border border-gray-200 text-gray-500 hover:bg-gray-50 transition-colors duration-150"
+                  className="inline-flex h-10 w-10 shrink-0 items-center justify-center rounded-[10px] border border-[#D1D5DB] text-[#6B7280] transition-all duration-200 hover:bg-[#F9FAFB]"
                   aria-label="Close"
                 >
                   ×
                 </button>
               </div>
 
-              <div className="flex-1 overflow-auto px-4 sm:px-5 py-3">
+              <div className="flex-1 overflow-auto px-5 py-4">
                 {detailLoading ? (
-                  <div className="space-y-2 animate-pulse">
-                    <div className="h-3 w-1/3 rounded bg-gray-100" />
-                    <div className="h-40 rounded bg-gray-100" />
+                  <div className="animate-pulse space-y-3">
+                    <div className="h-3 w-1/3 rounded bg-[#F3F4F6]" />
+                    <div className="h-40 rounded-[10px] bg-[#F3F4F6]" />
                   </div>
                 ) : null}
                 {detailError ? (
-                  <div className="rounded px-3 py-2 text-xs bg-red-50 text-red-800 border border-red-200">
+                  <div className="rounded-[10px] border border-red-200 bg-red-50 px-4 py-3 text-[13px] text-red-800">
                     {detailError}
                   </div>
                 ) : null}
@@ -796,21 +809,19 @@ export default function SystemPrompt() {
                     readOnly
                     value={selectedItem.text}
                     spellCheck={false}
-                    className="w-full min-h-[20rem] h-[52vh] font-mono text-sm leading-relaxed rounded border border-gray-200 px-3 py-2.5 bg-slate-50 text-gray-900 select-text focus:outline-none focus:ring-1 focus:ring-primary-navy/25"
+                    className="min-h-[20rem] h-[52vh] w-full select-text rounded-[10px] border border-[#E5E7EB] bg-[#F8FAFC] px-3 py-2.5 font-mono text-[14px] leading-relaxed text-[#111827] focus:outline-none focus:ring-2 focus:ring-[#2563EB]/20"
                   />
                 ) : null}
               </div>
 
-              <div className="px-4 sm:px-5 py-3 border-t border-gray-100 flex flex-wrap items-center justify-between gap-2 bg-slate-50/80">
-                <p className="text-[11px] text-gray-500">
-                  {copyStatus || 'Esc to close'}
-                </p>
+              <div className="flex flex-wrap items-center justify-between gap-3 border-t border-[#E5E7EB] bg-[#F8FAFC] px-5 py-4">
+                <p className="text-[13px] text-[#6B7280]">{copyStatus || 'Esc to close'}</p>
                 <div className="flex items-center gap-2">
                   <button
                     type="button"
                     onClick={handleCopy}
                     disabled={!selectedItem?.text}
-                    className="px-3 py-1.5 text-xs font-medium rounded border border-gray-200 bg-white text-gray-700 hover:bg-gray-50 disabled:opacity-50 transition-colors duration-150"
+                    className="h-10 rounded-[10px] border border-[#D1D5DB] bg-white px-4 text-[14px] font-medium text-[#374151] transition-all duration-200 hover:bg-[#F9FAFB] disabled:cursor-not-allowed disabled:opacity-50"
                   >
                     Copy
                   </button>
@@ -818,7 +829,7 @@ export default function SystemPrompt() {
                     type="button"
                     onClick={handleLoadIntoEditor}
                     disabled={!selectedItem?.text || !isSuperAdmin}
-                    className="px-3 py-1.5 text-xs font-semibold rounded bg-primary-navy text-white hover:bg-primary-navy/90 disabled:opacity-50 disabled:cursor-not-allowed transition-colors duration-150"
+                    className="h-10 rounded-[10px] bg-[#2563EB] px-4 text-[14px] font-semibold text-white transition-all duration-200 hover:bg-[#1D4ED8] disabled:cursor-not-allowed disabled:opacity-50"
                   >
                     Load into editor
                   </button>

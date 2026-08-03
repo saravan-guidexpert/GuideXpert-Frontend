@@ -34,6 +34,7 @@ export const ADMIN_SECTION_OPTIONS = [
   { sectionKey: 'iit-ai-calls-summary', label: 'IITian AI Calls Summary' },
   { sectionKey: 'whatsapp-ops', label: 'WhatsApp ops' },
   { sectionKey: 'student-workspace', label: 'Student panel' },
+  { sectionKey: 'resources', label: 'Resources' },
   // Legacy keys — still valid for existing admin grants; prefer student-workspace for new access
   { sectionKey: 'student-workspace-updates', label: 'Student panel (updates, legacy)' },
   { sectionKey: 'student-testimonials', label: 'Student panel (testimonials, legacy)' },
@@ -87,6 +88,7 @@ export const ADMIN_SECTION_GROUPS = [
       'lead-intelligence',
       'human-copilot',
       'student-workspace',
+      'resources',
       'system-prompt',
     ],
   },

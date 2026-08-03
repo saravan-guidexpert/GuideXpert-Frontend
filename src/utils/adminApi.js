@@ -1518,3 +1518,153 @@ export const publishStudentTestimonial = async (id, token = getStoredToken()) =>
 
 export const unpublishStudentTestimonial = async (id, token = getStoredToken()) =>
   adminRequest(`/student-testimonials/${encodeURIComponent(id)}/unpublish`, { method: 'POST' }, token);
+
+/** Student resources (admin) */
+export const RESOURCE_CHUNK_SIZE = 2 * 1024 * 1024;
+export const RESOURCE_DIRECT_MAX_SIZE = 10 * 1024 * 1024;
+
+function isPdfUploadFile(file) {
+  if (!file) return false;
+  const nameOk = /\.pdf$/i.test(String(file.name || ''));
+  const type = String(file.type || '').toLowerCase();
+  const typeOk = !type || type === 'application/pdf' || type === 'application/x-pdf';
+  return nameOk && typeOk;
+}
+
+function readFileAsBase64(file) {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onload = () => {
+      const result = String(reader.result || '');
+      const base64 = result.includes(',') ? result.split(',').pop() : result;
+      resolve(base64);
+    };
+    reader.onerror = () => reject(new Error('Failed to read file'));
+    reader.readAsDataURL(file);
+  });
+}
+
+export const uploadStudentResourceDirect = async (body, token = getStoredToken()) =>
+  adminRequest('/resources/upload/direct', { method: 'POST', body: JSON.stringify(body) }, token);
+
+export const getStudentResources = async (params = {}, token = getStoredToken()) => {
+  const search = new URLSearchParams();
+  if (params.status) search.set('status', params.status);
+  const query = search.toString();
+  return adminRequest(`/resources${query ? `?${query}` : ''}`, { method: 'GET' }, token);
+};
+
+export const getStudentResourceDownloadLogs = async (params = {}, token = getStoredToken()) => {
+  const search = new URLSearchParams();
+  if (params.resourceId) search.set('resourceId', params.resourceId);
+  if (params.limit) search.set('limit', String(params.limit));
+  if (params.skip) search.set('skip', String(params.skip));
+  const query = search.toString();
+  return adminRequest(`/resources/downloads${query ? `?${query}` : ''}`, { method: 'GET' }, token);
+};
+
+export const initStudentResourceUpload = async (body, token = getStoredToken()) =>
+  adminRequest('/resources/upload/init', { method: 'POST', body: JSON.stringify(body) }, token);
+
+export const uploadStudentResourceChunk = async (formData, token = getStoredToken()) => {
+  const url = `${getApiBaseUrl()}/admin/resources/upload/chunk`;
+  const headers = {};
+  if (token) headers.Authorization = `Bearer ${token}`;
+  try {
+    const response = await fetch(url, { method: 'POST', headers, body: formData });
+    const data = await response.json();
+    if (!response.ok) {
+      return {
+        success: false,
+        message: data?.message || `Upload failed (${response.status})`,
+      };
+    }
+    return data;
+  } catch (err) {
+    return { success: false, message: err?.message || 'Network error' };
+  }
+};
+
+export const completeStudentResourceUpload = async (body, token = getStoredToken()) =>
+  adminRequest('/resources/upload/complete', { method: 'POST', body: JSON.stringify(body) }, token);
+
+export async function uploadStudentResourcePdf(
+  file,
+  { title = '', description = '', onProgress, token = getStoredToken() } = {}
+) {
+  if (!isPdfUploadFile(file)) {
+    return { success: false, message: 'Please select a valid PDF file (.pdf)' };
+  }
+  if (file.size > 20 * 1024 * 1024) {
+    return { success: false, message: 'PDF must be 20MB or smaller' };
+  }
+
+  onProgress?.(0.05);
+
+  if (file.size <= RESOURCE_DIRECT_MAX_SIZE) {
+    const fileBase64 = await readFileAsBase64(file);
+    onProgress?.(0.6);
+    const directRes = await uploadStudentResourceDirect(
+      {
+        fileName: file.name,
+        fileSize: file.size,
+        mimeType: file.type || 'application/pdf',
+        fileBase64,
+        title,
+        description,
+      },
+      token
+    );
+    onProgress?.(1);
+    if (!directRes.success) return directRes;
+    return { success: true, data: directRes.data?.data || directRes.data };
+  }
+
+  const totalChunks = Math.ceil(file.size / RESOURCE_CHUNK_SIZE);
+  const initRes = await initStudentResourceUpload(
+    {
+      fileName: file.name,
+      fileSize: file.size,
+      mimeType: file.type || 'application/pdf',
+      title,
+      description,
+      totalChunks,
+    },
+    token
+  );
+  if (!initRes.success) return initRes;
+  const uploadId = initRes.data?.data?.uploadId;
+  if (!uploadId) return { success: false, message: 'Upload session not created' };
+
+  for (let i = 0; i < totalChunks; i += 1) {
+    const start = i * RESOURCE_CHUNK_SIZE;
+    const chunkBlob = file.slice(start, start + RESOURCE_CHUNK_SIZE);
+    const formData = new FormData();
+    formData.append('uploadId', uploadId);
+    formData.append('chunkIndex', String(i));
+    formData.append('chunk', chunkBlob, `chunk-${i}.pdf`);
+    const chunkRes = await uploadStudentResourceChunk(formData, token);
+    if (!chunkRes.success) return chunkRes;
+    onProgress?.(0.1 + ((i + 1) / totalChunks) * 0.85);
+  }
+
+  const completeRes = await completeStudentResourceUpload({ uploadId, title, description }, token);
+  onProgress?.(1);
+  if (!completeRes.success) return completeRes;
+  return { success: true, data: completeRes.data?.data || completeRes.data };
+}
+
+export const updateStudentResource = async (id, body, token = getStoredToken()) =>
+  adminRequest(`/resources/${encodeURIComponent(id)}`, {
+    method: 'PATCH',
+    body: JSON.stringify(body),
+  }, token);
+
+export const publishStudentResource = async (id, token = getStoredToken()) =>
+  adminRequest(`/resources/${encodeURIComponent(id)}/publish`, { method: 'POST' }, token);
+
+export const unpublishStudentResource = async (id, token = getStoredToken()) =>
+  adminRequest(`/resources/${encodeURIComponent(id)}/unpublish`, { method: 'POST' }, token);
+
+export const deleteStudentResource = async (id, token = getStoredToken()) =>
+  adminRequest(`/resources/${encodeURIComponent(id)}`, { method: 'DELETE' }, token);
