@@ -563,13 +563,53 @@ export default function ResourcesAdmin() {
           </div>
         ) : (
           <div className="space-y-5">
-            <div className="flex flex-wrap items-center gap-3">
-              <label className="flex items-center gap-2 text-sm text-slate-600">
-                <span className="font-medium">Resource</span>
+            <div className="rounded-2xl border border-slate-200/90 bg-white p-5 shadow-sm">
+              <div className="flex flex-wrap items-start justify-between gap-4">
+                <div>
+                  <h2 className="flex items-center gap-2 text-base font-semibold text-slate-900">
+                    <FiUsers className="h-4 w-4 text-[#f27921]" />
+                    Download leads
+                  </h2>
+                  <p className="mt-1 text-sm text-slate-500">
+                    Students who verified OTP and downloaded a PDF — name, phone, and resource.
+                  </p>
+                </div>
+                <div className="flex flex-wrap gap-2">
+                  <button
+                    type="button"
+                    onClick={() => exportLeadsCsv(filteredLogs)}
+                    disabled={filteredLogs.length === 0}
+                    className="inline-flex items-center gap-2 rounded-lg border border-slate-200 bg-white px-3 py-1.5 text-sm font-medium text-slate-700 shadow-sm hover:bg-slate-50 disabled:opacity-50"
+                  >
+                    <FiDownload className="h-4 w-4" />
+                    Export CSV
+                  </button>
+                  <button
+                    type="button"
+                    onClick={loadLogs}
+                    className="inline-flex items-center gap-2 rounded-lg border border-slate-200 bg-white px-3 py-1.5 text-sm font-medium text-slate-700 shadow-sm hover:bg-slate-50"
+                  >
+                    <FiRefreshCw className="h-4 w-4" />
+                    Refresh
+                  </button>
+                </div>
+              </div>
+
+              <div className="mt-4 flex flex-wrap items-center gap-3">
+                <div className="relative min-w-[200px] flex-1 sm:max-w-xs">
+                  <FiSearch className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
+                  <input
+                    type="search"
+                    value={leadsSearch}
+                    onChange={(e) => setLeadsSearch(e.target.value)}
+                    placeholder="Search name, phone, resource…"
+                    className="w-full rounded-lg border border-slate-200 bg-slate-50/50 py-2 pl-9 pr-3 text-sm outline-none focus:border-slate-300 focus:bg-white"
+                  />
+                </div>
                 <select
                   value={resourceFilter}
                   onChange={(e) => setResourceFilter(e.target.value)}
-                  className="max-w-xs rounded-lg border border-slate-200 bg-white px-3 py-1.5 text-sm shadow-sm"
+                  className="rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm shadow-sm"
                 >
                   <option value="">All resources</option>
                   {list.map((item) => (
@@ -578,48 +618,61 @@ export default function ResourcesAdmin() {
                     </option>
                   ))}
                 </select>
-              </label>
-              <button
-                type="button"
-                onClick={loadLogs}
-                className="inline-flex items-center gap-2 rounded-lg border border-slate-200 bg-white px-3 py-1.5 text-sm font-medium text-slate-700 shadow-sm hover:bg-slate-50"
-              >
-                <FiDownload className="h-4 w-4" />
-                Refresh logs
-              </button>
+              </div>
             </div>
 
             <div className="overflow-hidden rounded-2xl border border-slate-200/90 bg-white shadow-sm">
               {logsLoading ? (
-                <p className="p-8 text-center text-sm text-slate-500">Loading download logs…</p>
-              ) : logs.length === 0 ? (
+                <p className="p-8 text-center text-sm text-slate-500">Loading leads…</p>
+              ) : filteredLogs.length === 0 ? (
                 <div className="px-6 py-14 text-center">
-                  <FiDownload className="mx-auto h-10 w-10 text-slate-300" />
-                  <p className="mt-3 text-sm font-medium text-slate-600">No downloads recorded yet</p>
+                  <FiUsers className="mx-auto h-10 w-10 text-slate-300" />
+                  <p className="mt-3 text-sm font-medium text-slate-600">
+                    {logs.length === 0 ? 'No download leads yet' : 'No leads match your search'}
+                  </p>
+                  <p className="mt-1 text-xs text-slate-400">
+                    Leads appear here when students download a PDF after OTP verification.
+                  </p>
                 </div>
               ) : (
-                <div className="overflow-x-auto">
-                  <table className="min-w-full text-left text-sm">
-                    <thead className="border-b border-slate-100 bg-slate-50/80 text-[11px] uppercase tracking-wide text-slate-500">
-                      <tr>
-                        <th className="px-5 py-3.5 font-semibold">Student</th>
-                        <th className="px-5 py-3.5 font-semibold">Phone</th>
-                        <th className="px-5 py-3.5 font-semibold">Resource</th>
-                        <th className="px-5 py-3.5 font-semibold">Downloaded at</th>
-                      </tr>
-                    </thead>
-                    <tbody className="divide-y divide-slate-100">
-                      {logs.map((log) => (
-                        <tr key={log.id} className="hover:bg-slate-50/60">
-                          <td className="px-5 py-4 font-semibold text-slate-900">{log.fullName}</td>
-                          <td className="px-5 py-4 text-slate-600">{log.phone}</td>
-                          <td className="px-5 py-4 text-slate-600">{log.resourceTitle || '—'}</td>
-                          <td className="px-5 py-4 text-slate-600">{formatDate(log.downloadedAt)}</td>
+                <>
+                  <div className="border-b border-slate-100 bg-slate-50/60 px-5 py-3 text-xs text-slate-500">
+                    Showing {filteredLogs.length} of {leadsTotal} lead{leadsTotal === 1 ? '' : 's'}
+                  </div>
+                  <div className="overflow-x-auto">
+                    <table className="min-w-full text-left text-sm">
+                      <thead className="border-b border-slate-100 bg-white text-[11px] uppercase tracking-wide text-slate-500">
+                        <tr>
+                          <th className="px-5 py-3.5 font-semibold">#</th>
+                          <th className="px-5 py-3.5 font-semibold">Student name</th>
+                          <th className="px-5 py-3.5 font-semibold">Mobile</th>
+                          <th className="px-5 py-3.5 font-semibold">Resource</th>
+                          <th className="px-5 py-3.5 font-semibold">Downloaded</th>
                         </tr>
-                      ))}
-                    </tbody>
-                  </table>
-                </div>
+                      </thead>
+                      <tbody className="divide-y divide-slate-100">
+                        {filteredLogs.map((log, index) => (
+                          <tr key={log.id} className="hover:bg-slate-50/60">
+                            <td className="px-5 py-4 text-xs text-slate-400">{index + 1}</td>
+                            <td className="px-5 py-4 font-semibold text-slate-900">{log.fullName}</td>
+                            <td className="px-5 py-4">
+                              <a
+                                href={`tel:+91${log.phone}`}
+                                className="font-mono text-sm text-slate-700 hover:text-primary-navy"
+                              >
+                                {formatPhone(log.phone)}
+                              </a>
+                            </td>
+                            <td className="px-5 py-4 text-slate-600">{log.resourceTitle || '—'}</td>
+                            <td className="px-5 py-4 whitespace-nowrap text-slate-600">
+                              {formatDate(log.downloadedAt)}
+                            </td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
+                </>
               )}
             </div>
           </div>
