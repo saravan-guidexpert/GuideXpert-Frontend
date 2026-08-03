@@ -125,7 +125,6 @@ export default function ExecutiveDashboard() {
     { to: '/admin/dashboard', label: 'Sales Analytics' },
     { to: '/admin/funnel-analytics', label: 'Funnel Analytics' },
     { to: '/admin/lead-intelligence', label: 'Lead Intelligence' },
-    { to: '/admin/human-copilot', label: 'Human Copilot' },
     { to: '/admin/whatsapp-ops/overview', label: 'WhatsApp Ops' },
     { to: '/admin/one-on-one-counseling', label: '1-on-1 Counseling' },
     { to: '/admin/calling-team', label: 'Calling Team (BDA)' },

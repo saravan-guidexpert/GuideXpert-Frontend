@@ -2,7 +2,7 @@ import { createElement, useState, useMemo, useEffect, useCallback, useRef } from
 import { useSidebarScrollbarActivity } from '../../hooks/useSidebarScrollbarActivity';
 import { Link, NavLink, Outlet, useLocation, useNavigate } from 'react-router-dom';
 import { HiMenu, HiX } from 'react-icons/hi';
-import { FiLayout, FiUsers, FiBarChart2, FiDownload, FiSettings, FiCalendar, FiClock, FiVideo, FiFileText, FiBell, FiLink, FiClipboard, FiMessageSquare, FiBookOpen, FiImage, FiPhone, FiLayers, FiTarget, FiUserPlus, FiSend, FiDatabase, FiHeadphones, FiChevronLeft, FiChevronRight, FiLogOut, FiGlobe, FiColumns, FiEdit3 } from 'react-icons/fi';
+import { FiLayout, FiUsers, FiBarChart2, FiDownload, FiSettings, FiCalendar, FiClock, FiVideo, FiFileText, FiBell, FiLink, FiClipboard, FiMessageSquare, FiBookOpen, FiImage, FiPhone, FiLayers, FiTarget, FiUserPlus, FiSend, FiDatabase, FiChevronLeft, FiChevronRight, FiLogOut, FiGlobe, FiColumns, FiEdit3 } from 'react-icons/fi';
 import { useAuth } from '../../hooks/useAuth';
 import { AdminDashboardProvider } from '../../contexts/AdminDashboardContext';
 import { useAdminDateRange } from '../../hooks/useAdminDateRange';
@@ -61,7 +61,6 @@ const navItems = [
   { to: '/admin/iit-ai-calls-summary', label: 'IITian AI Calls Summary', icon: FiPhone, sectionKey: 'iit-ai-calls-summary', sidebarPlacement: 'students' },
   { to: '/admin/whatsapp-ops', label: 'WhatsApp ops', icon: FiSend, sectionKey: 'whatsapp-ops', sidebarPlacement: 'students' },
   { to: '/admin/lead-intelligence', label: 'Chatbot Lead Intelligence', icon: FiMessageSquare, sectionKey: 'lead-intelligence', sidebarPlacement: 'students' },
-  { to: '/admin/human-copilot', label: 'Human Copilot', icon: FiHeadphones, sectionKey: 'human-copilot', sidebarPlacement: 'students' },
   { to: '/admin/student-panel', label: 'Student panel', icon: FiLayers, sectionKey: 'student-workspace', sidebarPlacement: 'students' },
   { to: '/admin/resources', label: 'Resources', icon: FiBookOpen, sectionKey: 'resources', sidebarPlacement: 'students' },
   { to: '/admin/system-prompt', label: 'System Prompt', icon: FiEdit3, sectionKey: 'system-prompt', sidebarPlacement: 'students' },
@@ -299,8 +298,7 @@ export default function AdminLayout() {
     currentPath.startsWith('/admin/calling-data') ||
     currentPath.startsWith('/admin/ai-calls') ||
     currentPath.startsWith('/admin/iit-ai-calls-summary') ||
-    currentPath.startsWith('/admin/lead-intelligence') ||
-    currentPath.startsWith('/admin/human-copilot');
+    currentPath.startsWith('/admin/lead-intelligence');
   useEffect(() => {
     const firstAllowed = visibleNavItems[0];
     if (user && !user.isSuperAdmin && !isPathAllowed && firstAllowed) {
@@ -559,11 +557,7 @@ function AdminChrome({ sidebarOpen, setSidebarOpen, initials, username, onLogout
       </header>
       <AdminFiltersPanel open={filtersOpen} onClose={() => setFiltersOpen(false)} />
       <main
-        className={`grow bg-gray-50 ${
-          location.pathname.includes('/admin/human-copilot')
-            ? 'flex min-h-0 flex-col overflow-hidden p-4 lg:p-6'
-            : `overflow-auto scrollbar-hide px-4 pb-3 lg:px-6 lg:pb-4 ${isDashboard ? 'pt-0' : 'pt-2 lg:pt-3'}`
-        }`}
+        className={`grow overflow-auto scrollbar-hide bg-gray-50 px-4 pb-3 lg:px-6 lg:pb-4 ${isDashboard ? 'pt-0' : 'pt-2 lg:pt-3'}`}
       >
         <Outlet />
       </main>

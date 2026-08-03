@@ -63,7 +63,6 @@ import TrainingFormResponses from './pages/admin/TrainingFormResponses';
 import CollegeDostFormSubmissions from './pages/admin/CollegeDostFormSubmissions';
 import OneOnOneCounselingLeads from './pages/admin/OneOnOneCounselingLeads';
 import LeadIntelligenceDashboard from './pages/admin/lead-intelligence/LeadIntelligenceDashboard';
-const HumanCopilotPage = lazy(() => import('./pages/admin/human-copilot/HumanCopilotPage'));
 import GuidanceSlotBookings from './pages/admin/GuidanceSlotBookings';
 import OneOnOneCounselorsAdmin from './pages/admin/OneOnOneCounselorsAdmin';
 import OneOnOneSessionPage from './pages/OneOnOneSessionPage';
@@ -538,8 +537,6 @@ function App() {
             <Route path="college-dost" element={<CollegeDostFormSubmissions />} />
             <Route path="one-on-one-counseling" element={<OneOnOneCounselingLeads />} />
             <Route path="lead-intelligence" element={<LeadIntelligenceDashboard />} />
-            <Route path="human-copilot" element={<Suspense fallback={<div className="p-6 text-sm text-slate-500">Loading Human Copilot…</div>}><HumanCopilotPage /></Suspense>} />
-            <Route path="human-copilot/:handoffId" element={<Suspense fallback={<div className="p-6 text-sm text-slate-500">Loading Human Copilot…</div>}><HumanCopilotPage /></Suspense>} />
             <Route path="guidance-slot-bookings" element={<GuidanceSlotBookings />} />
             <Route path="one-on-one-counselors" element={<OneOnOneCounselorsAdmin />} />
             <Route path="influencer-create" element={<InfluencerCreate />} />
