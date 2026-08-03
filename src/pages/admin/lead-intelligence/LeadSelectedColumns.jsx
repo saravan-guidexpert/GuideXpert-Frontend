@@ -6,8 +6,7 @@ import LeadChatTranscript from './LeadChatTranscript';
 import LeadDetailsSidebar from './LeadDetailsSidebar';
 import { flattenRecentEvents, LI } from './leadIntelligenceUtils';
 
-/** Mobile / stacked layout when flat 3-column grid is not used. */
-export default function LeadDetailPanel({ phone, onClose, compact = false }) {
+export default function LeadSelectedColumns({ phone, onClose }) {
   const { details, loading, error, retry } = useLeadDetails(phone);
   const {
     messages,
@@ -25,15 +24,10 @@ export default function LeadDetailPanel({ phone, onClose, compact = false }) {
   const displayName = details?.name || profile?.name || 'Unknown lead';
 
   return (
-    <div className="flex h-full min-h-0 flex-col overflow-hidden bg-white">
-      <LeadChatHeader
-        displayName={displayName}
-        phone={phone}
-        onClose={onClose}
-        showBack={compact}
-      />
-      <div className="grid min-h-0 flex-1 grid-cols-1 overflow-hidden">
-        <div className="min-h-[40vh] min-w-0 overflow-hidden border-b border-[#E5E7EB]">
+    <>
+      <section className="flex min-h-0 min-w-0 flex-col overflow-hidden border-r border-[#E5E7EB] bg-white">
+        <LeadChatHeader displayName={displayName} phone={phone} onClose={onClose} />
+        <div className="min-h-0 flex-1 overflow-hidden">
           <LeadChatTranscript
             messages={messages}
             loading={transcriptLoading}
@@ -42,19 +36,20 @@ export default function LeadDetailPanel({ phone, onClose, compact = false }) {
             contactName={displayName}
           />
         </div>
-        <div className={`min-h-0 flex-1 overflow-hidden ${LI.bg}`}>
-          <LeadDetailsSidebar
-            phone={phone}
-            details={details}
-            score={score}
-            profile={profile}
-            eventRows={eventRows}
-            loading={loading}
-            error={error}
-            onRetry={retry}
-          />
-        </div>
-      </div>
-    </div>
+      </section>
+
+      <section className={`flex min-h-0 flex-col overflow-hidden ${LI.bg}`}>
+        <LeadDetailsSidebar
+          phone={phone}
+          details={details}
+          score={score}
+          profile={profile}
+          eventRows={eventRows}
+          loading={loading}
+          error={error}
+          onRetry={retry}
+        />
+      </section>
+    </>
   );
 }

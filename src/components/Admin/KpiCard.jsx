@@ -13,6 +13,7 @@ export default function KpiCard({
   icon: Icon = null,
   accent = false,
   subtitle = '',
+  compact = false,
   interactive = false,
   onActivate = null,
   ariaExpanded = false,
@@ -45,10 +46,10 @@ export default function KpiCard({
     <div
       {...interactiveProps}
       className={`
-        relative rounded-xl border border-primary-blue-200/70 bg-white p-4 portal-card shadow-sm
+        relative rounded-xl border border-primary-blue-200/70 bg-white portal-card
         transition-all duration-200
-        hover:border-primary-blue-300 hover:shadow-md hover:-translate-y-0.5
         focus-visible:ring-2 focus-visible:ring-primary-navy focus-visible:ring-offset-2 focus-visible:outline-none
+        ${compact ? 'p-3 shadow-none hover:border-primary-blue-300 hover:shadow-sm' : 'p-4 shadow-sm hover:border-primary-blue-300 hover:shadow-md hover:-translate-y-0.5'}
         ${showAccent ? 'group' : ''}
         ${interactive ? 'cursor-pointer' : ''}
         ${className}
@@ -75,7 +76,11 @@ export default function KpiCard({
             </span>
           )}
         </div>
-        <p className="text-[1.75rem] leading-8 font-semibold text-primary-navy tabular-nums truncate">
+        <p
+          className={`${
+            compact ? 'text-[1.5rem] leading-7' : 'text-[1.75rem] leading-8'
+          } font-semibold text-primary-navy tabular-nums truncate`}
+        >
           {typeof value === 'number' ? value.toLocaleString() : value}
         </p>
         {subtitle && (

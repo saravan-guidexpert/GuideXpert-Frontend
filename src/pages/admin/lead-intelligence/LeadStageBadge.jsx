@@ -1,11 +1,11 @@
 import { memo } from 'react';
-import { getStageTone } from './leadIntelligenceUtils';
+import { getStageLabel, getStageTone } from './leadIntelligenceUtils';
 
 function LeadStageBadge({ stage }) {
-  const label = String(stage || 'unknown');
+  const label = getStageLabel(stage);
   return (
     <span
-      className={`inline-flex items-center rounded-full border px-2.5 py-0.5 text-[11px] font-semibold capitalize tracking-wide ${getStageTone(stage)}`}
+      className={`inline-flex h-6 items-center rounded-full border px-2.5 text-[12px] font-medium capitalize ${getStageTone(stage)}`}
     >
       {label}
     </span>

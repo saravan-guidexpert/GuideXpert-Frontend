@@ -557,7 +557,7 @@ function AdminChrome({ sidebarOpen, setSidebarOpen, initials, username, onLogout
       </header>
       <AdminFiltersPanel open={filtersOpen} onClose={() => setFiltersOpen(false)} />
       <main
-        className={`grow overflow-auto scrollbar-hide bg-gray-50 px-4 pb-3 lg:px-6 lg:pb-4 ${isDashboard ? 'pt-0' : 'pt-2 lg:pt-3'}`}
+        className={`grow scrollbar-hide bg-gray-50 px-4 pb-3 lg:px-6 lg:pb-4 ${isDashboard ? 'pt-0' : 'pt-2 lg:pt-3'} overflow-auto`}
       >
         <Outlet />
       </main>

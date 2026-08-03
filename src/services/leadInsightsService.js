@@ -47,6 +47,11 @@ export async function leadInsightsRequest(path, options = {}, token = getStoredT
 
 export const getLeadStats = () => leadInsightsRequest('/stats');
 
+export const getLeadActivity = ({ year, month } = {}) => {
+  const query = buildLeadInsightsQuery({ year, month });
+  return leadInsightsRequest(`/activity${query}`);
+};
+
 export const getHotLeads = () => leadInsightsRequest('/hot');
 
 export const listLeads = (params = {}) =>

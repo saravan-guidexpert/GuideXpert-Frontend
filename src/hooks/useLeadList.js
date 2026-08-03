@@ -11,6 +11,7 @@ export function useLeadList({ onExactPhoneMatch } = {}) {
   const [limit, setLimit] = useState(DEFAULT_LIMIT);
   const [searchPhone, setSearchPhone] = useState('');
   const [awaitingReply, setAwaitingReply] = useState('');
+  const [activityDate, setActivityDate] = useState('');
   const debouncedSearch = useDebouncedValue(searchPhone, 300);
 
   const [items, setItems] = useState([]);
@@ -18,6 +19,11 @@ export function useLeadList({ onExactPhoneMatch } = {}) {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   const requestIdRef = useRef(0);
+
+  const exactPhoneDigits = useMemo(() => {
+    const digits = String(debouncedSearch || '').replace(/\D/g, '');
+    return digits.length === 10 ? digits : '';
+  }, [debouncedSearch]);
 
   const load = useCallback(async () => {
     const requestId = ++requestIdRef.current;
@@ -32,6 +38,12 @@ export function useLeadList({ onExactPhoneMatch } = {}) {
     if (minScore > 0) params.minScore = minScore;
     if (awaitingReply === 'true' || awaitingReply === 'false') {
       params.awaitingReply = awaitingReply;
+    }
+    if (exactPhoneDigits) {
+      params.phone = exactPhoneDigits;
+    }
+    if (activityDate) {
+      params.activityDate = activityDate;
     }
 
     const result = normalizeLeadInsightsResponse(await listLeads(params));
@@ -48,24 +60,25 @@ export function useLeadList({ onExactPhoneMatch } = {}) {
     setItems(Array.isArray(result.data?.items) ? result.data.items : []);
     setTotal(Number(result.data?.total) || 0);
     setLoading(false);
-  }, [stage, minScore, page, limit, awaitingReply]);
+  }, [stage, minScore, page, limit, awaitingReply, exactPhoneDigits, activityDate]);
 
   useEffect(() => {
     load();
   }, [load]);
 
   useEffect(() => {
-    const digits = String(debouncedSearch || '').replace(/\D/g, '');
-    if (digits.length === 10 && typeof onExactPhoneMatch === 'function') {
-      onExactPhoneMatch(digits);
+    if (exactPhoneDigits && typeof onExactPhoneMatch === 'function') {
+      onExactPhoneMatch(exactPhoneDigits);
     }
-  }, [debouncedSearch, onExactPhoneMatch]);
+  }, [exactPhoneDigits, onExactPhoneMatch]);
 
   const filteredItems = useMemo(() => {
     const digits = String(debouncedSearch || '').replace(/\D/g, '');
     if (!digits || digits.length === 10) return items;
     return items.filter((row) => String(row?.phone || '').includes(digits));
   }, [items, debouncedSearch]);
+
+  const hasActiveFilters = Boolean(stage || minScore > 0 || awaitingReply || activityDate);
 
   const setFilters = useCallback((patch = {}) => {
     if (patch.stage !== undefined) {
@@ -87,9 +100,21 @@ export function useLeadList({ onExactPhoneMatch } = {}) {
       setAwaitingReply(patch.awaitingReply);
       setPage(1);
     }
+    if (patch.activityDate !== undefined) {
+      setActivityDate(patch.activityDate || '');
+      setPage(1);
+    }
     if (patch.page !== undefined) {
       setPage(patch.page);
     }
+  }, []);
+
+  const clearFilters = useCallback(() => {
+    setStage('');
+    setMinScore(0);
+    setAwaitingReply('');
+    setActivityDate('');
+    setPage(1);
   }, []);
 
   return {
@@ -100,12 +125,15 @@ export function useLeadList({ onExactPhoneMatch } = {}) {
     searchPhone,
     debouncedSearch,
     awaitingReply,
+    activityDate,
     items: filteredItems,
     total,
     loading,
     error,
+    hasActiveFilters,
     retry: load,
     setFilters,
+    clearFilters,
     setPage,
   };
 }
