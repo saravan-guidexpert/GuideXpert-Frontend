@@ -218,12 +218,13 @@ export default function ResourcesAdmin() {
 
   const onDelete = async (id) => {
     const res = await deleteStudentResource(id);
-    setDeleteConfirm(null);
-    if (!res.success) setError(res.message || 'Failed to delete');
-    else {
-      setSuccess('Resource deleted');
-      await loadResources();
+    if (!res.success) {
+      setError(res.message || 'Failed to delete');
+      return;
     }
+    setDeleteConfirm(null);
+    setSuccess('Resource deleted');
+    await loadResources();
   };
 
   return (
@@ -680,7 +681,7 @@ export default function ResourcesAdmin() {
       </div>
 
       <ConfirmDialog
-        open={Boolean(deleteConfirm)}
+        isOpen={Boolean(deleteConfirm)}
         title="Delete resource?"
         message={
           deleteConfirm
