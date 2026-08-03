@@ -236,7 +236,7 @@ export default function SystemPrompt() {
       return;
     }
     const confirmed = window.confirm(
-      `Clear WhatsApp chatbot profile for ${phone10}?\n\nThis removes saved lead facts, predictor session, and opt-out flags for that number. Chat message history is kept.`
+      `Reset WhatsApp lead for ${phone10}?\n\nThis permanently deletes chat history, profile details, bot state, handoffs, and lead scoring. The next message from this number will be treated as a new lead.`
     );
     if (!confirmed) return;
 
@@ -247,7 +247,7 @@ export default function SystemPrompt() {
     if (!res.success) {
       setClearStatus({
         type: 'error',
-        message: res.message || res.data?.message || 'Failed to clear chatbot profile.',
+        message: res.message || res.data?.message || 'Failed to reset chatbot lead.',
       });
       return;
     }
@@ -256,7 +256,7 @@ export default function SystemPrompt() {
       type: 'success',
       message:
         res.data?.message ||
-        `Cleared profile for ${phone10} (bot states: ${deleted.botStates ?? 0}, lead profiles: ${deleted.leadProfiles ?? 0}).`,
+        `Reset lead ${phone10} (${deleted.inboundMessages ?? 0} inbound, ${deleted.outboundMessages ?? 0} outbound messages removed).`,
     });
     setClearPhone('');
   };
@@ -475,10 +475,10 @@ export default function SystemPrompt() {
         className="space-y-4 rounded-[14px] border border-[#E5E7EB] bg-white p-5 shadow-[0_1px_3px_rgba(0,0,0,0.05)] md:p-6"
       >
         <div>
-          <h2 className="text-[20px] font-semibold text-[#111827]">Clear WhatsApp chatbot profile</h2>
+          <h2 className="text-[20px] font-semibold text-[#111827]">Reset WhatsApp chatbot lead</h2>
           <p className="mt-2 text-[15px] text-[#6B7280]">
-            Reset saved profile details for one number (lead facts, predictor session, opt-out).
-            Message history is not deleted.
+            Delete chat history and profile data for one number so the next message is treated as a
+            brand-new lead (facts, predictor session, opt-out, handoffs, and transcripts).
           </p>
         </div>
 
@@ -514,11 +514,11 @@ export default function SystemPrompt() {
             disabled={!isSuperAdmin || clearingProfile || normalizePhoneInput(clearPhone).length !== 10}
             className="h-10 rounded-[10px] bg-red-600 px-5 text-[14px] font-semibold text-white transition-all duration-200 hover:bg-red-700 disabled:cursor-not-allowed disabled:opacity-50 sm:w-auto w-full"
           >
-            {clearingProfile ? 'Clearing…' : 'Clear profile'}
+            {clearingProfile ? 'Resetting…' : 'Reset lead'}
           </button>
         </div>
         {!isSuperAdmin ? (
-          <p className="text-[13px] text-amber-700">Only super-admins can clear chatbot profiles.</p>
+          <p className="text-[13px] text-amber-700">Only super-admins can reset chatbot leads.</p>
         ) : null}
       </form>
 

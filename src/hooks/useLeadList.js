@@ -10,6 +10,7 @@ export function useLeadList({ onExactPhoneMatch } = {}) {
   const [page, setPage] = useState(1);
   const [limit, setLimit] = useState(DEFAULT_LIMIT);
   const [searchPhone, setSearchPhone] = useState('');
+  const [awaitingReply, setAwaitingReply] = useState('');
   const debouncedSearch = useDebouncedValue(searchPhone, 300);
 
   const [items, setItems] = useState([]);
@@ -29,6 +30,9 @@ export function useLeadList({ onExactPhoneMatch } = {}) {
     };
     if (stage) params.stage = stage;
     if (minScore > 0) params.minScore = minScore;
+    if (awaitingReply === 'true' || awaitingReply === 'false') {
+      params.awaitingReply = awaitingReply;
+    }
 
     const result = normalizeLeadInsightsResponse(await listLeads(params));
     if (requestId !== requestIdRef.current) return;
@@ -44,7 +48,7 @@ export function useLeadList({ onExactPhoneMatch } = {}) {
     setItems(Array.isArray(result.data?.items) ? result.data.items : []);
     setTotal(Number(result.data?.total) || 0);
     setLoading(false);
-  }, [stage, minScore, page, limit]);
+  }, [stage, minScore, page, limit, awaitingReply]);
 
   useEffect(() => {
     load();
@@ -79,6 +83,10 @@ export function useLeadList({ onExactPhoneMatch } = {}) {
     if (patch.searchPhone !== undefined) {
       setSearchPhone(patch.searchPhone);
     }
+    if (patch.awaitingReply !== undefined) {
+      setAwaitingReply(patch.awaitingReply);
+      setPage(1);
+    }
     if (patch.page !== undefined) {
       setPage(patch.page);
     }
@@ -91,6 +99,7 @@ export function useLeadList({ onExactPhoneMatch } = {}) {
     limit,
     searchPhone,
     debouncedSearch,
+    awaitingReply,
     items: filteredItems,
     total,
     loading,

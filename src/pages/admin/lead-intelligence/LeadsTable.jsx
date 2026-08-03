@@ -1,40 +1,43 @@
 import { memo } from 'react';
-import { FiChevronLeft, FiChevronRight, FiInbox } from 'react-icons/fi';
+import { FiChevronLeft, FiChevronRight, FiClock, FiInbox } from 'react-icons/fi';
 import TableSkeleton from '../../../components/UI/TableSkeleton';
 import LeadProfileSummary from './LeadProfileSummary';
 import LeadStageBadge from './LeadStageBadge';
-import {
-  formatLeadDate,
-  PANEL_CLASS,
-  PANEL_HEADER_CLASS,
-  SECTION_SUBTITLE_CLASS,
-  SECTION_TITLE_CLASS,
-} from './leadIntelligenceUtils';
+import { formatLeadDate, formatNoReplyDuration } from './leadIntelligenceUtils';
 
-const LeadRow = memo(function LeadRow({ row, onSelect }) {
+const LeadRow = memo(function LeadRow({ row, selected, onSelect }) {
   return (
-    <tr className="transition-colors hover:bg-slate-50/80">
-      <td className="px-4 py-3 font-medium tabular-nums text-slate-900">{row.phone || '—'}</td>
-      <td className="px-4 py-3 font-medium text-slate-900">{row.name || '—'}</td>
-      <td className="px-4 py-3 min-w-[10rem]">
-        <LeadProfileSummary row={row} />
+    <tr
+      className={`cursor-pointer transition-colors ${
+        selected ? 'bg-primary-blue-50/80' : 'hover:bg-slate-50/90'
+      }`}
+      onClick={() => onSelect(row.phone)}
+    >
+      <td className="px-3 py-2.5">
+        <div className="font-medium text-slate-900">{row.name || 'Unknown'}</div>
+        <div className="text-xs tabular-nums text-slate-500">{row.phone || '—'}</div>
       </td>
-      <td className="px-4 py-3 tabular-nums font-semibold text-slate-800">{row.leadScore ?? '—'}</td>
-      <td className="px-4 py-3">
+      <td className="px-3 py-2.5">
         <LeadStageBadge stage={row.leadStage} />
       </td>
-      <td className="px-4 py-3 text-slate-700">{row.branchInterest || '—'}</td>
-      <td className="px-4 py-3 text-slate-700">{row.collegeInterest || '—'}</td>
-      <td className="px-4 py-3 tabular-nums text-slate-700">{row.eventCount ?? 0}</td>
-      <td className="whitespace-nowrap px-4 py-3 text-slate-600">{formatLeadDate(row.lastInteractionAt)}</td>
-      <td className="px-4 py-3">
-        <button
-          type="button"
-          onClick={() => onSelect(row.phone)}
-          className="rounded-lg border border-slate-200 bg-white px-3 py-1.5 text-xs font-semibold text-slate-700 shadow-sm transition hover:border-primary-blue-200 hover:bg-primary-blue-50 hover:text-primary-navy"
-        >
-          View profile
-        </button>
+      <td className="px-3 py-2.5 tabular-nums font-semibold text-slate-800">
+        {row.leadScore ?? '—'}
+      </td>
+      <td className="px-3 py-2.5">
+        {row.awaitingReply ? (
+          <span className="inline-flex items-center gap-1 rounded-full border border-amber-200 bg-amber-50 px-2 py-0.5 text-[11px] font-semibold text-amber-800">
+            <FiClock className="h-3 w-3" />
+            {formatNoReplyDuration(row.noReplyMs)}
+          </span>
+        ) : (
+          <span className="text-xs text-slate-400">—</span>
+        )}
+      </td>
+      <td className="hidden px-3 py-2.5 min-w-[7rem] xl:table-cell">
+        <LeadProfileSummary row={row} />
+      </td>
+      <td className="hidden whitespace-nowrap px-3 py-2.5 text-xs text-slate-600 2xl:table-cell">
+        {formatLeadDate(row.lastInboundAt || row.lastInteractionAt)}
       </td>
     </tr>
   );
@@ -47,39 +50,41 @@ export default function LeadsTable({
   limit,
   loading,
   error,
+  selectedPhone,
   onRetry,
   onSelectPhone,
   onPageChange,
+  embedded = false,
 }) {
   const totalPages = Math.max(1, Math.ceil(total / limit) || 1);
 
   return (
-    <section className={PANEL_CLASS}>
-      <div className={`${PANEL_HEADER_CLASS} flex flex-wrap items-center justify-between gap-3`}>
+    <div className={embedded ? 'flex min-h-0 flex-1 flex-col' : ''}>
+      <div className="flex flex-wrap items-center justify-between gap-2 border-b border-slate-200/80 px-3 py-2.5">
         <div>
-          <h2 className={SECTION_TITLE_CLASS}>Lead Directory</h2>
-          <p className={SECTION_SUBTITLE_CLASS}>
-            {total.toLocaleString()} leads matched the current filters
+          <h2 className="text-sm font-semibold text-slate-900">Lead directory</h2>
+          <p className="text-[11px] text-slate-500">
+            {total.toLocaleString()} matched · click a row for score &amp; chat
           </p>
         </div>
-        <div className="flex items-center gap-2 rounded-xl border border-slate-200 bg-slate-50/80 px-2 py-1 text-sm text-slate-600">
+        <div className="flex items-center gap-1 rounded-lg border border-slate-200 bg-slate-50/80 px-1.5 py-0.5 text-xs text-slate-600">
           <button
             type="button"
             disabled={page <= 1 || loading}
             onClick={() => onPageChange(page - 1)}
-            className="rounded-lg p-1.5 transition hover:bg-white disabled:opacity-40"
+            className="rounded p-1 transition hover:bg-white disabled:opacity-40"
             aria-label="Previous page"
           >
             <FiChevronLeft />
           </button>
-          <span className="min-w-[7rem] text-center text-xs font-medium tabular-nums">
-            Page {page} of {totalPages}
+          <span className="min-w-[4.5rem] text-center tabular-nums">
+            {page}/{totalPages}
           </span>
           <button
             type="button"
             disabled={page >= totalPages || loading}
             onClick={() => onPageChange(page + 1)}
-            className="rounded-lg p-1.5 transition hover:bg-white disabled:opacity-40"
+            className="rounded p-1 transition hover:bg-white disabled:opacity-40"
             aria-label="Next page"
           >
             <FiChevronRight />
@@ -88,11 +93,11 @@ export default function LeadsTable({
       </div>
 
       {loading ? (
-        <div className="p-5">
-          <TableSkeleton rows={8} cols={10} />
+        <div className="p-3">
+          <TableSkeleton rows={8} cols={5} />
         </div>
       ) : error ? (
-        <div className="flex items-center justify-between gap-3 p-5 text-sm text-red-700">
+        <div className="flex items-center justify-between gap-3 p-4 text-sm text-red-700">
           <span>{error}</span>
           <button
             type="button"
@@ -103,40 +108,53 @@ export default function LeadsTable({
           </button>
         </div>
       ) : items.length === 0 ? (
-        <div className="px-6 py-12 text-center">
-          <div className="mx-auto mb-3 flex h-11 w-11 items-center justify-center rounded-full bg-slate-100 text-slate-500">
+        <div className="px-4 py-10 text-center">
+          <div className="mx-auto mb-2 flex h-10 w-10 items-center justify-center rounded-full bg-slate-100 text-slate-500">
             <FiInbox className="h-5 w-5" />
           </div>
           <p className="text-sm font-medium text-slate-700">No leads found</p>
           <p className="mt-1 text-xs text-slate-500">
-            Adjust filters or wait for chatbot extraction to populate lead profiles.
+            Scores appear after chatbot conversations sync to Lead Intelligence.
           </p>
         </div>
       ) : (
-        <div className="overflow-x-auto">
+        <div className="min-h-0 flex-1 overflow-auto">
           <table className="min-w-full text-sm">
-            <thead className="border-b border-slate-200/80 bg-slate-50/90">
+            <thead className="sticky top-0 z-[1] border-b border-slate-200/80 bg-slate-50/95 backdrop-blur">
               <tr>
-                <th className="px-4 py-2.5 text-left text-[11px] font-semibold uppercase tracking-wide text-slate-500">Phone</th>
-                <th className="px-4 py-2.5 text-left text-[11px] font-semibold uppercase tracking-wide text-slate-500">Name</th>
-                <th className="px-4 py-2.5 text-left text-[11px] font-semibold uppercase tracking-wide text-slate-500">Profile</th>
-                <th className="px-4 py-2.5 text-left text-[11px] font-semibold uppercase tracking-wide text-slate-500">Lead Score</th>
-                <th className="px-4 py-2.5 text-left text-[11px] font-semibold uppercase tracking-wide text-slate-500">Stage</th>
-                <th className="px-4 py-2.5 text-left text-[11px] font-semibold uppercase tracking-wide text-slate-500">Branch Interest</th>
-                <th className="px-4 py-2.5 text-left text-[11px] font-semibold uppercase tracking-wide text-slate-500">College Interest</th>
-                <th className="px-4 py-2.5 text-left text-[11px] font-semibold uppercase tracking-wide text-slate-500">Events</th>
-                <th className="px-4 py-2.5 text-left text-[11px] font-semibold uppercase tracking-wide text-slate-500">Last Interaction</th>
-                <th className="px-4 py-2.5 text-left text-[11px] font-semibold uppercase tracking-wide text-slate-500">Actions</th>
+                <th className="px-3 py-2 text-left text-[10px] font-semibold uppercase tracking-wide text-slate-500">
+                  Lead
+                </th>
+                <th className="px-3 py-2 text-left text-[10px] font-semibold uppercase tracking-wide text-slate-500">
+                  Type
+                </th>
+                <th className="px-3 py-2 text-left text-[10px] font-semibold uppercase tracking-wide text-slate-500">
+                  Score
+                </th>
+                <th className="px-3 py-2 text-left text-[10px] font-semibold uppercase tracking-wide text-slate-500">
+                  No-reply
+                </th>
+                <th className="hidden px-3 py-2 text-left text-[10px] font-semibold uppercase tracking-wide text-slate-500 xl:table-cell">
+                  Tags
+                </th>
+                <th className="hidden px-3 py-2 text-left text-[10px] font-semibold uppercase tracking-wide text-slate-500 2xl:table-cell">
+                  Last inbound
+                </th>
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-100">
               {items.map((row) => (
-                <LeadRow key={row.phone} row={row} onSelect={onSelectPhone} />
+                <LeadRow
+                  key={row.phone}
+                  row={row}
+                  selected={selectedPhone === row.phone}
+                  onSelect={onSelectPhone}
+                />
               ))}
             </tbody>
           </table>
         </div>
       )}
-    </section>
+    </div>
   );
 }

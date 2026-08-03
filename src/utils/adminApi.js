@@ -1166,7 +1166,8 @@ export const setSystemPrompt = async (text, token = getStoredToken()) => {
 };
 
 /**
- * POST /admin/chatbot/clear-profile — clear WhatsApp bot profile for one phone (super-admin).
+ * POST /admin/chatbot/clear-profile — full WhatsApp lead reset for one phone (super-admin).
+ * Deletes profile, chat history, handoffs, and bot state.
  * @param {string} phone
  */
 export const clearChatbotProfile = async (phone, token = getStoredToken()) => {

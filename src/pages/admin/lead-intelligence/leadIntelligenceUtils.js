@@ -67,3 +67,34 @@ export function formatLeadProfileSummary(row = {}) {
   if (row.languagePreference) tags.push(row.languagePreference);
   return tags;
 }
+
+/** Humanize no-reply duration in ms (e.g. "12m", "2h 5m", "1d 3h"). */
+export function formatNoReplyDuration(ms) {
+  if (ms == null || !Number.isFinite(Number(ms)) || Number(ms) < 0) return '—';
+  const totalSec = Math.floor(Number(ms) / 1000);
+  if (totalSec < 60) return `${totalSec}s`;
+  const totalMin = Math.floor(totalSec / 60);
+  if (totalMin < 60) return `${totalMin}m`;
+  const hours = Math.floor(totalMin / 60);
+  const mins = totalMin % 60;
+  if (hours < 24) return mins ? `${hours}h ${mins}m` : `${hours}h`;
+  const days = Math.floor(hours / 24);
+  const remH = hours % 24;
+  return remH ? `${days}d ${remH}h` : `${days}d`;
+}
+
+export function formatChatTime(value) {
+  if (!value) return '';
+  try {
+    return new Date(value).toLocaleString('en-IN', {
+      day: 'numeric',
+      month: 'short',
+      hour: '2-digit',
+      minute: '2-digit',
+      hour12: true,
+      timeZone: 'Asia/Kolkata',
+    });
+  } catch {
+    return String(value);
+  }
+}

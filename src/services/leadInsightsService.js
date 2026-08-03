@@ -54,3 +54,10 @@ export const listLeads = (params = {}) =>
 
 export const getLeadDetails = (phone) =>
   leadInsightsRequest(`/${encodeURIComponent(String(phone || '').trim())}`);
+
+export const getLeadTranscript = (phone, params = {}) => {
+  const query = buildLeadInsightsQuery(params);
+  return leadInsightsRequest(
+    `/${encodeURIComponent(String(phone || '').trim())}/transcript${query}`
+  );
+};
