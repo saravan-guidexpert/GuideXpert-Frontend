@@ -514,13 +514,17 @@ export default function SystemPrompt() {
         ) : null}
       </form>
 
-      <section className="bg-white rounded-lg border border-gray-200 overflow-hidden">
-        <div className="px-3 sm:px-4 py-1.5 border-b border-gray-100 flex flex-wrap items-center gap-x-2.5 gap-y-1.5">
-          <h2 className="text-sm font-semibold text-primary-navy shrink-0">Prompt history</h2>
+      <section className="bg-white rounded-xl border border-gray-200 shadow-sm overflow-hidden">
+        <div className="px-4 py-2 border-b border-gray-100 flex flex-wrap items-center gap-x-3 gap-y-2">
+          <h2 className="text-sm font-semibold text-gray-900 shrink-0">Prompt history</h2>
 
           {(history.length > 0 || historyLoading) ? (
             <>
-              <div className="flex flex-wrap items-center gap-0.5" role="group" aria-label="Date range">
+              <div
+                className="inline-flex items-center rounded-md bg-gray-100 p-0.5"
+                role="group"
+                aria-label="Date range"
+              >
                 {HISTORY_RANGE_OPTIONS.map((opt) => {
                   const active = historyRange === opt.id;
                   return (
@@ -528,10 +532,10 @@ export default function SystemPrompt() {
                       key={opt.id}
                       type="button"
                       onClick={() => setHistoryRange(opt.id)}
-                      className={`px-2 py-0.5 text-[11px] font-medium rounded transition-colors duration-200 ${
+                      className={`px-2.5 py-1 text-xs font-medium rounded transition-colors ${
                         active
-                          ? 'bg-primary-navy text-white'
-                          : 'text-gray-500 hover:text-gray-800 hover:bg-gray-100'
+                          ? 'bg-white text-gray-900 shadow-sm'
+                          : 'text-gray-600 hover:text-gray-900'
                       }`}
                     >
                       {opt.label}
@@ -540,22 +544,24 @@ export default function SystemPrompt() {
                 })}
               </div>
 
-              <input
-                type="search"
-                value={historyQuery}
-                onChange={(e) => setHistoryQuery(e.target.value)}
-                placeholder="Search admin, hash, text…"
-                aria-label="Search history"
-                className="min-w-[8rem] flex-1 max-w-[14rem] rounded border border-gray-200 bg-white px-2 py-1 text-[11px] text-gray-800 placeholder:text-gray-400 focus:outline-none focus:ring-1 focus:ring-primary-navy/30"
-              />
+              <div className="relative min-w-[10rem] flex-1 max-w-xs">
+                <input
+                  type="search"
+                  value={historyQuery}
+                  onChange={(e) => setHistoryQuery(e.target.value)}
+                  placeholder="Search admin, hash, text…"
+                  aria-label="Search history"
+                  className="w-full rounded-md border border-gray-200 bg-white pl-2.5 pr-2 py-1.5 text-xs text-gray-800 placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-primary-navy/20 focus:border-primary-navy/40"
+                />
+              </div>
 
               {filtersActive ? (
                 <button
                   type="button"
                   onClick={clearHistoryFilters}
-                  className="text-[11px] text-gray-500 hover:text-gray-800 transition-colors duration-200"
+                  className="text-xs text-gray-500 hover:text-gray-800 transition-colors"
                 >
-                  Clear
+                  Clear filters
                 </button>
               ) : null}
             </>
@@ -563,7 +569,7 @@ export default function SystemPrompt() {
 
           <div className="ml-auto flex items-center gap-2 shrink-0">
             {!historyLoading && history.length > 0 ? (
-              <span className="text-[11px] text-gray-400 tabular-nums">
+              <span className="text-xs text-gray-500 tabular-nums">
                 {filteredHistory.length}/{history.length}
               </span>
             ) : null}
@@ -571,151 +577,145 @@ export default function SystemPrompt() {
               type="button"
               onClick={loadHistory}
               disabled={historyLoading}
-              className="px-2 py-1 text-[11px] font-medium rounded border border-gray-200 text-gray-600 hover:bg-gray-50 disabled:opacity-50 transition-colors duration-200"
+              className="px-2.5 py-1.5 text-xs font-medium rounded-md border border-gray-200 text-gray-700 bg-white hover:bg-gray-50 disabled:opacity-50 transition-colors"
             >
-              {historyLoading ? '…' : 'Refresh'}
+              {historyLoading ? 'Loading…' : 'Refresh'}
             </button>
           </div>
         </div>
 
         {historyRange === 'custom' && (history.length > 0 || historyLoading) ? (
-          <div className="px-3 sm:px-4 py-1 border-b border-gray-100 flex flex-wrap items-center gap-2 bg-gray-50/80">
+          <div className="px-4 py-1.5 border-b border-gray-100 flex flex-wrap items-center gap-2 bg-gray-50/60">
             <input
               type="date"
               value={historyFrom}
               onChange={(e) => setHistoryFrom(e.target.value)}
               aria-label="From date"
-              className="rounded border border-gray-200 bg-white px-2 py-0.5 text-[11px] focus:outline-none focus:ring-1 focus:ring-primary-navy/30"
+              className="rounded-md border border-gray-200 bg-white px-2 py-1 text-xs focus:outline-none focus:ring-2 focus:ring-primary-navy/20"
             />
-            <span className="text-[11px] text-gray-400">–</span>
+            <span className="text-xs text-gray-400">to</span>
             <input
               type="date"
               value={historyTo}
               onChange={(e) => setHistoryTo(e.target.value)}
               aria-label="To date"
-              className="rounded border border-gray-200 bg-white px-2 py-0.5 text-[11px] focus:outline-none focus:ring-1 focus:ring-primary-navy/30"
+              className="rounded-md border border-gray-200 bg-white px-2 py-1 text-xs focus:outline-none focus:ring-2 focus:ring-primary-navy/20"
             />
           </div>
         ) : null}
 
-        {historyError ? (
-          <div className="mx-3 sm:mx-4 my-2 rounded px-2.5 py-2 text-xs bg-red-50 text-red-800 border border-red-200">
-            {historyError}
-          </div>
-        ) : null}
+        <div className="p-3">
+          {historyError ? (
+            <div className="mb-3 rounded-lg px-3 py-2 text-xs bg-red-50 text-red-800 border border-red-200">
+              {historyError}
+            </div>
+          ) : null}
 
-        {historyLoading && history.length === 0 ? (
-          <div className="px-3 pb-3 pt-0 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-2">
-            {[0, 1, 2].map((i) => (
-              <div key={i} className="rounded-md border border-gray-200 p-2.5 animate-pulse space-y-2">
-                <div className="h-3 w-2/5 rounded bg-gray-100" />
-                <div className="h-2.5 w-3/5 rounded bg-gray-100" />
-                <div className="h-10 rounded-md bg-slate-100" />
-              </div>
-            ))}
-          </div>
-        ) : null}
+          {historyLoading && history.length === 0 ? (
+            <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-3">
+              {[0, 1, 2].map((i) => (
+                <div key={i} className="rounded-lg border border-gray-200 p-3 animate-pulse space-y-2.5">
+                  <div className="h-3.5 w-2/5 rounded bg-gray-100" />
+                  <div className="h-3 w-3/5 rounded bg-gray-100" />
+                  <div className="h-14 rounded-md bg-gray-100" />
+                </div>
+              ))}
+            </div>
+          ) : null}
 
-        {!historyLoading && history.length === 0 && !historyError ? (
-          <div className="px-4 py-5 text-center">
-            <p className="text-sm text-gray-700">No versions yet</p>
-            <p className="mt-0.5 text-xs text-gray-500">Versions appear after you save a prompt.</p>
-          </div>
-        ) : null}
+          {!historyLoading && history.length === 0 && !historyError ? (
+            <div className="py-8 text-center">
+              <p className="text-sm font-medium text-gray-800">No versions yet</p>
+              <p className="mt-1 text-xs text-gray-500">Versions appear after you save a prompt.</p>
+            </div>
+          ) : null}
 
-        {!historyLoading && history.length > 0 && filteredHistory.length === 0 ? (
-          <div className="px-4 py-5 text-center">
-            <p className="text-sm text-gray-700">No matches</p>
-            <button
-              type="button"
-              onClick={clearHistoryFilters}
-              className="mt-1.5 text-xs text-primary-navy hover:underline"
-            >
-              Clear filters
-            </button>
-          </div>
-        ) : null}
+          {!historyLoading && history.length > 0 && filteredHistory.length === 0 ? (
+            <div className="py-8 text-center">
+              <p className="text-sm font-medium text-gray-800">No matches</p>
+              <button
+                type="button"
+                onClick={clearHistoryFilters}
+                className="mt-2 text-xs font-medium text-primary-navy hover:underline"
+              >
+                Clear filters
+              </button>
+            </div>
+          ) : null}
 
-        {filteredHistory.length > 0 ? (
-          <div className="px-3 pb-3 pt-0 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-2">
-            {filteredHistory.map((item) => {
-              const isLive = isHistoryItemLive(item);
-              const timeLabel = formatHistoryTime(item.updatedAt);
-              return (
-                <button
-                  key={item.id}
-                  type="button"
-                  onClick={() => openHistoryItem(item.id)}
-                  className={`group relative flex flex-col text-left rounded-md border p-2.5 transition-all duration-200 ease-out focus:outline-none focus-visible:ring-2 focus-visible:ring-primary-navy/35 focus-visible:ring-offset-1 motion-safe:hover:-translate-y-px motion-safe:hover:shadow-sm ${
-                    isLive
-                      ? 'border-gray-200 bg-white ring-1 ring-emerald-500/25 hover:ring-emerald-500/40'
-                      : 'border-gray-200 bg-white hover:border-gray-300'
-                  }`}
-                >
-                  {isLive ? (
-                    <span
-                      className="absolute top-2 right-2 flex h-2 w-2"
-                      title="Currently in use"
-                      aria-label="Currently in use"
-                    >
-                      <span className="absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-50 motion-safe:animate-ping" />
-                      <span className="relative inline-flex h-2 w-2 rounded-full bg-emerald-500 ring-2 ring-white" />
-                    </span>
-                  ) : null}
-
-                  <div className={isLive ? 'pr-4' : undefined}>
-                    <p className="text-[13px] font-semibold text-primary-navy leading-tight">
-                      {formatHistoryDate(item.updatedAt)}
-                    </p>
-                    {timeLabel ? (
-                      <p className="mt-0.5 text-[11px] text-gray-400 tabular-nums">{timeLabel}</p>
-                    ) : null}
-                  </div>
-
-                  <p className="mt-1.5 text-[11px] text-gray-500 truncate">
-                    {[
-                      item.updatedByEmail || 'Unknown',
-                      formatBytes(item.bytes),
-                      item.hash ? item.hash.slice(0, 10) : null,
-                    ]
-                      .filter(Boolean)
-                      .join(' · ')}
-                  </p>
-
-                  <div className="mt-1.5 flex-1 rounded-md overflow-hidden border border-slate-700/15 shadow-inner">
-                    <div className="flex items-center justify-between px-2 py-0.5 bg-slate-800 border-b border-slate-700/40">
-                      <span className="text-[9px] font-medium uppercase tracking-wider text-slate-400">
-                        System prompt
-                      </span>
+          {filteredHistory.length > 0 ? (
+            <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-3">
+              {filteredHistory.map((item) => {
+                const isLive = isHistoryItemLive(item);
+                const timeLabel = formatHistoryTime(item.updatedAt);
+                return (
+                  <button
+                    key={item.id}
+                    type="button"
+                    onClick={() => openHistoryItem(item.id)}
+                    className={`group relative flex flex-col text-left rounded-lg border bg-white p-3 transition-all focus:outline-none focus-visible:ring-2 focus-visible:ring-primary-navy/30 focus-visible:ring-offset-1 hover:shadow-sm ${
+                      isLive
+                        ? 'border-emerald-200/80 bg-emerald-50/30 hover:border-emerald-300'
+                        : 'border-gray-200 hover:border-gray-300'
+                    }`}
+                  >
+                    <div className="flex items-start justify-between gap-2">
+                      <div className="min-w-0">
+                        <p className="text-sm font-semibold text-gray-900 leading-tight">
+                          {formatHistoryDate(item.updatedAt)}
+                        </p>
+                        {timeLabel ? (
+                          <p className="mt-0.5 text-xs text-gray-500 tabular-nums">{timeLabel}</p>
+                        ) : null}
+                      </div>
                       {isLive ? (
-                        <span className="text-[9px] font-semibold uppercase tracking-wide text-emerald-400">
+                        <span className="inline-flex shrink-0 items-center gap-1 rounded-full bg-emerald-100 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-emerald-700">
+                          <span className="h-1.5 w-1.5 rounded-full bg-emerald-500" aria-hidden="true" />
                           Live
                         </span>
                       ) : null}
                     </div>
-                    <div className="bg-[#0f172a] px-2 py-1.5 min-h-[2.5rem]">
-                      <p className="text-[10px] leading-relaxed text-slate-300 font-mono line-clamp-2">
-                        {item.textPreview || 'No preview'}
-                      </p>
-                    </div>
-                  </div>
 
-                  <div className="mt-1.5 flex items-center justify-between text-[11px]">
-                    <span className="font-medium text-gray-400 group-hover:text-primary-navy transition-colors duration-200">
-                      {isLive ? 'In use' : 'View version'}
-                    </span>
-                    <span
-                      aria-hidden="true"
-                      className="text-gray-300 group-hover:text-primary-navy transition-all duration-200 motion-safe:group-hover:translate-x-0.5"
-                    >
-                      →
-                    </span>
-                  </div>
-                </button>
-              );
-            })}
-          </div>
-        ) : null}
+                    <p className="mt-2 text-xs text-gray-500 truncate">
+                      {[
+                        item.updatedByEmail || 'Unknown',
+                        formatBytes(item.bytes),
+                        item.hash ? item.hash.slice(0, 10) : null,
+                      ]
+                        .filter(Boolean)
+                        .join(' · ')}
+                    </p>
+
+                    <div className="mt-2 flex-1 rounded-md overflow-hidden ring-1 ring-gray-900/10">
+                      <div className="flex items-center justify-between px-2.5 py-1 bg-slate-800">
+                        <span className="text-[10px] font-medium uppercase tracking-wider text-slate-400">
+                          Preview
+                        </span>
+                      </div>
+                      <div className="bg-slate-900 px-2.5 py-2 min-h-[3rem]">
+                        <p className="text-[11px] leading-relaxed text-slate-300 font-mono line-clamp-2">
+                          {item.textPreview || 'No preview'}
+                        </p>
+                      </div>
+                    </div>
+
+                    <div className="mt-2.5 flex items-center justify-between text-xs">
+                      <span className="font-medium text-gray-500 group-hover:text-primary-navy transition-colors">
+                        {isLive ? 'Currently in use' : 'View version'}
+                      </span>
+                      <span
+                        aria-hidden="true"
+                        className="text-gray-400 group-hover:text-primary-navy transition-colors"
+                      >
+                        →
+                      </span>
+                    </div>
+                  </button>
+                );
+              })}
+            </div>
+          ) : null}
+        </div>
       </section>
 
       <AnimatePresence>
