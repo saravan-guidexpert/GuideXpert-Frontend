@@ -1,5 +1,5 @@
 import { Link } from 'react-router-dom';
-import { FiArrowRight, FiChevronRight, FiDownload, FiFileText, FiHome } from 'react-icons/fi';
+import { FiChevronRight, FiDownload, FiFileText, FiHome } from 'react-icons/fi';
 import { useEffect, useState } from 'react';
 import { LAYOUT } from '../../components/studentDashboard/careers360/careers360Theme';
 import { getStudentResourcesFeed } from '../../utils/api';
@@ -40,82 +40,95 @@ export default function StudentResourcesPage() {
 
   return (
     <>
-      <main className="min-h-[60vh] bg-white">
-        <div className={`${LAYOUT.container} border-b border-[#eef1f4] py-8 sm:py-10`}>
-          <nav
-            className="mb-6 flex items-center gap-1.5 text-[13px] text-[#94a3b8]"
-            aria-label="Breadcrumb"
-          >
-            <Link to="/" className="inline-flex items-center gap-1 transition hover:text-[#0f172a]">
-              <FiHome className="h-3.5 w-3.5" />
-              <span className="sr-only">Home</span>
-            </Link>
-            <FiChevronRight className="h-3.5 w-3.5 opacity-50" />
-            <span className="text-[#475569]">Resources</span>
-          </nav>
-
-          <div className="max-w-3xl">
-            <h1 className="text-2xl font-semibold tracking-tight text-[#0f172a] sm:text-[1.75rem]">
-              Resources
+      <main className="min-h-[60vh] bg-[#f6f7f9]">
+        <div className="border-b border-[#e8eaed] bg-white">
+          <div className={`${LAYOUT.container} py-6 sm:py-8`}>
+            <nav
+              className="mb-4 flex items-center gap-1.5 text-[13px] text-[#64748b]"
+              aria-label="Breadcrumb"
+            >
+              <Link to="/" className="inline-flex items-center gap-1 hover:text-[#0f172a]">
+                <FiHome className="h-3.5 w-3.5" />
+                <span className="sr-only">Home</span>
+              </Link>
+              <FiChevronRight className="h-3.5 w-3.5 opacity-40" />
+              <span className="font-medium text-[#0f172a]">Resources</span>
+            </nav>
+            <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-[#f27921]">
+              Study materials
+            </p>
+            <h1 className="mt-1.5 font-sw-display text-2xl font-bold text-[#0f172a] sm:text-3xl">
+              Guides &amp; PDF resources
             </h1>
-            <p className="mt-2 text-[15px] leading-relaxed text-[#64748b]">
-              PDF guides and study material. Verify your mobile number once to download each file.
+            <p className="mt-2 max-w-2xl text-sm text-[#64748b]">
+              Download preparation guides and study PDFs. Verify your mobile number with OTP before
+              each download.
             </p>
           </div>
         </div>
 
         <div className={`${LAYOUT.container} py-8 sm:py-10`}>
-          <div className="mx-auto max-w-3xl">
-            {loading ? (
-              <div className="space-y-3">
-                {[1, 2].map((i) => (
-                  <div key={i} className="h-[72px] animate-pulse rounded-lg bg-[#f8fafc]" />
-                ))}
-              </div>
-            ) : items.length === 0 ? (
-              <div className="rounded-lg border border-[#eef1f4] px-6 py-14 text-center">
-                <FiFileText className="mx-auto h-8 w-8 text-[#cbd5e1]" strokeWidth={1.5} />
-                <p className="mt-3 text-sm text-[#64748b]">No resources available yet.</p>
-              </div>
-            ) : (
-              <ul className="divide-y divide-[#eef1f4] rounded-lg border border-[#eef1f4]">
-                {items.map((item) => (
-                  <li key={item.id}>
-                    <div className="flex items-center gap-4 px-4 py-4 sm:px-5 sm:py-5">
-                      <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-md bg-[#f8fafc] text-[#64748b]">
-                        <FiFileText className="h-[18px] w-[18px]" strokeWidth={1.75} />
+          {loading ? (
+            <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
+              {[1, 2, 3].map((i) => (
+                <div
+                  key={i}
+                  className="h-52 animate-pulse rounded-2xl border border-[#e8eaed] bg-white"
+                />
+              ))}
+            </div>
+          ) : items.length === 0 ? (
+            <div className="rounded-2xl border border-dashed border-[#dce3ec] bg-white px-6 py-14 text-center">
+              <FiFileText className="mx-auto h-10 w-10 text-[#cbd5e1]" />
+              <p className="mt-3 text-sm font-medium text-[#64748b]">No resources available yet.</p>
+              <p className="mt-1 text-xs text-[#94a3b8]">Check back soon for new guides and PDFs.</p>
+            </div>
+          ) : (
+            <ul className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-3">
+              {items.map((item) => (
+                <li key={item.id}>
+                  <article className="flex h-full flex-col rounded-2xl border border-[#e8eaed] bg-white p-5 shadow-[0_1px_2px_rgba(15,23,42,0.04)] transition duration-200 hover:border-[#f27921]/35 hover:shadow-[0_8px_24px_rgba(15,23,42,0.06)] sm:p-6">
+                    <div className="flex items-start gap-3">
+                      <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-[#fff4eb] text-[#f27921]">
+                        <FiFileText className="h-5 w-5" strokeWidth={1.75} />
                       </div>
-
                       <div className="min-w-0 flex-1">
-                        <h2 className="text-[15px] font-medium leading-snug text-[#0f172a] sm:text-base">
+                        <span className="inline-flex rounded bg-[#fff4ed] px-2 py-0.5 text-[10px] font-bold uppercase tracking-wide text-[#e06810]">
+                          PDF
+                        </span>
+                        <h2 className="mt-2 text-lg font-bold leading-snug text-[#0f172a]">
                           {item.title}
                         </h2>
-                        {item.description ? (
-                          <p className="mt-1 line-clamp-2 text-sm leading-relaxed text-[#64748b]">
-                            {item.description}
-                          </p>
-                        ) : null}
-                        <p className="mt-2 text-xs text-[#94a3b8]">
-                          PDF · {formatBytes(item.fileSize)}
-                          {item.publishedAt ? ` · ${formatDate(item.publishedAt)}` : ''}
-                        </p>
                       </div>
+                    </div>
 
+                    {item.description ? (
+                      <p className="mt-3 flex-1 text-sm leading-relaxed text-[#64748b] line-clamp-3">
+                        {item.description}
+                      </p>
+                    ) : (
+                      <div className="mt-3 flex-1" />
+                    )}
+
+                    <div className="mt-4 flex items-center justify-between gap-3 border-t border-[#f1f5f9] pt-4">
+                      <p className="text-xs text-[#94a3b8]">
+                        {formatBytes(item.fileSize)}
+                        {item.publishedAt ? ` · ${formatDate(item.publishedAt)}` : ''}
+                      </p>
                       <button
                         type="button"
                         onClick={() => setSelectedResource(item)}
-                        className="group inline-flex shrink-0 items-center gap-1.5 rounded-md border border-[#e2e8f0] bg-white px-3 py-2 text-sm font-medium text-[#334155] transition hover:border-[#cbd5e1] hover:bg-[#f8fafc] sm:px-3.5"
+                        className="inline-flex items-center gap-1.5 rounded-lg bg-[#f27921] px-4 py-2 text-sm font-semibold text-white transition hover:bg-[#e06d1a]"
                       >
-                        <FiDownload className="h-4 w-4 text-[#64748b] group-hover:text-[#0f172a]" />
-                        <span className="hidden sm:inline">Download</span>
-                        <FiArrowRight className="h-3.5 w-3.5 text-[#94a3b8] sm:hidden" />
+                        <FiDownload className="h-4 w-4" />
+                        Download
                       </button>
                     </div>
-                  </li>
-                ))}
-              </ul>
-            )}
-          </div>
+                  </article>
+                </li>
+              ))}
+            </ul>
+          )}
         </div>
       </main>
 
