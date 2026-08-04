@@ -7,7 +7,7 @@
  * Set VITE_DIRECT_LOCAL_API=true to force a direct absolute URL in dev (e.g. :5000).
  * Set VITE_API_URL to override the production fallback when not using same-origin `/api`.
  */
-const PRODUCTION_API = 'https://gxp-new-backend.vercel.app/api';
+const PRODUCTION_API = 'https://guide-xpert-backend.vercel.app/api';
 
 /** Hosts that should call `/api` on the same origin (proxy/rewrite). */
 function shouldUseSameOriginApi(hostname) {

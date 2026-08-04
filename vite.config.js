@@ -6,7 +6,7 @@ import tailwindcss from '@tailwindcss/vite'
 // Default: deployed backend so `npm run dev` works without a local Node server.
 // For local API: copy `.env.development.local.example` → `.env.development.local` and set
 // VITE_PROXY_TARGET=http://127.0.0.1:5000, then restart Vite.
-const DEFAULT_PROXY_TARGET = 'https://gxp-new-backend.vercel.app'
+const DEFAULT_PROXY_TARGET = 'https://guide-xpert-backend.vercel.app'
 
 // https://vite.dev/config/
 export default defineConfig(({ mode }) => {

@@ -23,7 +23,7 @@
   "rewrites": [
     {
       "source": "/api/:path*",
-      "destination": "https://gxp-new-backend.vercel.app/api/:path*"
+      "destination": "https://guide-xpert-backend.vercel.app/api/:path*"
     },
     {
       "source": "/((?!assets/|favicon.ico|robots.txt|sitemap.xml|api/).*)",
