@@ -1,33 +1,13 @@
 /**
- * Public blog API (no auth). Base URL matches src/utils/api.js for dev proxy + production.
+ * Public blog API (no auth). Uses same-origin `/api` via getApiBaseUrl (no CORS).
  */
 import { notifyAdminUnauthorized } from '../utils/authSession';
-
-const isDev = import.meta.env.DEV;
-const envUrl = import.meta.env.VITE_API_URL;
-const productionOrigin = 'https://guide-xpert-backend.vercel.app';
-
-function stripApiSuffix(url) {
-  if (!url) return '';
-  // Normalize env values like:
-  // - https://host/api
-  // - https://host/api/
-  // - https://host/api/api
-  return url.replace(/(?:\/api)+\/?$/, '');
-}
-
-// In dev/prod, call /api/blogs to avoid colliding with frontend /blogs route.
-const API_BASE_URL = isDev ? '' : (stripApiSuffix(envUrl) || productionOrigin);
+import { getApiBaseUrl } from '../utils/apiBaseUrl';
 
 function buildBlogUrl(pathname = '') {
   const cleanedPath = String(pathname || '').replace(/^\/+/, '');
-  if (isDev) {
-    return cleanedPath ? `/api/blogs/${cleanedPath}` : '/api/blogs';
-  }
-  const normalizedBase = API_BASE_URL.replace(/\/+$/, '');
-  const joined = cleanedPath
-    ? `${normalizedBase}/api/blogs/${cleanedPath}`
-    : `${normalizedBase}/api/blogs`;
+  const base = getApiBaseUrl().replace(/\/+$/, '');
+  const joined = cleanedPath ? `${base}/blogs/${cleanedPath}` : `${base}/blogs`;
   // Last-mile safety for misconfigured envs producing /api/api/blogs.
   return joined.replace(/\/api\/api\/blogs/g, '/api/blogs');
 }
