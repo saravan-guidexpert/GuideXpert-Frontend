@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef } from 'react';
 import { useSearchParams } from 'react-router-dom';
-import { FiEye, FiCopy } from 'react-icons/fi';
+import { FiCopy, FiX } from 'react-icons/fi';
 import { getAdminLeads, getLead, updateLeadNotes, updateLeadSlotBooking, getSlotsForDate, getStoredToken } from '../../utils/adminApi';
 import { useAuth } from '../../hooks/useAuth';
 import { useAdminDateRange } from '../../hooks/useAdminDateRange';
@@ -8,7 +8,6 @@ import TableSkeleton from '../../components/UI/TableSkeleton';
 import { ContentSkeleton } from '../../components/UI/Skeleton';
 import CopyToSheetsModal from '../../components/Admin/CopyToSheetsModal';
 import {
-  ALL_SLOT_IDS,
   leadListFiltersFromSearchParams,
   leadListFiltersToSearchParams,
   leadListFiltersToApiParams,
@@ -23,7 +22,132 @@ import { STUDENT_WORKSPACE_LEAD_UTM } from '../../utils/studentWorkspaceLeadCons
 function formatDate(d) {
   if (!d) return '—';
   const date = new Date(d);
-  return date.toLocaleDateString('en-IN', { dateStyle: 'short' }) + ' ' + date.toLocaleTimeString('en-IN', { timeStyle: 'short' });
+  if (Number.isNaN(date.getTime())) return '—';
+  return date.toLocaleString('en-IN', {
+    day: 'numeric',
+    month: 'short',
+    year: 'numeric',
+    hour: 'numeric',
+    minute: '2-digit',
+    hour12: true,
+  });
+}
+
+/** Display-only title case; keeps raw API values untouched. */
+function toDisplayName(name) {
+  if (!name || typeof name !== 'string') return '—';
+  return name
+    .trim()
+    .toLowerCase()
+    .replace(/\b([a-z])/g, (c) => c.toUpperCase());
+}
+
+function normalizeEnumKey(value) {
+  return String(value || '')
+    .trim()
+    .toLowerCase()
+    .replace(/[\s-]+/g, '_');
+}
+
+/** Convert snake_case / kebab / underscore enums into readable labels. */
+function humanizeLabel(value) {
+  if (value == null || value === '') return '—';
+  const raw = String(value).trim();
+  if (!raw) return '—';
+  const known = {
+    in_progress: 'In progress',
+    registered: 'Registered',
+    completed: 'Completed',
+    student_workspace_login: 'Student workspace',
+    student_tool: 'Student tools',
+    organic_rank_predictor: 'Organic rank predictor',
+    rank_predictor: 'Rank Predictor',
+    college_predictor: 'College Predictor',
+    branch_predictor: 'Branch Predictor',
+    exam_predictor: 'Exam Predictor',
+    college_comparison: 'College Comparison',
+    deadline_manager: 'Deadline Manager',
+    college_fit_test: 'College Fit Test',
+    course_fit_test: 'Course Fit Test',
+    profile_update: 'Profile update',
+    counselling_booking: 'Counselling booking',
+    auth: 'Login / signup',
+    login: 'Login',
+    signup: 'Signup',
+    high: 'High',
+    medium: 'Medium',
+    low: 'Low',
+    organic: 'Organic',
+  };
+  const key = normalizeEnumKey(raw);
+  if (known[key]) return known[key];
+  return raw
+    .replace(/[_-]+/g, ' ')
+    .replace(/\s+/g, ' ')
+    .trim()
+    .replace(/\b\w/g, (c) => c.toUpperCase());
+}
+
+function formatStatusLabel(status) {
+  if (!status) return '—';
+  return humanizeLabel(status);
+}
+
+function formatOccupation(occupation) {
+  if (!occupation) return null;
+  const raw = String(occupation).trim();
+  if (!raw) return null;
+  if (/student/i.test(raw) && /guide.?xpert/i.test(raw)) return 'Student';
+  return humanizeLabel(raw);
+}
+
+function statusBadgeClass(status) {
+  const key = normalizeEnumKey(status);
+  if (key === 'completed') return 'bg-emerald-50 text-emerald-800 ring-1 ring-inset ring-emerald-600/20';
+  if (key === 'registered') return 'bg-sky-50 text-sky-800 ring-1 ring-inset ring-sky-600/20';
+  if (key === 'in_progress') return 'bg-amber-50 text-amber-900 ring-1 ring-inset ring-amber-600/20';
+  return 'bg-slate-50 text-slate-600 ring-1 ring-inset ring-slate-500/15';
+}
+
+function StatusBadge({ status }) {
+  if (!status) return <span className="text-[12px] text-gray-400">—</span>;
+  return (
+    <span
+      className={`inline-flex items-center rounded-full px-2 py-0.5 text-[10px] font-medium tracking-tight ${statusBadgeClass(status)}`}
+    >
+      {formatStatusLabel(status)}
+    </span>
+  );
+}
+
+/** Compact label/value row — skips empty values. */
+function DetailField({ label, children, className = '' }) {
+  if (children == null || children === '' || children === '—') return null;
+  return (
+    <div
+      className={`grid grid-cols-[5.75rem_minmax(0,1fr)] items-baseline gap-x-2 border-b border-gray-100 py-1.5 last:border-b-0 ${className}`}
+    >
+      <dt className="text-[11px] leading-none text-gray-500">{label}</dt>
+      <dd className="text-[12.5px] font-medium leading-snug text-gray-900">{children}</dd>
+    </div>
+  );
+}
+
+function DetailSection({ title, children, action }) {
+  if (children == null || children === false) return null;
+  return (
+    <section>
+      {title ? (
+        <div className="mb-1 flex items-center justify-between gap-2">
+          <h4 className="text-[10px] font-semibold uppercase tracking-[0.08em] text-gray-400">
+            {title}
+          </h4>
+          {action || null}
+        </div>
+      ) : null}
+      <div className="overflow-hidden">{children}</div>
+    </section>
+  );
 }
 
 function toDateInputValue(value) {
@@ -55,10 +179,10 @@ function formatSlotIdForDropdown(slotId) {
 }
 
 function slotLabel(lead) {
-  if (!lead.slotBooked) return 'No';
+  if (!lead.slotBooked) return 'Not booked';
   const slot = formatSlotIdForDisplay(lead.selectedSlot) || lead.selectedSlot || '';
   const date = lead.slotDate ? formatDate(lead.slotDate) : '';
-  return date ? `Yes – ${slot}, ${date}` : `Yes – ${slot}`;
+  return date ? `${slot}, ${date}` : slot || 'Booked';
 }
 
 const COPY_FIELDS = [
@@ -113,12 +237,19 @@ function formatRankPredictorLead(lead) {
 
 /** Short label + full string for hover (organic leads table). */
 function rankPredictionTablePreview(lead) {
-  const full = formatRankPredictorLead(lead);
-  if (!full) return { display: '—', title: '' };
-  return {
-    display: full.length > 90 ? `${full.slice(0, 87)}…` : full,
-    title: full,
-  };
+  const r = lead?.rankPredictorLead;
+  if (!r || typeof r !== 'object') return { display: '—', title: '', chip: false };
+  const exam = r.examId || r.metricLabel || 'Prediction';
+  const score =
+    r.predictedValue !== undefined && r.predictedValue !== null && r.predictedValue !== ''
+      ? typeof r.predictedValue === 'number'
+        ? r.predictedValue.toLocaleString()
+        : String(r.predictedValue)
+      : r.score != null && r.score !== ''
+        ? String(r.score)
+        : '';
+  const display = score ? `${exam} · ${score}` : String(exam);
+  return { display, title: formatRankPredictorLead(lead), chip: true };
 }
 
 function getLeadCellValue(lead, key) {
@@ -129,6 +260,7 @@ function getLeadCellValue(lead, key) {
   if (key === 'selectedSlot') return v ? formatSlotIdForDisplay(v) : '';
   if (key === 'slotDate') return v ? formatDate(v) : '';
   if (key === 'createdAt' || key === 'updatedAt') return v ? formatDate(v) : '';
+  if (key === 'applicationStatus') return formatStatusLabel(v);
   if (v == null || v === '') return '';
   return String(v);
 }
@@ -138,27 +270,102 @@ function formatStudentProfile(lead) {
   if (!p || typeof p !== 'object') return '';
   const parts = [];
   if (p.age != null) parts.push(`Age ${p.age}`);
-  if (p.currentlyStudying) parts.push(p.currentlyStudying);
+  if (p.currentlyStudying) parts.push(humanizeLabel(p.currentlyStudying));
   if (p.city) parts.push(p.city);
   return parts.join(' · ');
 }
 
+const ACTIVITY_TOOL_LABELS = Object.fromEntries(
+  STUDENT_ACTIVITY_TYPE_OPTIONS.filter((o) => o.value).map((o) => [o.value, o.label])
+);
+
+function inferActivityToolKey(activity) {
+  if (!activity || typeof activity !== 'object') return '';
+  const raw = String(activity.tool || activity.type || '').toLowerCase().trim();
+  if (raw) return raw;
+  const title = String(activity.title || '').toLowerCase();
+  if (title.includes('auth') || title.includes('logged in') || title.includes('login') || title.includes('signup') || title.includes('sign up')) {
+    return 'auth';
+  }
+  for (const opt of STUDENT_ACTIVITY_TYPE_OPTIONS) {
+    if (!opt.value) continue;
+    if (title.includes(opt.value.replace(/_/g, ' ')) || title.includes(opt.label.toLowerCase())) {
+      return opt.value;
+    }
+  }
+  return '';
+}
+
+function activityToolLabel(activity) {
+  const raw = inferActivityToolKey(activity);
+  if (ACTIVITY_TOOL_LABELS[raw]) {
+    if (raw === 'auth') return 'Login';
+    return ACTIVITY_TOOL_LABELS[raw].replace(/ only$/, '');
+  }
+  if (raw.includes('auth') || raw.includes('login')) return 'Login';
+  if (raw.includes('signup') || raw.includes('sign_up')) return 'Signup';
+  return humanizeLabel(raw || 'Activity');
+}
+
+/** Strip redundant tool prefixes from activity titles for readable copy. */
+function activityDetailText(activity) {
+  let title = String(activity?.title || '').trim();
+  if (!title) return String(activity?.summary || '').trim();
+  title = title
+    .replace(/^(student\s+)?auth\s*:\s*/i, '')
+    .replace(/^login(\s*\/\s*signup)?\s*:\s*/i, '')
+    .replace(/^sign\s*up\s*:\s*/i, '')
+    .replace(/^rank\s*predictor\s*:\s*/i, '')
+    .replace(/^college\s*predictor\s*:\s*/i, '')
+    .replace(/^branch\s*predictor\s*:\s*/i, '')
+    .replace(/^exam\s*predictor\s*:\s*/i, '')
+    .replace(/^college\s*comparison\s*:\s*/i, '')
+    .replace(/^deadline\s*manager\s*:\s*/i, '')
+    .trim();
+  const summary = String(activity?.summary || '').trim();
+  if (summary && summary.toLowerCase() !== title.toLowerCase()) {
+    return title ? `${title}${summary.length < 80 ? ` · ${summary}` : ''}` : summary;
+  }
+  return title;
+}
+
+/** Compact activity chip for table — tool name only; full history in modal. */
 function formatStudentActivityPreview(lead) {
   const list = Array.isArray(lead?.studentActivityHistory) ? lead.studentActivityHistory : [];
   const count = lead?.studentActivityCount ?? list.length;
-  if (!count) return { display: '—', title: '' };
-  const latest = list[0];
-  const latestLabel = latest
-    ? [latest.tool || latest.type, latest.title].filter(Boolean).join(': ')
-    : '';
-  const display = latestLabel
-    ? `${count} · ${latestLabel.length > 60 ? `${latestLabel.slice(0, 57)}…` : latestLabel}`
-    : `${count} activities`;
+  if (!count) return { display: '—', title: '', chip: false, count: 0 };
+  const latest = list[0] || {};
+  const label = activityToolLabel(latest);
   const title = list
     .slice(0, 10)
-    .map((a) => `${a.tool || a.type}: ${a.title}${a.summary ? ` (${a.summary})` : ''}`)
+    .map((a) => {
+      const tool = activityToolLabel(a);
+      const detail = activityDetailText(a);
+      return detail ? `${tool}: ${detail}` : tool;
+    })
     .join('\n');
-  return { display, title };
+  return { display: label, title, chip: true, count };
+}
+
+function slotTableLabel(lead) {
+  if (!lead.slotBooked) return { display: 'Not booked', muted: true, title: '' };
+  const slot = formatSlotIdForDisplay(lead.selectedSlot) || lead.selectedSlot || '';
+  return {
+    display: slot || 'Booked',
+    muted: false,
+    title: slotLabel(lead),
+  };
+}
+
+function formatShortDate(d) {
+  if (!d) return '';
+  const date = new Date(d);
+  if (Number.isNaN(date.getTime())) return '';
+  return date.toLocaleDateString('en-IN', {
+    day: 'numeric',
+    month: 'short',
+    year: '2-digit',
+  });
 }
 
 /**
@@ -170,7 +377,8 @@ export default function Leads({ organicOnly = false, studentWorkspaceOnly = fals
     : studentWorkspaceOnly
       ? STUDENT_WORKSPACE_LEAD_UTM.utm_content
       : null;
-  const leadTableColCount = organicOnly ? 15 : studentWorkspaceOnly ? 16 : 14;
+  // Slim table: Name, Phone, Status, context column (activity / prediction / slot), View
+  const leadTableColCount = 5;
   const { logout } = useAuth();
   const { dateRange, leadListFilters, setLeadListFilters } = useAdminDateRange();
   const [searchParams, setSearchParams] = useSearchParams();
@@ -471,7 +679,7 @@ export default function Leads({ organicOnly = false, studentWorkspaceOnly = fals
           </button>
         </div>
         {studentWorkspaceOnly ? (
-          <div className="mt-3 flex flex-wrap gap-2" role="group" aria-label="Filter by tool or action">
+          <div className="mt-3 flex flex-wrap gap-1.5" role="group" aria-label="Filter by tool or action">
             {STUDENT_ACTIVITY_TYPE_OPTIONS.filter((o) =>
               ['', 'auth', 'rank_predictor', 'college_predictor', 'branch_predictor', 'exam_predictor', 'college_comparison', 'deadline_manager'].includes(
                 o.value
@@ -491,10 +699,10 @@ export default function Leads({ organicOnly = false, studentWorkspaceOnly = fals
                     });
                     setPagination((prev) => ({ ...prev, page: 1 }));
                   }}
-                  className={`rounded-full px-3 py-1.5 text-xs font-semibold transition ${
+                  className={`rounded-md px-2.5 py-1 text-[12px] font-medium transition ${
                     active
-                      ? 'bg-primary-navy text-white shadow-sm'
-                      : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                      ? 'bg-primary-navy text-white'
+                      : 'text-gray-600 hover:bg-gray-100 hover:text-gray-900'
                   }`}
                 >
                   {opt.label}
@@ -515,274 +723,412 @@ export default function Leads({ organicOnly = false, studentWorkspaceOnly = fals
         <TableSkeleton rows={8} cols={leadTableColCount} />
       ) : (
         <>
-          <div className="overflow-x-auto rounded-lg border border-gray-200 bg-white shadow-sm mb-4">
-            <table className="min-w-[900px] w-full text-left text-sm">
-              <thead>
-                <tr className="bg-gray-50 border-b border-gray-200">
-                  <th className="px-3 py-2 font-semibold text-gray-700 text-xs uppercase tracking-wider">Name</th>
-                  <th className="px-3 py-2 font-semibold text-gray-700 text-xs uppercase tracking-wider">Phone</th>
-                  <th className="px-3 py-2 font-semibold text-gray-700 text-xs uppercase tracking-wider">Occupation</th>
-                  {organicOnly ? (
-                    <th className="px-3 py-2 font-semibold text-gray-700 text-xs uppercase tracking-wider min-w-[140px]">
-                      Rank prediction
+          <div className="mb-4 overflow-hidden rounded-xl border border-gray-200/90 bg-white shadow-sm">
+            <div className="overflow-x-auto">
+              <table className="w-full min-w-[560px] table-fixed text-left">
+                <thead>
+                  <tr className="border-b border-gray-100 bg-gray-50/80">
+                    <th className="w-[28%] px-4 py-3 text-[11px] font-semibold uppercase tracking-[0.05em] text-gray-500">
+                      Name
                     </th>
-                  ) : null}
-                  {studentWorkspaceOnly ? (
-                    <>
-                      <th className="px-3 py-2 font-semibold text-gray-700 text-xs uppercase tracking-wider min-w-[120px]">
-                        Profile
-                      </th>
-                      <th className="px-3 py-2 font-semibold text-gray-700 text-xs uppercase tracking-wider min-w-[140px]">
-                        Activity
-                      </th>
-                    </>
-                  ) : null}
-                  <th className="px-3 py-2 font-semibold text-gray-700 text-xs uppercase tracking-wider text-center">OTP</th>
-                  <th className="px-3 py-2 font-semibold text-gray-700 text-xs uppercase tracking-wider text-center whitespace-nowrap">Slot</th>
-                  <th className="px-3 py-2 font-semibold text-gray-700 text-xs uppercase tracking-wider">Status</th>
-                  <th className="px-3 py-2 font-semibold text-gray-700 text-xs uppercase tracking-wider text-center">Step</th>
-                  <th className="px-3 py-2 font-semibold text-gray-700 text-xs uppercase tracking-wider">Email</th>
-                  <th className="px-3 py-2 font-semibold text-gray-700 text-xs uppercase tracking-wider">Interest</th>
-                  <th className="px-3 py-2 font-semibold text-gray-700 text-xs uppercase tracking-wider">Influencer</th>
-                  <th className="px-3 py-2 font-semibold text-gray-700 text-xs uppercase tracking-wider">Platform</th>
-                  <th className="px-3 py-2 font-semibold text-gray-700 text-xs uppercase tracking-wider whitespace-nowrap">Created</th>
-                  <th className="px-3 py-2 font-semibold text-gray-700 text-xs uppercase tracking-wider whitespace-nowrap">Updated</th>
-                  <th className="px-3 py-2 font-semibold text-gray-700 text-xs uppercase tracking-wider text-center">Actions</th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-gray-100">
-                {leads.length === 0 ? (
-                  <tr>
-                    <td colSpan={leadTableColCount} className="px-3 py-8 text-center text-gray-500 text-sm">
-                      No leads found
-                    </td>
+                    <th className="w-[18%] px-4 py-3 text-[11px] font-semibold uppercase tracking-[0.05em] text-gray-500">
+                      Phone
+                    </th>
+                    <th className="w-[16%] px-4 py-3 text-[11px] font-semibold uppercase tracking-[0.05em] text-gray-500">
+                      Status
+                    </th>
+                    <th className="w-[24%] px-4 py-3 text-[11px] font-semibold uppercase tracking-[0.05em] text-gray-500">
+                      {studentWorkspaceOnly ? 'Last activity' : organicOnly ? 'Prediction' : 'Slot'}
+                    </th>
+                    <th className="w-[14%] px-4 py-3 text-right text-[11px] font-semibold uppercase tracking-[0.05em] text-gray-500">
+                      <span className="sr-only">Actions</span>
+                    </th>
                   </tr>
-                ) : (
-                  leads.map((lead, i) => {
-                    const predPreview = organicOnly ? rankPredictionTablePreview(lead) : null;
-                    const activityPreview = studentWorkspaceOnly ? formatStudentActivityPreview(lead) : null;
-                    const profileLabel = studentWorkspaceOnly ? formatStudentProfile(lead) || '—' : null;
-                    return (
-                    <tr
-                      key={lead.id}
-                      className={`hover:bg-primary-blue-50/50 transition-colors ${i % 2 === 0 ? 'bg-white' : 'bg-gray-50/60'}`}
-                    >
-                      <td className="px-3 py-2 align-middle min-w-[120px] text-sm">{lead.fullName || '—'}</td>
-                      <td className="px-3 py-2 align-middle whitespace-nowrap text-sm">{lead.phone || '—'}</td>
-                      <td className="px-3 py-2 align-middle min-w-[100px] text-sm">{lead.occupation || '—'}</td>
-                      {organicOnly && predPreview ? (
-                        <td
-                          className="px-3 py-2 align-middle max-w-[min(280px,28vw)] text-xs text-gray-700"
-                          title={predPreview.title}
-                        >
-                          {predPreview.display}
-                        </td>
-                      ) : null}
-                      {studentWorkspaceOnly ? (
-                        <>
-                          <td className="px-3 py-2 align-middle text-xs text-gray-700">{profileLabel}</td>
-                          <td
-                            className="px-3 py-2 align-middle max-w-[min(280px,28vw)] text-xs text-gray-700"
-                            title={activityPreview?.title || ''}
-                          >
-                            {activityPreview?.display || '—'}
-                          </td>
-                        </>
-                      ) : null}
-                      <td className="px-3 py-2 align-middle text-center text-sm">{lead.otpVerified ? 'Yes' : 'No'}</td>
-                      <td className="px-3 py-2 align-middle text-center whitespace-nowrap text-gray-600 text-sm">{slotLabel(lead)}</td>
-                      <td className="px-3 py-2 align-middle">
-                        {lead.applicationStatus ? (
-                          <span className={`inline-flex px-2 py-0.5 rounded text-xs font-medium ${
-                            lead.applicationStatus === 'completed' ? 'bg-green-100 text-green-800' :
-                            lead.applicationStatus === 'registered' ? 'bg-blue-100 text-blue-800' :
-                            'bg-amber-100 text-amber-800'
-                          }`}>
-                            {lead.applicationStatus}
-                          </span>
-                        ) : (
-                          '—'
-                        )}
-                      </td>
-                      <td className="px-3 py-2 align-middle text-center text-gray-600 text-sm">{lead.currentStep ?? '—'}</td>
-                      <td className="px-3 py-2 align-middle text-gray-600 max-w-[160px] truncate text-sm" title={lead.email || ''}>{lead.email || '—'}</td>
-                      <td className="px-3 py-2 align-middle text-gray-600 text-sm">{lead.interestLevel || '—'}</td>
+                </thead>
+                <tbody className="divide-y divide-gray-100">
+                  {leads.length === 0 ? (
+                    <tr>
                       <td
-                        className="px-3 py-2 align-middle max-w-[140px] truncate text-gray-600 text-sm"
-                        title={lead.utm_content || ''}
+                        colSpan={leadTableColCount}
+                        className="px-4 py-10 text-center text-[13px] text-gray-500"
                       >
-                        {lead.utm_content || '—'}
-                      </td>
-                      <td className="px-3 py-2 align-middle text-gray-600 text-sm">{lead.utm_source || '—'}</td>
-                      <td className="px-3 py-2 align-middle whitespace-nowrap text-gray-600 text-xs">{formatDate(lead.createdAt)}</td>
-                      <td className="px-3 py-2 align-middle whitespace-nowrap text-gray-600 text-xs">{formatDate(lead.updatedAt)}</td>
-                      <td className="px-3 py-2 align-middle text-center">
-                        <button
-                          type="button"
-                          onClick={() => openLeadDetail(lead.id)}
-                          className="inline-flex items-center gap-1 text-primary-navy hover:underline text-sm font-medium"
-                          aria-label={`View details for ${lead.fullName || 'lead'}`}
-                        >
-                          <FiEye className="w-4 h-4" /> View
-                        </button>
+                        No leads found
                       </td>
                     </tr>
-                    );
-                  })
-                )}
-              </tbody>
-            </table>
-          </div>
-
-          {/* Lead detail modal */}
-          {(detailLoading || detailLead) && (
-            <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50" aria-modal="true" role="dialog">
-              <div className="bg-white rounded-xl shadow-xl max-w-lg w-full max-h-[90vh] overflow-hidden flex flex-col">
-                {detailLoading ? (
-                  <div className="p-6"><ContentSkeleton lines={5} /></div>
-                ) : detailLead ? (
-                  <>
-                    <div className="px-4 py-3 border-b border-gray-200 flex items-center justify-between">
-                      <h3 className="font-semibold text-gray-800">Lead details</h3>
-                      <button
-                        type="button"
-                        onClick={closeLeadDetail}
-                        className="p-2 rounded-lg text-gray-500 hover:bg-gray-100"
-                        aria-label="Close"
-                      >
-                        ×
-                      </button>
-                    </div>
-                    <div className="p-4 overflow-y-auto space-y-4 flex-1">
-                      <dl className="grid grid-cols-1 gap-2 text-sm">
-                        <div><dt className="text-gray-500">Name</dt><dd className="font-medium text-gray-900">{detailLead.fullName || '—'}</dd></div>
-                        <div className="flex items-center gap-2">
-                          <div><dt className="text-gray-500">Phone</dt><dd className="font-medium text-gray-900">{detailLead.phone || '—'}</dd></div>
-                          {detailLead.phone && (
+                  ) : (
+                    leads.map((lead) => {
+                      const predPreview = organicOnly ? rankPredictionTablePreview(lead) : null;
+                      const activityPreview = studentWorkspaceOnly
+                        ? formatStudentActivityPreview(lead)
+                        : null;
+                      const slotPreview = !studentWorkspaceOnly && !organicOnly
+                        ? slotTableLabel(lead)
+                        : null;
+                      return (
+                        <tr
+                          key={lead.id}
+                          className="transition-colors hover:bg-slate-50/80"
+                        >
+                          <td className="truncate px-4 py-3 text-[13px] font-medium text-gray-900">
+                            {toDisplayName(lead.fullName)}
+                          </td>
+                          <td className="whitespace-nowrap px-4 py-3 font-mono text-[12.5px] tabular-nums text-gray-600">
+                            {lead.phone || '—'}
+                          </td>
+                          <td className="px-4 py-3">
+                            <StatusBadge status={lead.applicationStatus} />
+                          </td>
+                          <td className="px-4 py-3">
+                            {studentWorkspaceOnly ? (
+                              activityPreview?.chip ? (
+                                <span
+                                  className="inline-flex max-w-full items-center gap-1.5"
+                                  title={activityPreview.title}
+                                >
+                                  <span className="truncate rounded-md bg-slate-100 px-2 py-0.5 text-[11px] font-medium text-slate-700">
+                                    {activityPreview.display}
+                                  </span>
+                                  {activityPreview.count > 1 ? (
+                                    <span className="shrink-0 text-[11px] tabular-nums text-gray-400">
+                                      +{activityPreview.count - 1}
+                                    </span>
+                                  ) : null}
+                                </span>
+                              ) : (
+                                <span className="text-[13px] text-gray-400">—</span>
+                              )
+                            ) : organicOnly ? (
+                              predPreview?.chip ? (
+                                <span
+                                  className="inline-block max-w-full truncate rounded-md bg-slate-100 px-2 py-0.5 text-[11px] font-medium text-slate-700"
+                                  title={predPreview.title}
+                                >
+                                  {predPreview.display}
+                                </span>
+                              ) : (
+                                <span className="text-[13px] text-gray-400">—</span>
+                              )
+                            ) : (
+                              <span
+                                className={`text-[13px] ${slotPreview?.muted ? 'text-gray-400' : 'text-gray-700'}`}
+                                title={slotPreview?.title || ''}
+                              >
+                                {slotPreview?.display || '—'}
+                              </span>
+                            )}
+                          </td>
+                          <td className="px-4 py-3 text-right">
                             <button
                               type="button"
-                              onClick={() => copyPhone(detailLead.phone)}
-                              className="mt-4 inline-flex items-center gap-1 px-2 py-1 rounded border border-gray-300 text-gray-600 hover:bg-gray-50 text-xs"
+                              onClick={() => openLeadDetail(lead.id)}
+                              className="inline-flex items-center rounded-md border border-gray-200 bg-white px-2.5 py-1 text-[12px] font-medium text-gray-700 shadow-sm transition-colors hover:border-gray-300 hover:bg-gray-50 hover:text-gray-900"
+                              aria-label={`View details for ${toDisplayName(lead.fullName)}`}
                             >
-                              <FiCopy className="w-3.5 h-3.5" /> {copyFeedback ? 'Copied' : 'Copy'}
+                              View
                             </button>
-                          )}
+                          </td>
+                        </tr>
+                      );
+                    })
+                  )}
+                </tbody>
+              </table>
+            </div>
+          </div>
+
+          {(detailLoading || detailLead) && (
+            <div
+              className="fixed inset-0 z-50 flex items-end justify-center bg-black/45 p-0 sm:items-center sm:p-6"
+              aria-modal="true"
+              role="dialog"
+              onClick={(e) => {
+                if (e.target === e.currentTarget) closeLeadDetail();
+              }}
+            >
+              <div className="flex w-full max-w-[420px] max-h-[92vh] flex-col overflow-hidden rounded-t-2xl bg-white shadow-2xl sm:rounded-2xl">
+                {detailLoading ? (
+                  <div className="p-6">
+                    <ContentSkeleton lines={5} />
+                  </div>
+                ) : detailLead ? (
+                  <>
+                    <div className="shrink-0 border-b border-gray-100 px-5 pb-4 pt-5">
+                      <div className="flex items-start justify-between gap-3">
+                        <div className="min-w-0">
+                          <h3 className="truncate text-[17px] font-semibold tracking-tight text-gray-900">
+                            {toDisplayName(detailLead.fullName)}
+                          </h3>
+                          <div className="mt-2.5 flex flex-wrap items-center gap-2">
+                            {detailLead.phone ? (
+                              <button
+                                type="button"
+                                onClick={() => copyPhone(detailLead.phone)}
+                                className="inline-flex items-center gap-1.5 rounded-md border border-gray-200 bg-white px-2 py-1 font-mono text-[12px] tabular-nums text-gray-700 transition-colors hover:bg-gray-50"
+                                title="Copy phone"
+                              >
+                                {detailLead.phone}
+                                <FiCopy className="h-3 w-3 text-gray-400" />
+                                <span className="sr-only">
+                                  {copyFeedback ? 'Copied' : 'Copy phone'}
+                                </span>
+                              </button>
+                            ) : (
+                              <span className="text-[12px] text-gray-400">No phone</span>
+                            )}
+                            {copyFeedback ? (
+                              <span className="text-[11px] font-medium text-emerald-600">Copied</span>
+                            ) : null}
+                            <StatusBadge status={detailLead.applicationStatus} />
+                          </div>
                         </div>
-                        <div><dt className="text-gray-500">Occupation</dt><dd className="text-gray-900">{detailLead.occupation || '—'}</dd></div>
-                        {formatStudentProfile(detailLead) ? (
-                          <div>
-                            <dt className="text-gray-500">Student profile</dt>
-                            <dd className="text-gray-900">{formatStudentProfile(detailLead)}</dd>
-                          </div>
-                        ) : null}
-                        {Array.isArray(detailLead.studentActivityHistory) && detailLead.studentActivityHistory.length > 0 ? (
-                          <div>
-                            <dt className="text-gray-500 mb-1">Tool activity ({detailLead.studentActivityCount || detailLead.studentActivityHistory.length})</dt>
-                            <dd className="space-y-2">
-                              {detailLead.studentActivityHistory.slice(0, 20).map((a, idx) => (
-                                <div key={`${a.createdAt || idx}-${a.title}`} className="rounded border border-gray-100 bg-gray-50 px-2.5 py-2 text-xs text-gray-800">
-                                  <p className="font-semibold text-gray-900">{a.tool || a.type}: {a.title}</p>
-                                  {a.summary ? <p className="mt-0.5 text-gray-600">{a.summary}</p> : null}
-                                  {a.payload ? (
-                                    <pre className="mt-1 max-h-28 overflow-auto whitespace-pre-wrap break-words rounded bg-white/80 p-1.5 font-mono text-[10px] text-gray-500">
-                                      {typeof a.payload === 'string'
-                                        ? a.payload
-                                        : JSON.stringify(a.payload, null, 2)}
-                                    </pre>
-                                  ) : null}
-                                  {a.createdAt ? <p className="mt-0.5 text-gray-400">{formatDate(a.createdAt)}</p> : null}
-                                </div>
-                              ))}
-                            </dd>
-                          </div>
-                        ) : null}
-                        {formatRankPredictorLead(detailLead) ? (
-                          <div><dt className="text-gray-500">Rank predictor</dt><dd className="text-gray-900 wrap-break-word">{formatRankPredictorLead(detailLead)}</dd></div>
-                        ) : null}
-                        {detailLead.rankPredictorLead?.predictedAt ? (
-                          <div>
-                            <dt className="text-gray-500">Prediction saved at</dt>
-                            <dd className="text-gray-900">{formatDate(detailLead.rankPredictorLead.predictedAt)}</dd>
-                          </div>
-                        ) : null}
-                        <div><dt className="text-gray-500">Email</dt><dd className="text-gray-900">{detailLead.email || '—'}</dd></div>
-                        <div><dt className="text-gray-500">Status</dt><dd><span className={`inline-flex px-2 py-0.5 rounded text-xs font-medium ${detailLead.applicationStatus === 'completed' ? 'bg-green-100 text-green-800' : detailLead.applicationStatus === 'registered' ? 'bg-blue-100 text-blue-800' : 'bg-amber-100 text-amber-800'}`}>{detailLead.applicationStatus || '—'}</span></dd></div>
-                        <div><dt className="text-gray-500">Step</dt><dd className="text-gray-900">{detailLead.currentStep ?? '—'}</dd></div>
-                        <div><dt className="text-gray-500">Slot</dt><dd className="text-gray-900">{slotLabel(detailLead)}</dd></div>
-                        <div><dt className="text-gray-500">Interest</dt><dd className="text-gray-900">{detailLead.interestLevel ?? '—'}</dd></div>
-                        <div><dt className="text-gray-500">Influencer (utm_content)</dt><dd className="text-gray-900">{detailLead.utm_content || '—'}</dd></div>
-                        <div><dt className="text-gray-500">UTM Source</dt><dd className="text-gray-900">{detailLead.utm_source || '—'}</dd></div>
-                        <div><dt className="text-gray-500">Created</dt><dd className="text-gray-900">{formatDate(detailLead.createdAt)}</dd></div>
-                        <div><dt className="text-gray-500">Updated</dt><dd className="text-gray-900">{formatDate(detailLead.updatedAt)}</dd></div>
-                      </dl>
-                      <div>
-                        <label htmlFor="lead-slot-date" className="block text-sm font-medium text-gray-700 mb-1">Reassign slot date</label>
-                        <input
-                          id="lead-slot-date"
-                          type="date"
-                          value={detailSlotDate}
-                          onChange={(e) => {
-                            const nextDate = e.target.value;
-                            setDetailSlotDate(nextDate);
-                            if (!nextDate) {
-                              setDetailSlotOptions([]);
-                              setDetailSlotId('');
-                              setDetailSlotLoading(false);
-                              setDetailSlotError('');
-                            } else {
-                              setDetailSlotLoading(true);
-                              setDetailSlotError('');
-                            }
-                          }}
-                          className="w-full px-3 py-2 rounded-lg border border-gray-300 focus:ring-2 focus:ring-primary-blue-500 focus:border-primary-blue-500 outline-none text-sm"
-                        />
-                      </div>
-                      <div>
-                        <label htmlFor="lead-slot-id" className="block text-sm font-medium text-gray-700 mb-1">Reassign slot</label>
-                        <select
-                          id="lead-slot-id"
-                          value={detailSlotId}
-                          onChange={(e) => setDetailSlotId(e.target.value)}
-                          disabled={!detailSlotDate || detailSlotLoading}
-                          className="w-full px-3 py-2 rounded-lg border border-gray-300 focus:ring-2 focus:ring-primary-blue-500 focus:border-primary-blue-500 outline-none text-sm disabled:bg-gray-100"
+                        <button
+                          type="button"
+                          onClick={closeLeadDetail}
+                          className="shrink-0 rounded-lg p-1.5 text-gray-400 transition-colors hover:bg-gray-100 hover:text-gray-700"
+                          aria-label="Close"
                         >
-                          <option value="">{detailSlotLoading ? 'Loading slots...' : 'Select available slot'}</option>
-                          {detailSlotOptions.map((slot) => (
-                            <option key={slot.slotId} value={slot.slotId}>
-                              {slot.label || formatSlotIdForDropdown(slot.slotId)}
-                            </option>
-                          ))}
-                        </select>
-                        {detailSlotError && (
-                          <p className="mt-1 text-xs text-red-600">{detailSlotError}</p>
-                        )}
+                          <FiX className="h-4 w-4" />
+                        </button>
+                      </div>
+                    </div>
+
+                    <div className="min-h-0 flex-1 space-y-4 overflow-y-auto overscroll-contain px-5 py-4">
+                      <DetailSection title="Overview">
+                        <dl>
+                          <DetailField label="Email">
+                            {detailLead.email ? (
+                              <span className="break-all font-normal">{detailLead.email}</span>
+                            ) : null}
+                          </DetailField>
+                          <DetailField label="Occupation">
+                            {formatOccupation(detailLead.occupation)}
+                          </DetailField>
+                          {formatStudentProfile(detailLead) ? (
+                            <DetailField label="Profile">
+                              <span className="font-normal text-gray-700">
+                                {formatStudentProfile(detailLead)}
+                              </span>
+                            </DetailField>
+                          ) : null}
+                          <DetailField label="OTP">
+                            {detailLead.otpVerified ? 'Verified' : 'Not verified'}
+                          </DetailField>
+                          <DetailField label="Slot">{slotLabel(detailLead)}</DetailField>
+                          <DetailField label="Step">
+                            {detailLead.currentStep != null && detailLead.currentStep !== ''
+                              ? String(detailLead.currentStep)
+                              : null}
+                          </DetailField>
+                          <DetailField label="Interest">
+                            {detailLead.interestLevel
+                              ? humanizeLabel(detailLead.interestLevel)
+                              : null}
+                          </DetailField>
+                          <DetailField label="Created">
+                            {detailLead.createdAt ? (
+                              <span className="font-normal tabular-nums text-gray-700">
+                                {formatDate(detailLead.createdAt)}
+                              </span>
+                            ) : null}
+                          </DetailField>
+                          <DetailField label="Updated">
+                            {detailLead.updatedAt ? (
+                              <span className="font-normal tabular-nums text-gray-700">
+                                {formatDate(detailLead.updatedAt)}
+                              </span>
+                            ) : null}
+                          </DetailField>
+                        </dl>
+                      </DetailSection>
+
+                      {(detailLead.utm_content ||
+                        detailLead.utm_source ||
+                        detailLead.utm_medium ||
+                        formatRankPredictorLead(detailLead)) ? (
+                        <DetailSection title="Source">
+                          <dl>
+                            <DetailField label="Channel">
+                              {detailLead.utm_content
+                                ? humanizeLabel(detailLead.utm_content)
+                                : null}
+                            </DetailField>
+                            <DetailField label="Platform">
+                              {detailLead.utm_source
+                                ? humanizeLabel(detailLead.utm_source)
+                                : null}
+                            </DetailField>
+                            <DetailField label="Medium">
+                              {detailLead.utm_medium
+                                ? humanizeLabel(detailLead.utm_medium)
+                                : null}
+                            </DetailField>
+                            {formatRankPredictorLead(detailLead) ? (
+                              <DetailField label="Prediction">
+                                <span className="wrap-break-word font-normal text-gray-700">
+                                  {formatRankPredictorLead(detailLead)}
+                                  {detailLead.rankPredictorLead?.predictedAt ? (
+                                    <span className="mt-0.5 block text-[12px] text-gray-500">
+                                      Saved {formatDate(detailLead.rankPredictorLead.predictedAt)}
+                                    </span>
+                                  ) : null}
+                                </span>
+                              </DetailField>
+                            ) : null}
+                          </dl>
+                        </DetailSection>
+                      ) : null}
+
+                      {Array.isArray(detailLead.studentActivityHistory) &&
+                      detailLead.studentActivityHistory.length > 0 ? (
+                        <DetailSection
+                          title={`Activity · ${
+                            detailLead.studentActivityCount ||
+                            detailLead.studentActivityHistory.length
+                          }`}
+                        >
+                          <ul className="-mx-3.5">
+                            {detailLead.studentActivityHistory.slice(0, 20).map((a, idx) => {
+                              const tool = activityToolLabel(a);
+                              const detail = activityDetailText(a);
+                              const isLast =
+                                idx ===
+                                Math.min(19, detailLead.studentActivityHistory.length - 1);
+                              return (
+                                <li
+                                  key={`${a.createdAt || idx}-${a.title || tool}`}
+                                  className={`px-3.5 py-2.5 ${isLast ? '' : 'border-b border-gray-100'}`}
+                                >
+                                  <div className="flex items-start justify-between gap-3">
+                                    <div className="min-w-0">
+                                      <p className="text-[13px] font-medium text-gray-900">
+                                        {tool}
+                                      </p>
+                                      {detail ? (
+                                        <p className="mt-0.5 text-[12px] leading-snug text-gray-500">
+                                          {detail}
+                                        </p>
+                                      ) : null}
+                                    </div>
+                                    {a.createdAt ? (
+                                      <time className="shrink-0 pt-0.5 text-[11px] tabular-nums text-gray-400">
+                                        {formatShortDate(a.createdAt)}
+                                      </time>
+                                    ) : null}
+                                  </div>
+                                  {a.payload ? (
+                                    <details className="mt-1.5">
+                                      <summary className="cursor-pointer select-none text-[11px] font-medium text-gray-400 hover:text-gray-600">
+                                        Technical details
+                                      </summary>
+                                      <pre className="mt-1.5 max-h-28 overflow-auto whitespace-pre-wrap break-words rounded-md bg-gray-50 p-2 font-mono text-[10px] leading-relaxed text-gray-500">
+                                        {typeof a.payload === 'string'
+                                          ? a.payload
+                                          : JSON.stringify(a.payload, null, 2)}
+                                      </pre>
+                                    </details>
+                                  ) : null}
+                                </li>
+                              );
+                            })}
+                          </ul>
+                        </DetailSection>
+                      ) : null}
+                    </div>
+
+                    <div className="shrink-0 border-t border-gray-100 bg-gray-50/90 px-5 py-4">
+                      <p className="mb-3 text-[11px] font-semibold uppercase tracking-[0.08em] text-gray-400">
+                        Actions
+                      </p>
+                      <div className="space-y-3">
+                        <div className="grid grid-cols-2 gap-2.5">
+                          <div>
+                            <label
+                              htmlFor="lead-slot-date"
+                              className="mb-1 block text-[11px] text-gray-500"
+                            >
+                              Slot date
+                            </label>
+                            <input
+                              id="lead-slot-date"
+                              type="date"
+                              value={detailSlotDate}
+                              onChange={(e) => {
+                                const nextDate = e.target.value;
+                                setDetailSlotDate(nextDate);
+                                if (!nextDate) {
+                                  setDetailSlotOptions([]);
+                                  setDetailSlotId('');
+                                  setDetailSlotLoading(false);
+                                  setDetailSlotError('');
+                                } else {
+                                  setDetailSlotLoading(true);
+                                  setDetailSlotError('');
+                                }
+                              }}
+                              className="w-full rounded-md border border-gray-200 bg-white px-2.5 py-1.5 text-[13px] outline-none focus:border-gray-400 focus:ring-1 focus:ring-gray-300"
+                            />
+                          </div>
+                          <div>
+                            <label
+                              htmlFor="lead-slot-id"
+                              className="mb-1 block text-[11px] text-gray-500"
+                            >
+                              Time slot
+                            </label>
+                            <select
+                              id="lead-slot-id"
+                              value={detailSlotId}
+                              onChange={(e) => setDetailSlotId(e.target.value)}
+                              disabled={!detailSlotDate || detailSlotLoading}
+                              className="w-full rounded-md border border-gray-200 bg-white px-2.5 py-1.5 text-[13px] outline-none focus:border-gray-400 focus:ring-1 focus:ring-gray-300 disabled:bg-gray-100"
+                            >
+                              <option value="">
+                                {detailSlotLoading ? 'Loading…' : 'Select slot'}
+                              </option>
+                              {detailSlotOptions.map((slot) => (
+                                <option key={slot.slotId} value={slot.slotId}>
+                                  {slot.label || formatSlotIdForDropdown(slot.slotId)}
+                                </option>
+                              ))}
+                            </select>
+                          </div>
+                        </div>
+                        {detailSlotError ? (
+                          <p className="text-[12px] text-red-600">{detailSlotError}</p>
+                        ) : null}
                         <button
                           type="button"
                           onClick={saveLeadSlot}
                           disabled={detailSlotSaving || detailSlotLoading}
-                          className="mt-2 px-4 py-2 rounded-lg bg-primary-blue-600 text-white text-sm font-medium hover:opacity-90 disabled:opacity-50 transition-colors"
+                          className="rounded-md border border-gray-200 bg-white px-3 py-1.5 text-[12px] font-medium text-gray-700 hover:bg-gray-50 disabled:opacity-50"
                         >
-                          {detailSlotSaving ? 'Updating slot…' : 'Update slot'}
+                          {detailSlotSaving ? 'Updating…' : 'Update slot'}
                         </button>
-                      </div>
-                      <div>
-                        <label htmlFor="lead-admin-notes" className="block text-sm font-medium text-gray-700 mb-1">Admin notes</label>
-                        <textarea
-                          id="lead-admin-notes"
-                          value={detailNotes}
-                          onChange={(e) => setDetailNotes(e.target.value)}
-                          rows={3}
-                          className="w-full px-3 py-2 rounded-lg border border-gray-300 focus:ring-2 focus:ring-primary-blue-500 focus:border-primary-blue-500 outline-none text-sm"
-                          placeholder="Internal notes (e.g. follow-up, outcome)"
-                        />
-                        <button
-                          type="button"
-                          onClick={saveLeadNotes}
-                          disabled={detailSaving}
-                          className="mt-2 px-4 py-2 rounded-lg bg-primary-navy text-white text-sm font-medium hover:opacity-90 disabled:opacity-50 transition-colors"
-                        >
-                          {detailSaving ? 'Saving…' : 'Save notes'}
-                        </button>
+
+                        <div className="border-t border-gray-200/70 pt-3">
+                          <label
+                            htmlFor="lead-admin-notes"
+                            className="mb-1 block text-[11px] text-gray-500"
+                          >
+                            Admin notes
+                          </label>
+                          <textarea
+                            id="lead-admin-notes"
+                            value={detailNotes}
+                            onChange={(e) => setDetailNotes(e.target.value)}
+                            rows={2}
+                            className="w-full rounded-md border border-gray-200 bg-white px-2.5 py-1.5 text-[13px] outline-none focus:border-gray-400 focus:ring-1 focus:ring-gray-300"
+                            placeholder="Internal notes"
+                          />
+                          <button
+                            type="button"
+                            onClick={saveLeadNotes}
+                            disabled={detailSaving}
+                            className="mt-2 rounded-md bg-primary-navy px-3 py-1.5 text-[12px] font-medium text-white hover:opacity-90 disabled:opacity-50"
+                          >
+                            {detailSaving ? 'Saving…' : 'Save notes'}
+                          </button>
+                        </div>
                       </div>
                     </div>
                   </>
