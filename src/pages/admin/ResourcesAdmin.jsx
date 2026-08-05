@@ -24,10 +24,21 @@ import {
 import ConfirmDialog from '../../components/Counsellor/ConfirmDialog';
 import { copyTextToClipboard } from '../../utils/clipboard';
 
-function studentResourceShareUrl(slug) {
-  if (!slug) return '';
+function studentResourceSharePath(item) {
+  const key = String(item?.slug || item?.id || '').trim();
+  return key ? `/students/resources/${key}` : '';
+}
+
+function studentResourceShareUrl(itemOrKey) {
+  const path =
+    typeof itemOrKey === 'string'
+      ? itemOrKey
+        ? `/students/resources/${itemOrKey}`
+        : ''
+      : studentResourceSharePath(itemOrKey);
+  if (!path) return '';
   const origin = typeof window !== 'undefined' ? window.location.origin : '';
-  return `${origin}/students/resources/${slug}`;
+  return `${origin}${path}`;
 }
 
 function formatBytes(bytes) {
@@ -214,8 +225,8 @@ export default function ResourcesAdmin() {
     const res = await publishStudentResource(id);
     if (!res.success) setError(res.message || 'Failed to publish');
     else {
-      const slug = res.data?.data?.slug || res.data?.slug;
-      const shareUrl = studentResourceShareUrl(slug);
+      const published = res.data?.data || res.data || {};
+      const shareUrl = studentResourceShareUrl(published);
       setSuccess(
         shareUrl
           ? `Published. Share link: ${shareUrl}`
@@ -225,14 +236,15 @@ export default function ResourcesAdmin() {
     }
   };
 
-  const onCopyShareLink = async (slug) => {
-    const url = studentResourceShareUrl(slug);
-    if (!url) return;
+  const onCopyShareLink = async (item) => {
+    const key = String(item?.slug || item?.id || '').trim();
+    const url = studentResourceShareUrl(item);
+    if (!url || !key) return;
     try {
       await copyTextToClipboard(url);
-      setCopiedSlug(slug);
+      setCopiedSlug(key);
       window.setTimeout(() => {
-        setCopiedSlug((prev) => (prev === slug ? '' : prev));
+        setCopiedSlug((prev) => (prev === key ? '' : prev));
       }, 2000);
     } catch {
       setError('Could not copy link');
@@ -549,20 +561,20 @@ export default function ResourcesAdmin() {
                             </span>
                           </td>
                           <td className="px-5 py-4">
-                            {item.status === 'published' && item.slug ? (
-                              <div className="flex max-w-[220px] flex-col gap-1.5">
+                            {item.status === 'published' && (item.slug || item.id) ? (
+                              <div className="flex max-w-[240px] flex-col gap-1.5">
                                 <p
                                   className="truncate font-mono text-[11px] text-slate-600"
-                                  title={studentResourceShareUrl(item.slug)}
+                                  title={studentResourceShareUrl(item)}
                                 >
-                                  /students/resources/{item.slug}
+                                  {studentResourceSharePath(item)}
                                 </p>
                                 <button
                                   type="button"
-                                  onClick={() => onCopyShareLink(item.slug)}
+                                  onClick={() => onCopyShareLink(item)}
                                   className="inline-flex w-fit items-center gap-1 rounded-lg border border-slate-200 bg-white px-2 py-1 text-[11px] font-semibold text-slate-700 hover:bg-slate-50"
                                 >
-                                  {copiedSlug === item.slug ? (
+                                  {copiedSlug === String(item.slug || item.id) ? (
                                     <>
                                       <FiCheckCircle className="h-3 w-3 text-emerald-600" />
                                       Copied
@@ -577,7 +589,7 @@ export default function ResourcesAdmin() {
                               </div>
                             ) : (
                               <span className="text-xs text-slate-400">
-                                {item.status === 'published' ? 'Generating…' : 'Publish to get link'}
+                                {item.status === 'published' ? 'Unavailable' : 'Publish to get link'}
                               </span>
                             )}
                           </td>

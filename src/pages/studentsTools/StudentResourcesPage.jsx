@@ -22,8 +22,9 @@ function formatDate(iso) {
 export default function StudentResourcesPage() {
   const { slug: slugParam } = useParams();
   const navigate = useNavigate();
-  const focusSlug = slugParam ? String(slugParam).trim().toLowerCase() : '';
-  const spotlightActive = Boolean(focusSlug);
+  const focusKey = slugParam ? String(slugParam).trim() : '';
+  const focusKeyLower = focusKey.toLowerCase();
+  const spotlightActive = Boolean(focusKey);
 
   const [items, setItems] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -45,15 +46,21 @@ export default function StudentResourcesPage() {
   }, []);
 
   const focusedItem = useMemo(() => {
-    if (!focusSlug) return null;
-    return items.find((item) => String(item.slug || '').toLowerCase() === focusSlug) || null;
-  }, [items, focusSlug]);
+    if (!focusKey) return null;
+    return (
+      items.find((item) => {
+        const slug = String(item.slug || '').toLowerCase();
+        const id = String(item.id || '');
+        return (slug && slug === focusKeyLower) || id === focusKey;
+      }) || null
+    );
+  }, [items, focusKey, focusKeyLower]);
 
   const slugNotFound = spotlightActive && !loading && !focusedItem;
 
   useEffect(() => {
     setSelectedResource(null);
-  }, [focusSlug]);
+  }, [focusKey]);
 
   useEffect(() => {
     if (!spotlightActive || !focusedItem) return;
@@ -68,6 +75,11 @@ export default function StudentResourcesPage() {
   const clearSpotlight = () => {
     setSelectedResource(null);
     navigate('/students/resources');
+  };
+
+  const resourcePath = (item) => {
+    const key = String(item?.slug || item?.id || '').trim();
+    return key ? `/students/resources/${key}` : '/students/resources';
   };
 
   return (
@@ -147,7 +159,10 @@ export default function StudentResourcesPage() {
                 const isFocused =
                   spotlightActive &&
                   focusedItem &&
-                  String(item.slug || '').toLowerCase() === focusSlug;
+                  (String(item.id || '') === String(focusedItem.id || '') ||
+                    (item.slug &&
+                      String(item.slug).toLowerCase() ===
+                        String(focusedItem.slug || '').toLowerCase()));
                 return (
                   <li
                     key={item.id}
@@ -170,16 +185,9 @@ export default function StudentResourcesPage() {
                             PDF
                           </span>
                           <h2 className="mt-2 text-lg font-bold leading-snug text-[#0f172a]">
-                            {item.slug ? (
-                              <Link
-                                to={`/students/resources/${item.slug}`}
-                                className="hover:text-[#f27921]"
-                              >
-                                {item.title}
-                              </Link>
-                            ) : (
-                              item.title
-                            )}
+                            <Link to={resourcePath(item)} className="hover:text-[#f27921]">
+                              {item.title}
+                            </Link>
                           </h2>
                         </div>
                       </div>
