@@ -18,7 +18,7 @@ import {
 import { LuGraduationCap, LuScale } from 'react-icons/lu';
 import { getWorkspaceMegaMenus } from '../../../constants/studentWorkspaceNavMenus';
 import { C360, LAYOUT } from './careers360Theme';
-import { useStudentAuthRequired } from '../../../contexts/StudentAuthContext';
+import { useStudentAuth } from '../../../contexts/StudentAuthContext';
 import StudentUpdatesBell from '../StudentUpdatesBell';
 import { getStudentWorkspaceUpdatesFeed } from '../../../utils/api';
 import {
@@ -133,7 +133,11 @@ export default function Careers360Navbar({
   const [updatesLoading, setUpdatesLoading] = useState(true);
   const [unreadCount, setUnreadCount] = useState(0);
   const { pathname } = useLocation();
-  const { isAuthenticated, openAuthModal, session, profile } = useStudentAuthRequired();
+  const auth = useStudentAuth();
+  const isAuthenticated = Boolean(auth?.isAuthenticated);
+  const openAuthModal = auth?.openAuthModal || (() => {});
+  const session = auth?.session || null;
+  const profile = auth?.profile || null;
 
   const menus = useMemo(() => getWorkspaceMegaMenus(), []);
   const displayName = profile?.fullName || session?.fullName || 'Profile';

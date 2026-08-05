@@ -399,6 +399,14 @@ function App() {
               }
             />
             <Route
+              path="resources/:slug"
+              element={
+                <Suspense fallback={<div className="flex min-h-screen items-center justify-center bg-slate-50 text-slate-500"><div className="animate-pulse text-sm font-medium">Loading…</div></div>}>
+                  <StudentResourcesPage />
+                </Suspense>
+              }
+            />
+            <Route
               path="college-predictor"
               element={
                 <RequireStudentAuth title="Login to use College Predictor">

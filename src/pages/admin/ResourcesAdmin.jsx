@@ -11,6 +11,7 @@ import {
   FiRefreshCw,
   FiUsers,
   FiSearch,
+  FiCopy,
 } from 'react-icons/fi';
 import {
   getStudentResources,
@@ -21,6 +22,13 @@ import {
   deleteStudentResource,
 } from '../../utils/adminApi';
 import ConfirmDialog from '../../components/Counsellor/ConfirmDialog';
+import { copyTextToClipboard } from '../../utils/clipboard';
+
+function studentResourceShareUrl(slug) {
+  if (!slug) return '';
+  const origin = typeof window !== 'undefined' ? window.location.origin : '';
+  return `${origin}/students/resources/${slug}`;
+}
 
 function formatBytes(bytes) {
   if (!bytes || bytes <= 0) return '0 B';
@@ -97,6 +105,7 @@ export default function ResourcesAdmin() {
   const [uploadProgress, setUploadProgress] = useState(0);
   const [uploading, setUploading] = useState(false);
   const [deleteConfirm, setDeleteConfirm] = useState(null);
+  const [copiedSlug, setCopiedSlug] = useState('');
 
   const stats = useMemo(() => {
     const published = list.filter((i) => i.status === 'published').length;
@@ -205,8 +214,28 @@ export default function ResourcesAdmin() {
     const res = await publishStudentResource(id);
     if (!res.success) setError(res.message || 'Failed to publish');
     else {
-      setSuccess('Resource published to student portal');
+      const slug = res.data?.data?.slug || res.data?.slug;
+      const shareUrl = studentResourceShareUrl(slug);
+      setSuccess(
+        shareUrl
+          ? `Published. Share link: ${shareUrl}`
+          : 'Resource published to student portal'
+      );
       await loadResources();
+    }
+  };
+
+  const onCopyShareLink = async (slug) => {
+    const url = studentResourceShareUrl(slug);
+    if (!url) return;
+    try {
+      await copyTextToClipboard(url);
+      setCopiedSlug(slug);
+      window.setTimeout(() => {
+        setCopiedSlug((prev) => (prev === slug ? '' : prev));
+      }, 2000);
+    } catch {
+      setError('Could not copy link');
     }
   };
 
@@ -486,6 +515,7 @@ export default function ResourcesAdmin() {
                         <th className="px-5 py-3.5 font-semibold">Resource</th>
                         <th className="px-5 py-3.5 font-semibold">File</th>
                         <th className="px-5 py-3.5 font-semibold">Status</th>
+                        <th className="px-5 py-3.5 font-semibold">Share link</th>
                         <th className="px-5 py-3.5 font-semibold">Downloads</th>
                         <th className="px-5 py-3.5 font-semibold">Uploaded</th>
                         <th className="px-5 py-3.5 font-semibold">Actions</th>
@@ -517,6 +547,39 @@ export default function ResourcesAdmin() {
                             >
                               {item.status}
                             </span>
+                          </td>
+                          <td className="px-5 py-4">
+                            {item.status === 'published' && item.slug ? (
+                              <div className="flex max-w-[220px] flex-col gap-1.5">
+                                <p
+                                  className="truncate font-mono text-[11px] text-slate-600"
+                                  title={studentResourceShareUrl(item.slug)}
+                                >
+                                  /students/resources/{item.slug}
+                                </p>
+                                <button
+                                  type="button"
+                                  onClick={() => onCopyShareLink(item.slug)}
+                                  className="inline-flex w-fit items-center gap-1 rounded-lg border border-slate-200 bg-white px-2 py-1 text-[11px] font-semibold text-slate-700 hover:bg-slate-50"
+                                >
+                                  {copiedSlug === item.slug ? (
+                                    <>
+                                      <FiCheckCircle className="h-3 w-3 text-emerald-600" />
+                                      Copied
+                                    </>
+                                  ) : (
+                                    <>
+                                      <FiCopy className="h-3 w-3" />
+                                      Copy link
+                                    </>
+                                  )}
+                                </button>
+                              </div>
+                            ) : (
+                              <span className="text-xs text-slate-400">
+                                {item.status === 'published' ? 'Generating…' : 'Publish to get link'}
+                              </span>
+                            )}
                           </td>
                           <td className="px-5 py-4 font-medium text-slate-700">{item.downloadCount || 0}</td>
                           <td className="px-5 py-4 text-slate-600">

@@ -4,6 +4,7 @@ import Careers360Navbar from './careers360/Careers360Navbar';
 import Careers360Footer from './careers360/Careers360Footer';
 import StudentAuthModal from '../studentAuth/StudentAuthModal';
 import OneOnOneSessionModal from '../oneOnOneSession/OneOnOneSessionModal';
+import { StudentAuthProvider } from '../../contexts/StudentAuthContext';
 
 export default function StudentsWorkspaceLayout() {
   const [searchTerm, setSearchTerm] = useState('');
@@ -36,18 +37,20 @@ export default function StudentsWorkspaceLayout() {
   );
 
   return (
-    <div className="flex min-h-screen flex-col bg-white font-sans text-[#333]">
-      <Careers360Navbar
-        searchTerm={searchTerm}
-        onSearchChange={setSearchTerm}
-        onSearchFocus={() => setShowSuggestions(true)}
-        onSearchBlur={() => setTimeout(() => setShowSuggestions(false), 200)}
-        onSearchKeyDown={handleSearchKeyDown}
-      />
-      <Outlet context={outletContext} />
-      <Careers360Footer />
-      <StudentAuthModal />
-      <OneOnOneSessionModal open={oneOnOneBookingOpen} onClose={closeOneOnOneBooking} />
-    </div>
+    <StudentAuthProvider>
+      <div className="flex min-h-screen flex-col bg-white font-sans text-[#333]">
+        <Careers360Navbar
+          searchTerm={searchTerm}
+          onSearchChange={setSearchTerm}
+          onSearchFocus={() => setShowSuggestions(true)}
+          onSearchBlur={() => setTimeout(() => setShowSuggestions(false), 200)}
+          onSearchKeyDown={handleSearchKeyDown}
+        />
+        <Outlet context={outletContext} />
+        <Careers360Footer />
+        <StudentAuthModal />
+        <OneOnOneSessionModal open={oneOnOneBookingOpen} onClose={closeOneOnOneBooking} />
+      </div>
+    </StudentAuthProvider>
   );
 }

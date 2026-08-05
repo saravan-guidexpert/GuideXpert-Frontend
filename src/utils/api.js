@@ -1255,6 +1255,9 @@ export const getStudentTestimonialsFeed = async (params = {}) => {
 export const getStudentResourcesFeed = async () =>
   apiRequest('/resources', { method: 'GET' });
 
+export const getStudentResourceBySlug = async (slug) =>
+  apiRequest(`/resources/by-slug/${encodeURIComponent(slug)}`, { method: 'GET' });
+
 export const requestResourceDownloadOtp = async (resourceId, fullName, phone) =>
   apiRequest(`/resources/${encodeURIComponent(resourceId)}/request-download`, {
     method: 'POST',
