@@ -528,6 +528,33 @@ export const getTrainingFeedback = async (params = {}, token = getStoredToken())
   return adminRequest(`/training-feedback${query ? `?${query}` : ''}`, { method: 'GET' }, token);
 };
 
+export const getCounsellorOccupations = async (params = {}, token = getStoredToken()) => {
+  const search = new URLSearchParams();
+  if (params.page != null) search.set('page', params.page);
+  if (params.limit != null) search.set('limit', params.limit);
+  if (params.from) search.set('from', params.from);
+  if (params.to) search.set('to', params.to);
+  if (params.q) search.set('q', params.q);
+  const occupations = Array.isArray(params.occupations)
+    ? params.occupations
+    : params.occupation
+      ? [params.occupation]
+      : [];
+  occupations.filter(Boolean).forEach((occupation) => search.append('occupation', occupation));
+  if (params.source) search.set('source', params.source);
+  if (params.status) search.set('status', params.status);
+  const query = search.toString();
+  return adminRequest(`/counsellor-occupations${query ? `?${query}` : ''}`, { method: 'GET' }, token);
+};
+
+export const getCounsellorOccupationCategories = async (params = {}, token = getStoredToken()) => {
+  const search = new URLSearchParams();
+  if (params.from) search.set('from', params.from);
+  if (params.to) search.set('to', params.to);
+  const query = search.toString();
+  return adminRequest(`/counsellor-occupations/categories${query ? `?${query}` : ''}`, { method: 'GET' }, token);
+};
+
 export const getTrainingFormResponses = async (params = {}, token = getStoredToken()) => {
   const search = new URLSearchParams();
   if (params.page != null) search.set('page', params.page);

@@ -58,6 +58,7 @@ import InfluencerCreate from './pages/admin/InfluencerCreate';
 import LeadStatus from './pages/admin/LeadStatus';
 import AssessmentResults from './pages/admin/AssessmentResults';
 import TrainingFeedback from './pages/admin/TrainingFeedback';
+import CounsellorOccupations from './pages/admin/CounsellorOccupations';
 import CounsellorSupportRequests from './pages/admin/CounsellorSupportRequests';
 import TrainingFormResponses from './pages/admin/TrainingFormResponses';
 import CollegeDostFormSubmissions from './pages/admin/CollegeDostFormSubmissions';
@@ -540,6 +541,7 @@ function App() {
             <Route path="meeting-attendance" element={<MeetingAttendance />} />
             <Route path="iit-meet-attendance" element={<IitMeetAttendance />} />
             <Route path="training-feedback" element={<TrainingFeedback />} />
+            <Route path="counsellor-occupations" element={<CounsellorOccupations />} />
             <Route path="counsellor-support-requests" element={<CounsellorSupportRequests />} />
             <Route path="training-form-responses" element={<TrainingFormResponses />} />
             <Route path="college-dost" element={<CollegeDostFormSubmissions />} />
