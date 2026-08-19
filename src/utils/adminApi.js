@@ -543,6 +543,7 @@ export const getCounsellorOccupations = async (params = {}, token = getStoredTok
   occupations.filter(Boolean).forEach((occupation) => search.append('occupation', occupation));
   if (params.source) search.set('source', params.source);
   if (params.status) search.set('status', params.status);
+  if (params.funnelNode) search.set('funnelNode', params.funnelNode);
   const query = search.toString();
   return adminRequest(`/counsellor-occupations${query ? `?${query}` : ''}`, { method: 'GET' }, token);
 };
