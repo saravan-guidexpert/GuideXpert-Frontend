@@ -81,6 +81,12 @@ function formatCount(value) {
   return Number(value || 0).toLocaleString('en-IN');
 }
 
+function occupationsForApi(selected, allCategories) {
+  if (!Array.isArray(selected) || selected.length === 0) return undefined;
+  if (allCategories.length > 0 && selected.length >= allCategories.length) return undefined;
+  return selected;
+}
+
 function funnelStatusBadgeClass(status) {
   if (status === 'activation_filled') return 'bg-emerald-100 text-emerald-800';
   if (status === 'assessment_written') return 'bg-violet-100 text-violet-800';
@@ -156,6 +162,25 @@ function OccupationMultiSelect({ categories, selected, onChange }) {
     onChange(next);
   };
 
+  const selectedFilteredCount = filtered.filter((item) => selectedSet.has(item.category)).length;
+  const allFilteredSelected = filtered.length > 0 && selectedFilteredCount === filtered.length;
+  const someFilteredSelected = selectedFilteredCount > 0 && !allFilteredSelected;
+
+  const toggleSelectAll = () => {
+    if (allFilteredSelected) {
+      const remove = new Set(filtered.map((item) => item.category));
+      onChange(selected.filter((item) => !remove.has(item)));
+      return;
+    }
+    const next = new Set(selected);
+    filtered.forEach((item) => next.add(item.category));
+    onChange([...next]);
+  };
+
+  const selectAllRef = (node) => {
+    if (node) node.indeterminate = someFilteredSelected;
+  };
+
   const label = selected.length === 0 ? 'All occupations' : `${selected.length} selected`;
 
   return (
@@ -197,6 +222,24 @@ function OccupationMultiSelect({ categories, selected, onChange }) {
               />
             </div>
           </div>
+          {filtered.length > 0 && (
+            <label className="flex items-center gap-2 px-3 py-2 text-sm font-medium text-gray-900 border-b border-gray-100 bg-slate-50 cursor-pointer">
+              <input
+                ref={selectAllRef}
+                type="checkbox"
+                checked={allFilteredSelected}
+                onChange={toggleSelectAll}
+                className="rounded border-gray-300 text-[#003366] focus:ring-[#003366]"
+                aria-label="Select all occupations"
+              />
+              <span className="flex-1">Select all</span>
+              <span className="text-xs font-normal text-gray-400 tabular-nums">
+                {query.trim()
+                  ? `${selectedFilteredCount}/${filtered.length}`
+                  : filtered.length.toLocaleString('en-IN')}
+              </span>
+            </label>
+          )}
           <div className="max-h-[min(70vh,420px)] overflow-y-auto py-1" role="listbox" aria-multiselectable="true">
             {filtered.length === 0 ? (
               <p className="px-3 py-4 text-sm text-gray-500">No occupations match.</p>
@@ -312,7 +355,7 @@ export default function CounsellorOccupations() {
       q: filters.q.trim() || undefined,
       from: filters.from || undefined,
       to: filters.to || undefined,
-      occupations: filters.occupations,
+      occupations: occupationsForApi(filters.occupations, categories),
       source: filters.source || undefined,
       status: filters.status || undefined,
     };
@@ -349,7 +392,7 @@ export default function CounsellorOccupations() {
       });
     });
     return () => { cancelledRef.current = true; };
-  }, [viewAll, pagination.page, pagination.limit, filters.q, filters.from, filters.to, filters.occupations, filters.source, filters.status, logout]);
+  }, [viewAll, pagination.page, pagination.limit, filters.q, filters.from, filters.to, filters.occupations, filters.source, filters.status, categories, logout]);
 
   const goToPage = (p) => {
     const next = Math.max(1, Math.min(p, pagination.totalPages));
@@ -402,7 +445,7 @@ export default function CounsellorOccupations() {
       q: filters.q.trim() || undefined,
       from: filters.from || undefined,
       to: filters.to || undefined,
-      occupations: filters.occupations,
+      occupations: occupationsForApi(filters.occupations, categories),
       source: filters.source || undefined,
       status: filters.status || undefined,
     };
