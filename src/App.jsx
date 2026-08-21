@@ -567,6 +567,7 @@ function App() {
               <Route path="testimonials" element={<StudentTestimonialsAdmin />} />
             </Route>
             <Route path="webinar-progress" element={<WebinarProgressAdmin />} />
+            <Route path="webinar-progress-26-27" element={<WebinarProgressAdmin cohort="26-27" />} />
             <Route path="bulk-certificates" element={<BulkCertificateDownload />} />
             <Route path="blogs" element={<AdminBlog />} />
             <Route path="resources" element={<ResourcesAdmin />} />

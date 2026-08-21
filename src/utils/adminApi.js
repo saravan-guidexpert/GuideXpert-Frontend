@@ -968,46 +968,99 @@ function appendWebinarProgressFilterParams(search, params) {
   }
 }
 
-export const getWebinarProgressList = async (params = {}, token = getStoredToken()) => {
-  const search = new URLSearchParams();
-  appendWebinarProgressFilterParams(search, params);
-  const query = search.toString();
-  return adminRequest(`/webinar-progress${query ? `?${query}` : ''}`, { method: 'GET', cache: 'no-store' }, token);
-};
+function createWebinarProgressAdminApi(basePath) {
+  const getList = async (params = {}, token = getStoredToken()) => {
+    const search = new URLSearchParams();
+    appendWebinarProgressFilterParams(search, params);
+    const query = search.toString();
+    return adminRequest(`${basePath}${query ? `?${query}` : ''}`, { method: 'GET', cache: 'no-store' }, token);
+  };
 
-export const getWebinarProgressStats = async (paramsOrToken = {}, token = getStoredToken()) => {
-  const params = typeof paramsOrToken === 'string' ? {} : (paramsOrToken || {});
-  const actualToken = typeof paramsOrToken === 'string' ? paramsOrToken : token;
-  const search = new URLSearchParams();
-  if (params.from) search.set('from', params.from);
-  if (params.to) search.set('to', params.to);
-  const query = search.toString();
-  return adminRequest(`/webinar-progress/stats${query ? `?${query}` : ''}`, { method: 'GET', cache: 'no-store' }, actualToken);
-};
+  const getStats = async (paramsOrToken = {}, token = getStoredToken()) => {
+    const params = typeof paramsOrToken === 'string' ? {} : (paramsOrToken || {});
+    const actualToken = typeof paramsOrToken === 'string' ? paramsOrToken : token;
+    const search = new URLSearchParams();
+    if (params.from) search.set('from', params.from);
+    if (params.to) search.set('to', params.to);
+    const query = search.toString();
+    return adminRequest(`${basePath}/stats${query ? `?${query}` : ''}`, { method: 'GET', cache: 'no-store' }, actualToken);
+  };
 
-export const getWebinarProgressDetail = async (phone, token = getStoredToken()) => {
-  return adminRequest(`/webinar-progress/${encodeURIComponent(phone)}`, { method: 'GET', cache: 'no-store' }, token);
-};
+  const getDetail = async (phone, token = getStoredToken()) => {
+    return adminRequest(`${basePath}/${encodeURIComponent(phone)}`, { method: 'GET', cache: 'no-store' }, token);
+  };
 
-export const getWebinarUserAssessments = async (phone, token = getStoredToken()) => {
-  return adminRequest(`/webinar-progress/${encodeURIComponent(phone)}/assessments`, { method: 'GET', cache: 'no-store' }, token);
-};
+  const getAssessments = async (phone, token = getStoredToken()) => {
+    return adminRequest(`${basePath}/${encodeURIComponent(phone)}/assessments`, { method: 'GET', cache: 'no-store' }, token);
+  };
 
-export const adminUpdateWebinarProgress = async (phone, payload, token = getStoredToken()) => {
-  return adminRequest(`/webinar-progress/${encodeURIComponent(phone)}`, {
-    method: 'PATCH',
-    body: JSON.stringify(payload),
-    cache: 'no-store',
-  }, token);
-};
+  const update = async (phone, payload, token = getStoredToken()) => {
+    return adminRequest(`${basePath}/${encodeURIComponent(phone)}`, {
+      method: 'PATCH',
+      body: JSON.stringify(payload),
+      cache: 'no-store',
+    }, token);
+  };
 
-export const bulkWebinarProgress = async (payload, token = getStoredToken()) => {
-  return adminRequest('/webinar-progress/bulk', {
-    method: 'POST',
-    body: JSON.stringify(payload),
-    cache: 'no-store',
-  }, token);
-};
+  const bulk = async (payload, token = getStoredToken()) => {
+    return adminRequest(`${basePath}/bulk`, {
+      method: 'POST',
+      body: JSON.stringify(payload),
+      cache: 'no-store',
+    }, token);
+  };
+
+  const exportCsv = async (paramsOrToken = {}, token = getStoredToken()) => {
+    const params = typeof paramsOrToken === 'string' || paramsOrToken == null ? {} : paramsOrToken;
+    const actualToken = typeof paramsOrToken === 'string' ? paramsOrToken : token;
+    const search = new URLSearchParams();
+    appendWebinarProgressFilterParams(search, params);
+    const query = search.toString();
+    const url = `${getApiBaseUrl()}/admin${basePath}/export${query ? `?${query}` : ''}`;
+    const headers = {};
+    if (actualToken) headers.Authorization = `Bearer ${actualToken}`;
+    const response = await fetch(url, { method: 'GET', headers });
+    if (!response.ok) {
+      if (response.status === 401) {
+        notifyAdminUnauthorized({ endpoint: `/admin${basePath}/export`, status: 401 });
+      }
+      let message = 'Export failed';
+      try {
+        const data = await response.json();
+        message = data.message || message;
+      } catch {
+        message = response.statusText || message;
+      }
+      return { success: false, message, status: response.status };
+    }
+    const blob = await response.blob();
+    const disposition = response.headers.get('Content-Disposition');
+    const cohortSlug = basePath.includes('26-27') ? '26-27' : '25-26';
+    let filename = `training-progress-${cohortSlug}-${new Date().toISOString().slice(0, 10)}.csv`;
+    if (disposition) {
+      const match = /filename="?([^"]+)"?/.exec(disposition);
+      if (match) filename = match[1];
+    }
+    const a = document.createElement('a');
+    a.href = URL.createObjectURL(blob);
+    a.download = filename;
+    a.click();
+    URL.revokeObjectURL(a.href);
+    return { success: true };
+  };
+
+  return { getList, getStats, getDetail, getAssessments, update, bulk, exportCsv };
+}
+
+export const webinarProgressAdminApi = createWebinarProgressAdminApi('/webinar-progress');
+export const webinarProgress2627AdminApi = createWebinarProgressAdminApi('/webinar-progress-26-27');
+
+export const getWebinarProgressList = webinarProgressAdminApi.getList;
+export const getWebinarProgressStats = webinarProgressAdminApi.getStats;
+export const getWebinarProgressDetail = webinarProgressAdminApi.getDetail;
+export const getWebinarUserAssessments = webinarProgressAdminApi.getAssessments;
+export const adminUpdateWebinarProgress = webinarProgressAdminApi.update;
+export const bulkWebinarProgress = webinarProgressAdminApi.bulk;
 
 /**
  * POST /api/admin/certificates/bulk-download — ZIP with PNG, PDF per found cert + manifest.csv
@@ -1050,43 +1103,7 @@ export const bulkDownloadCertificates = async (payload = {}, token = getStoredTo
   return { success: true };
 };
 
-export const getWebinarProgressExport = async (paramsOrToken = {}, token = getStoredToken()) => {
-  const params = typeof paramsOrToken === 'string' || paramsOrToken == null ? {} : paramsOrToken;
-  const actualToken = typeof paramsOrToken === 'string' ? paramsOrToken : token;
-  const search = new URLSearchParams();
-  appendWebinarProgressFilterParams(search, params);
-  const query = search.toString();
-  const url = `${getApiBaseUrl()}/admin/webinar-progress/export${query ? `?${query}` : ''}`;
-  const headers = {};
-  if (actualToken) headers.Authorization = `Bearer ${actualToken}`;
-  const response = await fetch(url, { method: 'GET', headers });
-  if (!response.ok) {
-    if (response.status === 401) {
-      notifyAdminUnauthorized({ endpoint: '/admin/webinar-progress/export', status: 401 });
-    }
-    let message = 'Export failed';
-    try {
-      const data = await response.json();
-      message = data.message || message;
-    } catch {
-      message = response.statusText || message;
-    }
-    return { success: false, message, status: response.status };
-  }
-  const blob = await response.blob();
-  const disposition = response.headers.get('Content-Disposition');
-  let filename = `webinar-progress-${new Date().toISOString().slice(0, 10)}.csv`;
-  if (disposition) {
-    const match = /filename="?([^"]+)"?/.exec(disposition);
-    if (match) filename = match[1];
-  }
-  const a = document.createElement('a');
-  a.href = URL.createObjectURL(blob);
-  a.download = filename;
-  a.click();
-  URL.revokeObjectURL(a.href);
-  return { success: true };
-};
+export const getWebinarProgressExport = webinarProgressAdminApi.exportCsv;
 
 export async function getAdminLeadsExport(params = {}, token = getStoredToken()) {
   const search = new URLSearchParams();

@@ -24,7 +24,7 @@ export function getWebinarStorageKeys(phone10) {
 }
 
 // Increment when unlock/progress system changes; each user bucket resets independently.
-const PROGRESS_VERSION = 3;
+const PROGRESS_VERSION = 4;
 
 const DEFAULT_SETTINGS = {
   defaultPlaybackSpeed: 1,

@@ -47,7 +47,8 @@ const navItems = [
   { to: '/admin/poster-downloads', label: 'Poster downloads', icon: FiImage, sectionKey: 'poster-downloads', sidebarPlacement: 'counsellors' },
   { to: '/admin/posters', label: 'Poster automation', icon: FiLayers, sectionKey: 'poster-automation', sidebarPlacement: 'counsellors' },
   { to: '/admin/assessment-results', label: 'Custom Reports', icon: FiFileText, sectionKey: 'assessment-results', sidebarPlacement: 'counsellors' },
-  { to: '/admin/webinar-progress', label: 'Webinar Progress', icon: FiVideo, sectionKey: 'webinar-progress', sidebarPlacement: 'counsellors' },
+  { to: '/admin/webinar-progress', label: 'Training progress 25-26', icon: FiVideo, sectionKey: 'webinar-progress', sidebarPlacement: 'counsellors' },
+  { to: '/admin/webinar-progress-26-27', label: 'Training progress 26-27', icon: FiVideo, sectionKey: 'webinar-progress', sidebarPlacement: 'counsellors' },
   { to: '/admin/blogs', label: 'Blog Management', icon: FiBookOpen, sectionKey: 'blogs', sidebarPlacement: 'counsellors' },
   { to: '/admin/iit-counselling', label: 'IIT Counselling', icon: FiClipboard, sectionKey: 'iit-counselling', sidebarPlacement: 'students' },
   { to: '/admin/iit-counselling-utm', label: 'IIT Counselling UTM', icon: FiLink, sectionKey: 'iit-counselling', sidebarPlacement: 'students' },
@@ -383,7 +384,7 @@ export default function AdminLayout() {
                   label={label}
                   icon={icon}
                   sidebarCollapsed={sidebarCollapsed}
-                  end={to === '/admin/dashboard'}
+                  end={to === '/admin/dashboard' || to === '/admin/webinar-progress'}
                   onNavigate={closeMobileSidebar}
                 />
               ))}

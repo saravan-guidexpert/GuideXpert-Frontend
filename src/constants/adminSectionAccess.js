@@ -25,7 +25,7 @@ export const ADMIN_SECTION_OPTIONS = [
   { sectionKey: 'poster-downloads', label: 'Poster downloads' },
   { sectionKey: 'poster-automation', label: 'Poster automation' },
   { sectionKey: 'assessment-results', label: 'Custom Reports' },
-  { sectionKey: 'webinar-progress', label: 'Webinar Progress' },
+  { sectionKey: 'webinar-progress', label: 'Training progress' },
   { sectionKey: 'bulk-certificates', label: 'Bulk Certificates' },
   { sectionKey: 'blogs', label: 'Blog Management' },
   { sectionKey: 'osvi-calls', label: 'OSVI Calls' },

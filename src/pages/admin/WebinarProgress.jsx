@@ -1,50 +1,47 @@
 import { useState, useEffect, useCallback, useMemo, useRef, Fragment } from 'react';
 import { DayPicker } from 'react-day-picker';
 import 'react-day-picker/style.css';
-import { FiUsers, FiCheckCircle, FiTrendingUp, FiActivity, FiSearch, FiDownload, FiChevronLeft, FiChevronRight, FiChevronDown, FiChevronUp, FiLock, FiPlay, FiClipboard, FiRefreshCw, FiAward, FiX, FiCheck, FiAlertTriangle, FiStar, FiEdit3, FiRotateCcw, FiCalendar, FiFilter, FiCopy } from 'react-icons/fi';
+import { FiUsers, FiCheckCircle, FiTrendingUp, FiActivity, FiSearch, FiDownload, FiChevronLeft, FiChevronRight, FiChevronDown, FiChevronUp, FiLock, FiPlay, FiClipboard, FiRefreshCw, FiAward, FiX, FiCheck, FiAlertTriangle, FiStar, FiEdit3, FiRotateCcw, FiCalendar, FiCopy, FiSliders } from 'react-icons/fi';
 import KpiCard from '../../components/Admin/KpiCard';
 import CopyToSheetsModal from '../../components/Admin/CopyToSheetsModal';
 import { ADMIN_VIEW_ALL_LIMIT } from '../../constants/adminListLimits';
 import { fetchAllPaginatedRows } from '../../utils/adminPagedFetch';
-import { getWebinarProgressList, getWebinarProgressStats, getWebinarProgressExport, getWebinarUserAssessments, adminUpdateWebinarProgress, bulkWebinarProgress } from '../../utils/adminApi';
+import { webinarProgressAdminApi, webinarProgress2627AdminApi } from '../../utils/adminApi';
+import {
+  MODULE_ORDER,
+  TIMELINE_IDS,
+  SESSION_IDS,
+  ASSESSMENT_IDS,
+  MODULE_LABELS,
+  SHORT_MODULE_LABELS,
+  INITIAL_FILTERS,
+  WEBINAR_COPY_FIELDS,
+  toYMDLocal,
+  parseYMDLocal,
+  buildListParams,
+  buildExportParams,
+  timeAgo,
+  formatDateTime,
+  countActiveFilters,
+} from './webinar-progress/webinarProgressShared';
 
-const MODULE_ORDER = ['intro', 's2', 'a1', 's3', 'a2', 's4', 'a3', 's5', 'a4', 's6', 'a5'];
-const TIMELINE_IDS = [...MODULE_ORDER, 'certificate'];
-const SESSION_IDS = ['intro', 's2', 's3', 's4', 's5', 's6'];
-const ASSESSMENT_IDS = ['a1', 'a2', 'a3', 'a4', 'a5'];
-const MODULE_LABELS = {
-  intro: 'Introduction to GuideXpert Counsellor training program',
-  s2: 'Session 1', a1: 'Assessment 1',
-  s3: 'Session 2', a2: 'Assessment 2',
-  s4: 'Session 3', a3: 'Assessment 3',
-  s5: 'Session 4', a4: 'Assessment 4',
-  s6: 'Session 5', a5: 'Assessment 5',
-  certificate: 'Certificate',
-};
-
-function timeAgo(dateStr) {
-  if (!dateStr) return '—';
-  const diff = Date.now() - new Date(dateStr).getTime();
-  if (diff < 60_000) return 'Just now';
-  if (diff < 3_600_000) return `${Math.floor(diff / 60_000)}m ago`;
-  if (diff < 86_400_000) return `${Math.floor(diff / 3_600_000)}h ago`;
-  return `${Math.floor(diff / 86_400_000)}d ago`;
-}
-
-function formatDateTime(dateStr) {
-  if (!dateStr) return '—';
-  const d = new Date(dateStr);
-  if (Number.isNaN(d.getTime())) return '—';
-  return d.toLocaleString();
+const BTN =
+  'inline-flex h-10 items-center justify-center gap-2 rounded-lg border border-slate-200 bg-white px-3.5 text-sm font-medium text-slate-700 shadow-sm transition hover:border-slate-300 hover:bg-slate-50 disabled:opacity-50';
+const BTN_PRIMARY =
+  'inline-flex h-10 items-center justify-center gap-2 rounded-lg bg-primary-navy px-3.5 text-sm font-medium text-white shadow-sm transition hover:bg-primary-navy/90 disabled:opacity-50';
+const CHIP_ON = 'border-primary-navy bg-primary-navy text-white';
+const CHIP_OFF = 'border-slate-200 bg-white text-slate-600 hover:border-slate-300';
+function chipClass(on) {
+  return `inline-flex h-8 items-center rounded-full border px-3 text-xs font-semibold transition ${on ? CHIP_ON : CHIP_OFF}`;
 }
 
 function StatusBadge({ status }) {
   const styles = {
-    completed: 'bg-green-100 text-green-700',
-    in_progress: 'bg-amber-100 text-amber-700',
-    not_started: 'bg-gray-100 text-gray-500',
-    unlocked: 'bg-amber-100 text-amber-700',
-    locked: 'bg-gray-100 text-gray-500',
+    completed: 'bg-emerald-50 text-emerald-800 ring-1 ring-inset ring-emerald-100',
+    in_progress: 'bg-amber-50 text-amber-800 ring-1 ring-inset ring-amber-100',
+    not_started: 'bg-slate-50 text-slate-500 ring-1 ring-inset ring-slate-200',
+    unlocked: 'bg-amber-50 text-amber-800 ring-1 ring-inset ring-amber-100',
+    locked: 'bg-slate-50 text-slate-500 ring-1 ring-inset ring-slate-200',
   };
   const labels = {
     completed: 'Completed',
@@ -64,7 +61,7 @@ function JoinTypeBadge({ isLegacyUser }) {
   if (isLegacyUser) {
     return (
       <span
-        className="inline-flex items-center px-2 py-0.5 rounded-full text-[11px] font-semibold bg-gray-100 text-gray-700"
+        className="inline-flex items-center px-2 py-0.5 rounded-full text-[11px] font-semibold bg-slate-100 text-slate-600 ring-1 ring-inset ring-slate-200"
         title="Legacy users joined before first-join tracking was implemented."
       >
         Legacy
@@ -72,7 +69,7 @@ function JoinTypeBadge({ isLegacyUser }) {
     );
   }
   return (
-    <span className="inline-flex items-center px-2 py-0.5 rounded-full text-[11px] font-semibold bg-green-100 text-green-700">
+    <span className="inline-flex items-center px-2 py-0.5 rounded-full text-[11px] font-semibold bg-emerald-50 text-emerald-800 ring-1 ring-inset ring-emerald-100">
       New
     </span>
   );
@@ -341,7 +338,7 @@ function useDebounced(value, ms) {
   return d;
 }
 
-function UserDetailPanel({ user, onUserUpdated }) {
+export function UserDetailPanel({ user, onUserUpdated, api }) {
   const [localUser, setLocalUser] = useState(user);
   const [assessmentData, setAssessmentData] = useState(null);
   const [assessmentLoading, setAssessmentLoading] = useState(true);
@@ -359,7 +356,7 @@ function UserDetailPanel({ user, onUserUpdated }) {
       if (!localUser?.phone) return;
       setAssessmentLoading(true);
       try {
-        const res = await getWebinarUserAssessments(localUser.phone);
+        const res = await api.getAssessments(localUser.phone);
         if (!cancelled && res.success && res.data?.data) {
           setAssessmentData(res.data.data);
         }
@@ -368,7 +365,7 @@ function UserDetailPanel({ user, onUserUpdated }) {
     }
     load();
     return () => { cancelled = true; };
-  }, [localUser?.phone]);
+  }, [localUser?.phone, api]);
 
   useEffect(() => {
     if (!toast) return;
@@ -391,7 +388,7 @@ function UserDetailPanel({ user, onUserUpdated }) {
   async function handleModuleToggle(moduleId, action) {
     setBusy(true);
     try {
-      const res = await adminUpdateWebinarProgress(localUser.phone, { moduleUpdates: { [moduleId]: action } });
+      const res = await api.update(localUser.phone, { moduleUpdates: { [moduleId]: action } });
       if (res.success && res.data?.data) {
         setLocalUser(res.data.data);
         if (onUserUpdated) onUserUpdated(res.data.data);
@@ -409,7 +406,7 @@ function UserDetailPanel({ user, onUserUpdated }) {
     setConfirm(null);
     setBusy(true);
     try {
-      const res = await adminUpdateWebinarProgress(localUser.phone, { bulkAction });
+      const res = await api.update(localUser.phone, { bulkAction });
       if (res.success && res.data?.data) {
         setLocalUser(res.data.data);
         if (onUserUpdated) onUserUpdated(res.data.data);
@@ -687,91 +684,83 @@ function ModuleAnalytics({ stats }) {
   }
 
   return (
-    <div className="rounded-xl border border-gray-200 bg-white shadow-sm overflow-hidden">
-      {/* Header */}
-      <div className="px-4 sm:px-6 pt-5 pb-3">
-        <h3 className="text-sm font-bold text-gray-800">Module Progress & Performance</h3>
-        <p className="text-[11px] text-gray-500 mt-0.5">Completion and assessment insights across all modules</p>
+    <div className="rounded-2xl border border-slate-200/80 bg-white shadow-sm overflow-hidden">
+      <div className="flex flex-col gap-3 px-5 py-5 sm:flex-row sm:items-end sm:justify-between sm:px-6">
+        <div>
+          <h3 className="text-base font-semibold tracking-tight text-slate-900">Module progress</h3>
+          <p className="mt-0.5 text-sm text-slate-500">Completion across sessions and assessments</p>
+        </div>
+        <div className="inline-flex rounded-lg border border-slate-200 bg-slate-50 p-0.5">
+          <button
+            type="button"
+            onClick={() => setActiveTab('progress')}
+            className={`rounded-md px-3 py-1.5 text-xs font-semibold transition ${
+              activeTab === 'progress' ? 'bg-white text-primary-navy shadow-sm' : 'text-slate-500 hover:text-slate-700'
+            }`}
+          >
+            Progress overview
+          </button>
+          <button
+            type="button"
+            onClick={() => setActiveTab('insights')}
+            className={`rounded-md px-3 py-1.5 text-xs font-semibold transition ${
+              activeTab === 'insights' ? 'bg-white text-primary-navy shadow-sm' : 'text-slate-500 hover:text-slate-700'
+            }`}
+          >
+            Assessment insights
+          </button>
+        </div>
       </div>
 
-      {/* Tabs */}
-      <div className="px-4 sm:px-6 flex gap-1 border-b border-gray-200">
-        <button
-          type="button"
-          onClick={() => setActiveTab('progress')}
-          className={`px-4 py-2.5 text-xs font-semibold border-b-2 transition-colors ${
-            activeTab === 'progress'
-              ? 'border-blue-600 text-blue-600'
-              : 'border-transparent text-gray-500 hover:text-gray-700'
-          }`}
-        >
-          Progress Overview
-        </button>
-        <button
-          type="button"
-          onClick={() => setActiveTab('insights')}
-          className={`px-4 py-2.5 text-xs font-semibold border-b-2 transition-colors ${
-            activeTab === 'insights'
-              ? 'border-amber-500 text-amber-600'
-              : 'border-transparent text-gray-500 hover:text-gray-700'
-          }`}
-        >
-          Assessment Insights
-        </button>
-      </div>
-
-      {/* Tab content */}
-      <div className="p-4 sm:p-6">
+      <div className="border-t border-slate-100 p-5 sm:p-6">
         {activeTab === 'progress' ? (
           <div className="space-y-1">
-            {MODULE_ORDER.map((id, idx) => {
+            {MODULE_ORDER.map((id) => {
               const count = stats.perModuleCompletion[id] || 0;
               const pct = stats.totalEnrolled > 0 ? Math.round((count / stats.totalEnrolled) * 100) : 0;
               const isAssessment = id.startsWith('a');
               const highScorers = isAssessment ? (stats.perModuleHighScorers?.[id] || 0) : 0;
               const status = pct >= 100 ? 'completed' : pct > 0 ? 'in_progress' : 'not_started';
-              const statusDot = status === 'completed' ? 'bg-green-500' : status === 'in_progress' ? 'bg-amber-400' : 'bg-gray-300';
+              const statusDot = status === 'completed' ? 'bg-emerald-500' : status === 'in_progress' ? 'bg-amber-400' : 'bg-slate-300';
 
               return (
                 <div
                   key={id}
-                  className={`flex items-center gap-3 px-3 py-2.5 rounded-lg transition-colors hover:bg-gray-50 group ${idx % 2 === 0 ? 'bg-white' : 'bg-gray-50/40'}`}
-                  title={`${count} of ${stats.totalEnrolled} users completed`}
+                  className="flex items-center gap-3 rounded-lg px-2 py-2 transition-colors hover:bg-slate-50"
+                  title={`${SHORT_MODULE_LABELS[id] || MODULE_LABELS[id]} — ${count} of ${stats.totalEnrolled} completed`}
                 >
-                  <div className="w-7 h-7 rounded-lg bg-gray-100 flex items-center justify-center shrink-0 group-hover:bg-gray-200/70 transition-colors">
+                  <div className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-lg ${isAssessment ? 'bg-amber-50' : 'bg-primary-navy/5'}`}>
                     {isAssessment
-                      ? <FiClipboard className="w-3.5 h-3.5 text-amber-500" />
-                      : <FiPlay className="w-3.5 h-3.5 text-blue-500" />
+                      ? <FiClipboard className="h-3.5 w-3.5 text-amber-600" />
+                      : <FiPlay className="h-3.5 w-3.5 text-primary-navy" />
                     }
                   </div>
-                  <span className="text-xs font-medium text-gray-700 w-24 shrink-0 truncate">{MODULE_LABELS[id]}</span>
-                  <div className="flex-1 h-3 rounded-full bg-gray-100 overflow-hidden">
+                  <span className="w-24 shrink-0 truncate text-sm font-medium text-slate-700">{SHORT_MODULE_LABELS[id] || MODULE_LABELS[id]}</span>
+                  <div className="h-2 flex-1 overflow-hidden rounded-full bg-slate-100">
                     <div
                       className={`h-full rounded-full transition-all duration-700 ${
-                        isAssessment
-                          ? 'bg-gradient-to-r from-amber-400 to-amber-500'
-                          : 'bg-gradient-to-r from-blue-400 to-blue-600'
+                        isAssessment ? 'bg-amber-500' : 'bg-primary-navy'
                       }`}
                       style={{ width: `${pct}%` }}
                     />
                   </div>
-                  <div className="flex items-center gap-2 shrink-0">
-                    <span className="text-xs text-gray-500 tabular-nums w-20 text-right">{count} ({pct}%)</span>
-                    <span className={`w-2 h-2 rounded-full ${statusDot} shrink-0`} />
+                  <div className="flex shrink-0 items-center gap-2">
+                    <span className="w-20 text-right text-xs tabular-nums text-slate-500">{count} ({pct}%)</span>
+                    <span className={`h-2 w-2 shrink-0 rounded-full ${statusDot}`} />
                     {isAssessment && highScorers > 0 && (
-                      <span className="inline-flex items-center gap-0.5 px-1.5 py-0.5 rounded bg-green-50 text-[10px] font-medium text-green-700" title={`${highScorers} users scored >= 80%`}>
-                        <FiAward className="w-3 h-3" />{highScorers}
+                      <span className="inline-flex items-center gap-0.5 rounded bg-emerald-50 px-1.5 py-0.5 text-[10px] font-medium text-emerald-700" title={`${highScorers} users scored >= 80%`}>
+                        <FiAward className="h-3 w-3" />{highScorers}
                       </span>
                     )}
                   </div>
                 </div>
               );
             })}
-            <div className="flex items-center gap-4 pt-2 px-3 text-[10px] text-gray-400">
-              <span className="flex items-center gap-1"><span className="w-2 h-2 rounded-full bg-green-500 inline-block" /> Completed</span>
-              <span className="flex items-center gap-1"><span className="w-2 h-2 rounded-full bg-amber-400 inline-block" /> In Progress</span>
-              <span className="flex items-center gap-1"><span className="w-2 h-2 rounded-full bg-gray-300 inline-block" /> Not Started</span>
-              <span className="flex items-center gap-1 ml-auto"><FiAward className="w-3 h-3 text-green-500" /> scored 80%+</span>
+            <div className="flex items-center gap-4 px-2 pt-3 text-[11px] text-slate-400">
+              <span className="flex items-center gap-1.5"><span className="inline-block h-2 w-2 rounded-full bg-emerald-500" /> Completed</span>
+              <span className="flex items-center gap-1.5"><span className="inline-block h-2 w-2 rounded-full bg-amber-400" /> In progress</span>
+              <span className="flex items-center gap-1.5"><span className="inline-block h-2 w-2 rounded-full bg-slate-300" /> Not started</span>
+              <span className="ml-auto flex items-center gap-1"><FiAward className="h-3 w-3 text-emerald-500" /> scored 80%+</span>
             </div>
           </div>
         ) : (
@@ -817,83 +806,12 @@ function ModuleAnalytics({ stats }) {
   );
 }
 
-const INITIAL_FILTERS = {
-  sort: '-lastActivityAt',
-  filterMode: 'first_join',
-  statuses: [],
-  activeOn: '',
-  fromDate: '',
-  toDate: '',
-  modulesMode: 'none',
-  modulesBucket: '',
-  modulesMin: '',
-  modulesMax: '',
-  progressMin: 0,
-  progressMax: 100,
-  lastActiveModule: '',
-  activity: '',
-};
-
-function toYMDLocal(d) {
-  if (!d) return '';
-  const y = d.getFullYear();
-  const m = String(d.getMonth() + 1).padStart(2, '0');
-  const day = String(d.getDate()).padStart(2, '0');
-  return `${y}-${m}-${day}`;
-}
-
-function parseYMDLocal(s) {
-  if (!s || !/^\d{4}-\d{2}-\d{2}$/.test(s)) return undefined;
-  const [y, mo, d] = s.split('-').map(Number);
-  return new Date(y, mo - 1, d);
-}
-
-function buildListParams(f, debouncedSearch, page, limit) {
-  const params = { page, limit, sort: f.sort, filterMode: f.filterMode || 'first_join' };
-  const q = debouncedSearch.trim();
-  if (q) params.search = q;
-  if (f.statuses.length) params.status = f.statuses;
-  if (f.activeOn) params.activeOn = f.activeOn;
-  if (f.fromDate) params.firstJoinedFrom = f.fromDate;
-  if (f.toDate) params.firstJoinedTo = f.toDate;
-  if (f.modulesMode === 'bucket' && f.modulesBucket) params.modulesBucket = f.modulesBucket;
-  if (f.modulesMode === 'custom') {
-    if (f.modulesMin !== '') params.modulesMin = f.modulesMin;
-    if (f.modulesMax !== '') params.modulesMax = f.modulesMax;
-  }
-  if (f.progressMin > 0 || f.progressMax < 100) {
-    params.progressMin = f.progressMin;
-    params.progressMax = f.progressMax;
-  }
-  if (f.lastActiveModule) params.lastActiveModule = f.lastActiveModule;
-  if (f.activity) params.activity = f.activity;
-  return params;
-}
-
-function buildExportParams(f, debouncedSearch) {
-  const p = buildListParams(f, debouncedSearch, 1, 25);
-  delete p.page;
-  delete p.limit;
-  return p;
-}
-
 function sortCaret(field, currentSort) {
   const neg = currentSort.startsWith('-');
   const curField = neg ? currentSort.slice(1) : currentSort;
   if (curField !== field) return 'text-gray-300';
   return neg ? 'text-primary-navy' : 'text-primary-navy';
 }
-
-const WEBINAR_COPY_FIELDS = [
-  { key: 'phone', label: 'Phone' },
-  { key: 'fullName', label: 'Name' },
-  { key: 'overallPercent', label: 'Progress %' },
-  { key: 'modulesDone', label: 'Modules done' },
-  { key: 'lastActiveModule', label: 'Last active module' },
-  { key: 'firstJoinedAt', label: 'First joined' },
-  { key: 'lastActivityAt', label: 'Last activity' },
-  { key: 'isLegacyUser', label: 'Join type' },
-];
 
 function getWebinarCellValue(row, key) {
   if (key === 'modulesDone') {
@@ -911,7 +829,13 @@ function getWebinarCellValue(row, key) {
   return String(v);
 }
 
-export default function WebinarProgress() {
+export default function WebinarProgress({ cohort = '25-26' } = {}) {
+  const is2627 = cohort === '26-27';
+  const api = is2627 ? webinarProgress2627AdminApi : webinarProgressAdminApi;
+  const pageTitle = is2627 ? 'Training progress 26-27' : 'Training progress 25-26';
+  const pageSubtitle = is2627
+    ? 'Live counsellor training for the 26–27 cohort. Returning 25–26 trainees start from zero here.'
+    : 'Frozen snapshot of counsellor training for the 25–26 cohort.';
   const [stats, setStats] = useState(null);
   const [users, setUsers] = useState([]);
   const [total, setTotal] = useState(0);
@@ -937,6 +861,7 @@ export default function WebinarProgress() {
   const [pickerOpen, setPickerOpen] = useState(null);
   const [moduleComboOpen, setModuleComboOpen] = useState(false);
   const [moduleSearch, setModuleSearch] = useState('');
+  const [moreOpen, setMoreOpen] = useState(false);
   const fetchUsersRef = useRef(async () => {});
 
   const filterKey = useMemo(
@@ -954,14 +879,14 @@ export default function WebinarProgress() {
     setStatsLoading(true);
     setStatsError(null);
     try {
-      const res = await getWebinarProgressStats();
+      const res = await api.getStats();
       if (res.success && res.data?.data) setStats(res.data.data);
       else setStatsError(res.message || 'Failed to load stats.');
     } catch {
       setStatsError('Failed to load stats.');
     }
     setStatsLoading(false);
-  }, []);
+  }, [api]);
 
   const fetchUsers = useCallback(
     async (targetPage) => {
@@ -971,7 +896,7 @@ export default function WebinarProgress() {
         const listLimit = viewAll ? ADMIN_VIEW_ALL_LIMIT : pageLimit;
         const pageArg = viewAll ? 1 : targetPage;
         const params = buildListParams(f, debouncedSearch, pageArg, listLimit);
-        const res = await getWebinarProgressList(params);
+        const res = await api.getList(params);
         if (res.success && res.data?.data) {
           setUsers(res.data.data.users || []);
           setTotal(res.data.data.total || 0);
@@ -982,7 +907,7 @@ export default function WebinarProgress() {
       }
       setLoading(false);
     },
-    [viewAll, pageLimit, f, debouncedSearch]
+    [viewAll, pageLimit, f, debouncedSearch, api]
   );
 
   const lastLoadKeyRef = useRef('');
@@ -1067,7 +992,7 @@ export default function WebinarProgress() {
     setCopyError('');
     try {
       const result = await fetchAllPaginatedRows((p, chunk) =>
-        getWebinarProgressList(buildListParams(f, debouncedSearch, p, chunk))
+        api.getList(buildListParams(f, debouncedSearch, p, chunk))
       );
       if (!result.success) {
         setCopyError(result.result?.message || 'Failed to load users for copy.');
@@ -1085,7 +1010,7 @@ export default function WebinarProgress() {
   const handleExport = async () => {
     setExporting(true);
     setExportToast(null);
-    const res = await getWebinarProgressExport(buildExportParams(f, debouncedSearch));
+    const res = await api.exportCsv(buildExportParams(f, debouncedSearch));
     setExporting(false);
     if (res.success) setExportToast({ type: 'success', message: 'CSV downloaded.' });
     else setExportToast({ type: 'error', message: res.message || 'Export failed.' });
@@ -1154,7 +1079,7 @@ export default function WebinarProgress() {
     if (phones.length === 0) return;
     setBulkBusy(true);
     try {
-      const res = await bulkWebinarProgress({ phones, action });
+      const res = await api.bulk({ phones, action });
       if (res.success) {
         setSelectedPhones(new Set());
         lastLoadKeyRef.current = '';
@@ -1180,20 +1105,25 @@ export default function WebinarProgress() {
   const listLimit = viewAll ? ADMIN_VIEW_ALL_LIMIT : pageLimit;
   const totalPages = Math.max(1, Math.ceil(total / listLimit));
   const hasError = listError || statsError;
+  const activeFilterCount = countActiveFilters(f, searchInput);
 
   return (
-    <div className="space-y-6">
-      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+    <div className="-mx-4 -mt-2 min-h-full bg-slate-50/80 px-4 pb-10 sm:-mx-6 sm:px-6">
+      <div className="space-y-6 pt-3">
+      <div className="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
         <div>
-          <h2 className="text-xl font-bold text-gray-900">Webinar Progress</h2>
-          <p className="text-sm text-gray-500 mt-0.5">Track user progress across webinar sessions and assessments.</p>
+          <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-primary-navy/70">
+            {is2627 ? '26–27 cohort' : '25–26 cohort'}
+          </p>
+          <h1 className="mt-1 text-2xl font-semibold tracking-tight text-slate-900">{pageTitle}</h1>
+          <p className="mt-1 max-w-2xl text-sm text-slate-500">{pageSubtitle}</p>
         </div>
         <div className="flex items-center gap-2 shrink-0">
           <button
             type="button"
             onClick={handleRefresh}
             disabled={loading || statsLoading}
-            className="inline-flex items-center gap-2 h-10 px-4 rounded-lg border border-gray-300 bg-white text-sm font-medium text-gray-700 hover:bg-gray-50 disabled:opacity-50 transition-colors shadow-sm"
+            className={BTN}
           >
             <FiRefreshCw className={`w-4 h-4 ${loading || statsLoading ? 'animate-spin' : ''}`} />
             Refresh
@@ -1202,10 +1132,10 @@ export default function WebinarProgress() {
             type="button"
             onClick={handleExport}
             disabled={exporting}
-            className="inline-flex items-center gap-2 h-10 px-4 rounded-lg border border-gray-300 bg-white text-sm font-medium text-gray-700 hover:bg-gray-50 disabled:opacity-50 transition-colors shadow-sm"
+            className={BTN_PRIMARY}
           >
             <FiDownload className="w-4 h-4" />
-            {exporting ? 'Exporting...' : 'Export CSV'}
+            {exporting ? 'Exporting…' : 'Export CSV'}
           </button>
         </div>
       </div>
@@ -1246,6 +1176,7 @@ export default function WebinarProgress() {
           label="Fully Completed"
           value={statsLoading ? '—' : stats?.fullyCompleted ?? 0}
           icon={FiCheckCircle}
+          accent
           subtitle={
             stats && stats.totalEnrolled > 0
               ? `${Math.round((stats.fullyCompleted / stats.totalEnrolled) * 100)}% completion rate`
@@ -1256,54 +1187,52 @@ export default function WebinarProgress() {
           label="Avg. Progress"
           value={statsLoading ? '—' : `${stats?.averagePercent ?? 0}%`}
           icon={FiTrendingUp}
+          accent
         />
         <KpiCard
           label="Active (24h)"
           value={statsLoading ? '—' : stats?.activeLast24h ?? 0}
           icon={FiActivity}
+          accent
         />
       </div>
 
       <ModuleAnalytics stats={stats} />
 
-      <section className="rounded-2xl border border-gray-200 bg-white shadow-sm overflow-hidden">
-        <div className="border-b border-gray-200 bg-slate-50/90 px-4 sm:px-5 py-4 space-y-4">
-        <div className="flex flex-col gap-3 sm:flex-row sm:flex-wrap sm:items-center sm:justify-between">
-          <div className="flex items-center gap-2 min-w-0">
-            <FiFilter className="w-4 h-4 text-gray-500 shrink-0" aria-hidden />
-            <span className="text-sm font-semibold text-gray-900">Filters</span>
+      <section className="overflow-hidden rounded-2xl border border-slate-200/80 bg-white shadow-sm">
+        <div className="space-y-4 border-b border-slate-100 px-4 py-4 sm:px-5">
+        <div className="flex flex-col gap-3 lg:flex-row lg:items-center">
+          <div className="relative min-w-0 flex-1">
+            <FiSearch className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
+            <input
+              type="text"
+              value={searchInput}
+              onChange={(e) => setSearchInput(e.target.value)}
+              placeholder="Search name or phone"
+              className="h-10 w-full rounded-lg border border-slate-200 bg-white pl-9 pr-3 text-sm text-slate-800 outline-none placeholder:text-slate-400 focus:border-primary-navy/40 focus:ring-2 focus:ring-primary-navy/15"
+            />
+          </div>
+          <div className="flex flex-wrap items-center gap-2">
             {f.filterMode === 'first_join' && (f.activeOn || f.fromDate || f.toDate) && (
-              <span className="ml-2 inline-flex items-center rounded-full bg-blue-100 px-2 py-0.5 text-[11px] font-medium text-blue-700">
-                Total New Users: {total}
+              <span className="inline-flex h-8 items-center rounded-full bg-primary-navy/8 px-2.5 text-[11px] font-semibold text-primary-navy">
+                {total} new
               </span>
             )}
-          </div>
-          <div className="flex flex-col sm:flex-row gap-2 sm:items-center flex-1 sm:justify-end min-w-0">
-            <div className="relative w-full sm:max-w-xs sm:min-w-[220px]">
-              <FiSearch className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400 pointer-events-none" />
-              <input
-                type="text"
-                value={searchInput}
-                onChange={(e) => setSearchInput(e.target.value)}
-                placeholder="Search name or phone"
-                className="w-full pl-9 pr-3 h-10 rounded-lg border border-gray-200 bg-white text-sm text-gray-800 placeholder:text-gray-400 shadow-sm focus:ring-2 focus:ring-primary-navy/30 focus:border-primary-navy outline-none"
-              />
-            </div>
-            <button
-              type="button"
-              onClick={applyNewUsersToday}
-              className="shrink-0 h-10 px-4 rounded-lg border border-blue-200 bg-blue-50 text-sm font-medium text-blue-700 hover:bg-blue-100 shadow-sm transition-colors"
-            >
+            <button type="button" onClick={applyNewUsersToday} className={chipClass(false)}>
               New users today
             </button>
             <button
               type="button"
-              onClick={clearFilters}
-              className="shrink-0 h-10 px-4 rounded-lg border border-gray-200 bg-white text-sm font-medium text-gray-700 hover:bg-gray-50 shadow-sm transition-colors"
+              onClick={() => setMoreOpen((o) => !o)}
+              className={chipClass(moreOpen || activeFilterCount > 0)}
             >
-              Clear filters
+              <FiSliders className="mr-1.5 h-3.5 w-3.5" />
+              Filters{activeFilterCount > 0 ? ` (${activeFilterCount})` : ''}
             </button>
-            <label className="inline-flex items-center gap-2 cursor-pointer shrink-0 h-10 px-3 rounded-lg border border-gray-200 bg-white text-sm text-gray-700 shadow-sm">
+            <button type="button" onClick={clearFilters} className={chipClass(false)}>
+              Clear
+            </button>
+            <label className={`${chipClass(viewAll)} cursor-pointer`}>
               <input
                 type="checkbox"
                 checked={viewAll}
@@ -1311,7 +1240,7 @@ export default function WebinarProgress() {
                   setViewAll(e.target.checked);
                   setPage(1);
                 }}
-                className="rounded border-gray-300 text-primary-navy focus:ring-primary-navy"
+                className="sr-only"
                 aria-label="View all users in one list"
               />
               View all
@@ -1320,9 +1249,9 @@ export default function WebinarProgress() {
               type="button"
               onClick={prepareCopyWebinarRows}
               disabled={copyLoading}
-              className="inline-flex items-center gap-1.5 shrink-0 h-10 px-4 rounded-lg border border-gray-200 bg-white text-sm font-medium text-gray-700 hover:bg-gray-50 shadow-sm transition-colors disabled:opacity-50"
+              className={BTN}
             >
-              <FiCopy className="w-4 h-4" /> {copyLoading ? 'Preparing...' : 'Copy'}
+              <FiCopy className="w-4 h-4" /> {copyLoading ? 'Preparing…' : 'Copy'}
             </button>
           </div>
         </div>
@@ -1332,31 +1261,25 @@ export default function WebinarProgress() {
           </p>
         )}
 
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-          <div className="space-y-2 rounded-lg border border-gray-100 bg-gray-50/80 p-3">
-            <p className="text-[11px] font-bold text-gray-500 uppercase tracking-wider">Date</p>
+        {moreOpen && (
+        <div className="space-y-4">
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+          <div className="space-y-3 rounded-xl border border-slate-100 bg-slate-50/70 p-4">
+            <p className="text-[11px] font-semibold uppercase tracking-wider text-slate-500">Date</p>
             <div className="flex flex-wrap gap-2">
               <button
                 type="button"
                 onClick={() => setF((p) => ({ ...p, filterMode: 'first_join' }))}
-                className={`px-3 py-1.5 rounded-full text-xs font-medium border transition-colors ${
-                  f.filterMode === 'first_join'
-                    ? 'bg-primary-navy text-white border-primary-navy'
-                    : 'bg-white text-gray-600 border-gray-200'
-                }`}
+                className={chipClass(f.filterMode === 'first_join')}
               >
-                First Join Date
+                First join date
               </button>
               <button
                 type="button"
                 onClick={() => setF((p) => ({ ...p, filterMode: 'last_activity' }))}
-                className={`px-3 py-1.5 rounded-full text-xs font-medium border transition-colors ${
-                  f.filterMode === 'last_activity'
-                    ? 'bg-primary-navy text-white border-primary-navy'
-                    : 'bg-white text-gray-600 border-gray-200'
-                }`}
+                className={chipClass(f.filterMode === 'last_activity')}
               >
-                Last Activity Date
+                Last activity date
               </button>
             </div>
             <div className="flex flex-wrap items-end gap-3">
@@ -1367,7 +1290,7 @@ export default function WebinarProgress() {
                 <button
                   type="button"
                   onClick={() => setPickerOpen((o) => (o === 'single' ? null : 'single'))}
-                  className="inline-flex items-center gap-2 h-10 px-3 rounded-lg border border-gray-300 bg-white text-sm text-gray-800 shadow-sm"
+                  className="inline-flex h-10 items-center gap-2 rounded-lg border border-slate-200 bg-white px-3 text-sm text-slate-800 shadow-sm"
                 >
                   <FiCalendar className="w-4 h-4 text-gray-400" />
                   {f.activeOn || 'Pick date'}
@@ -1390,7 +1313,7 @@ export default function WebinarProgress() {
                 <button
                   type="button"
                   onClick={() => setPickerOpen((o) => (o === 'from' ? null : 'from'))}
-                  className="inline-flex items-center gap-2 h-10 px-3 rounded-lg border border-gray-300 bg-white text-sm text-gray-800 shadow-sm"
+                  className="inline-flex h-10 items-center gap-2 rounded-lg border border-slate-200 bg-white px-3 text-sm text-slate-800 shadow-sm"
                 >
                   <FiCalendar className="w-4 h-4 text-gray-400" />
                   {f.fromDate || '—'}
@@ -1413,7 +1336,7 @@ export default function WebinarProgress() {
                 <button
                   type="button"
                   onClick={() => setPickerOpen((o) => (o === 'to' ? null : 'to'))}
-                  className="inline-flex items-center gap-2 h-10 px-3 rounded-lg border border-gray-300 bg-white text-sm text-gray-800 shadow-sm"
+                  className="inline-flex h-10 items-center gap-2 rounded-lg border border-slate-200 bg-white px-3 text-sm text-slate-800 shadow-sm"
                 >
                   <FiCalendar className="w-4 h-4 text-gray-400" />
                   {f.toDate || '—'}
@@ -1439,8 +1362,8 @@ export default function WebinarProgress() {
             </p>
           </div>
 
-          <div className="space-y-2 rounded-lg border border-gray-100 bg-gray-50/80 p-3">
-            <p className="text-[11px] font-bold text-gray-500 uppercase tracking-wider">Progress & modules</p>
+          <div className="space-y-3 rounded-xl border border-slate-100 bg-slate-50/70 p-4">
+            <p className="text-[11px] font-semibold uppercase tracking-wider text-slate-500">Progress & modules</p>
             <div className="space-y-2">
               <div className="flex flex-wrap items-center gap-2">
                 <span className="text-xs text-gray-600 w-28">Progress %</span>
@@ -1479,11 +1402,7 @@ export default function WebinarProgress() {
                         };
                       })
                     }
-                    className={`px-2.5 py-1 rounded-full text-xs font-medium border transition-colors ${
-                      f.modulesMode === 'bucket' && f.modulesBucket === b
-                        ? 'bg-primary-navy text-white border-primary-navy'
-                        : 'bg-white text-gray-600 border-gray-200 hover:border-gray-300'
-                    }`}
+                    className={chipClass(f.modulesMode === 'bucket' && f.modulesBucket === b)}
                   >
                     {b === '11' ? '11/11' : b}
                   </button>
@@ -1526,8 +1445,8 @@ export default function WebinarProgress() {
         </div>
 
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-          <div className="space-y-2 rounded-lg border border-gray-100 bg-gray-50/80 p-3">
-            <p className="text-[11px] font-bold text-gray-500 uppercase tracking-wider">Status</p>
+          <div className="space-y-3 rounded-xl border border-slate-100 bg-slate-50/70 p-4">
+            <p className="text-[11px] font-semibold uppercase tracking-wider text-slate-500">Status</p>
             <div className="flex flex-wrap gap-3">
               {[
                 ['completed', 'Completed'],
@@ -1548,8 +1467,8 @@ export default function WebinarProgress() {
             <p className="text-[11px] text-gray-400">Leave all unchecked for any status.</p>
           </div>
 
-          <div className="space-y-2 rounded-lg border border-gray-100 bg-gray-50/80 p-3">
-            <p className="text-[11px] font-bold text-gray-500 uppercase tracking-wider">Activity</p>
+          <div className="space-y-3 rounded-xl border border-slate-100 bg-slate-50/70 p-4">
+            <p className="text-[11px] font-semibold uppercase tracking-wider text-slate-500">Activity</p>
             <div className="flex flex-wrap gap-2">
               {[
                 ['', 'Any'],
@@ -1561,11 +1480,7 @@ export default function WebinarProgress() {
                   key={val || 'any'}
                   type="button"
                   onClick={() => setF((p) => ({ ...p, activity: val }))}
-                  className={`px-3 py-1.5 rounded-full text-xs font-medium border transition-colors ${
-                    f.activity === val
-                      ? 'bg-slate-800 text-white border-slate-800'
-                      : 'bg-white text-gray-600 border-gray-200'
-                  }`}
+                  className={chipClass(f.activity === val)}
                 >
                   {label}
                 </button>
@@ -1574,8 +1489,8 @@ export default function WebinarProgress() {
           </div>
         </div>
 
-        <div className="rounded-lg border border-gray-100 bg-gray-50/80 p-3">
-          <p className="text-[11px] font-bold text-gray-500 uppercase tracking-wider mb-2">Current module</p>
+        <div className="rounded-xl border border-slate-100 bg-slate-50/70 p-4">
+          <p className="mb-2 text-[11px] font-semibold uppercase tracking-wider text-slate-500">Current module</p>
           <div className="relative max-w-md" data-module-combo>
             <input
               type="text"
@@ -1630,15 +1545,17 @@ export default function WebinarProgress() {
           </div>
         </div>
         </div>
+        )}
+        </div>
 
       {selectedPhones.size > 0 && (
-        <div className="flex flex-wrap items-center gap-3 border-b border-amber-200/80 bg-amber-50/95 px-4 sm:px-5 py-3">
-          <span className="text-sm font-medium text-amber-900">{selectedPhones.size} selected</span>
+        <div className="flex flex-wrap items-center gap-3 border-b border-slate-100 bg-slate-50 px-4 py-3 sm:px-5">
+          <span className="text-sm font-medium text-slate-800">{selectedPhones.size} selected</span>
           <button
             type="button"
             disabled={bulkBusy}
             onClick={() => runBulkTable('complete_all')}
-            className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-green-600 text-white text-xs font-semibold hover:bg-green-700 disabled:opacity-50"
+            className="inline-flex items-center gap-1.5 rounded-lg bg-primary-navy px-3 py-1.5 text-xs font-semibold text-white hover:bg-primary-navy/90 disabled:opacity-50"
           >
             <FiCheckCircle className="w-3.5 h-3.5" />
             Mark completed
@@ -1647,7 +1564,7 @@ export default function WebinarProgress() {
             type="button"
             disabled={bulkBusy}
             onClick={() => runBulkTable('reset')}
-            className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-red-600 text-white text-xs font-semibold hover:bg-red-700 disabled:opacity-50"
+            className="inline-flex items-center gap-1.5 rounded-lg border border-red-200 bg-white px-3 py-1.5 text-xs font-semibold text-red-700 hover:bg-red-50 disabled:opacity-50"
           >
             <FiRotateCcw className="w-3.5 h-3.5" />
             Reset progress
@@ -1679,8 +1596,8 @@ export default function WebinarProgress() {
               <col className="w-14" />
             </colgroup>
             <thead>
-              <tr className="border-b border-gray-200 bg-gray-50">
-                <th scope="col" className="px-3 py-3.5 text-left align-middle">
+              <tr className="border-b border-slate-200 bg-slate-50/90">
+                <th scope="col" className="px-4 py-3 text-left align-middle">
                   <input
                     type="checkbox"
                     aria-label="Select all on page"
@@ -1692,23 +1609,23 @@ export default function WebinarProgress() {
                     className="rounded border-gray-300"
                   />
                 </th>
-                <th scope="col" className="px-3 py-3.5 text-left text-xs font-semibold text-gray-600 uppercase tracking-wide">
+                <th scope="col" className="px-4 py-3 text-left text-[11px] font-semibold uppercase tracking-wider text-slate-500">
                   Name
                 </th>
-                <th scope="col" className="px-3 py-3.5 text-left text-xs font-semibold text-gray-600 uppercase tracking-wide">
+                <th scope="col" className="px-4 py-3 text-left text-[11px] font-semibold uppercase tracking-wider text-slate-500">
                   Phone
                 </th>
                 <th
                   scope="col"
-                  className="px-3 py-3.5 text-left text-xs font-semibold text-gray-600 uppercase tracking-wide"
+                  className="px-4 py-3 text-left text-[11px] font-semibold uppercase tracking-wider text-slate-500"
                   title="Legacy users joined before first-join tracking was implemented."
                 >
                   Join Type
                 </th>
-                <th scope="col" className="px-3 py-3.5 text-left text-xs font-semibold text-gray-600 uppercase tracking-wide">
+                <th scope="col" className="px-4 py-3 text-left text-[11px] font-semibold uppercase tracking-wider text-slate-500">
                   Joined On
                 </th>
-                <th scope="col" className="px-3 py-3.5 text-left text-xs font-semibold text-gray-600 uppercase tracking-wide">
+                <th scope="col" className="px-4 py-3 text-left text-[11px] font-semibold uppercase tracking-wider text-slate-500">
                   <button
                     type="button"
                     onClick={() => toggleSort('overallPercent')}
@@ -1722,13 +1639,13 @@ export default function WebinarProgress() {
                     />
                   </button>
                 </th>
-                <th scope="col" className="px-3 py-3.5 text-left text-xs font-semibold text-gray-600 uppercase tracking-wide">
+                <th scope="col" className="px-4 py-3 text-left text-[11px] font-semibold uppercase tracking-wider text-slate-500">
                   Status
                 </th>
-                <th scope="col" className="px-3 py-3.5 text-left text-xs font-semibold text-gray-600 uppercase tracking-wide">
+                <th scope="col" className="px-4 py-3 text-left text-[11px] font-semibold uppercase tracking-wider text-slate-500">
                   Current module
                 </th>
-                <th scope="col" className="px-3 py-3.5 text-xs font-semibold text-gray-600 uppercase tracking-wide text-end">
+                <th scope="col" className="px-4 py-3 text-end text-[11px] font-semibold uppercase tracking-wider text-slate-500">
                   <button
                     type="button"
                     onClick={() => toggleSort('modulesDone')}
@@ -1742,7 +1659,7 @@ export default function WebinarProgress() {
                     />
                   </button>
                 </th>
-                <th scope="col" className="px-3 py-3.5 text-xs font-semibold text-gray-600 uppercase tracking-wide text-end">
+                <th scope="col" className="px-4 py-3 text-end text-[11px] font-semibold uppercase tracking-wider text-slate-500">
                   <button
                     type="button"
                     onClick={() => toggleSort('lastActivityAt')}
@@ -1756,18 +1673,18 @@ export default function WebinarProgress() {
                     />
                   </button>
                 </th>
-                <th scope="col" className="px-3 py-3.5 text-center text-xs font-semibold text-gray-600 uppercase tracking-wide w-14">
+                <th scope="col" className="w-14 px-4 py-3 text-center text-[11px] font-semibold uppercase tracking-wider text-slate-500">
                   Details
                 </th>
               </tr>
             </thead>
-            <tbody className="divide-y divide-gray-100">
+            <tbody className="divide-y divide-slate-100">
               {loading ? (
                 Array.from({ length: 5 }).map((_, i) => (
                   <tr key={i} className="bg-white">
                     {Array.from({ length: 11 }).map((__, j) => (
-                      <td key={j} className="px-3 py-3.5">
-                        <div className="h-4 bg-gray-100 rounded animate-pulse" />
+                      <td key={j} className="px-4 py-3.5">
+                        <div className="h-4 animate-pulse rounded bg-slate-100" />
                       </td>
                     ))}
                   </tr>
@@ -1775,10 +1692,16 @@ export default function WebinarProgress() {
               ) : users.length === 0 ? (
                 <tr>
                   <td colSpan={11} className="p-0">
-                    <div className="flex flex-col items-center justify-center py-16 px-4">
-                      <FiUsers className="w-12 h-12 text-gray-300 mb-3" aria-hidden />
-                      <p className="text-sm font-medium text-gray-600">No users found</p>
-                      <p className="text-xs text-gray-400 mt-1">Adjust filters or check back later.</p>
+                    <div className="flex flex-col items-center justify-center px-4 py-16">
+                      <div className="mb-3 flex h-12 w-12 items-center justify-center rounded-full bg-slate-100">
+                        <FiUsers className="h-5 w-5 text-slate-400" aria-hidden />
+                      </div>
+                      <p className="text-sm font-medium text-slate-800">No trainees yet</p>
+                      <p className="mt-1 max-w-sm text-center text-sm text-slate-500">
+                        {is2627
+                          ? 'New webinar logins will appear here after their first sync.'
+                          : 'Adjust filters or check back later.'}
+                      </p>
                     </div>
                   </td>
                 </tr>
@@ -1797,8 +1720,8 @@ export default function WebinarProgress() {
 
                   return (
                     <Fragment key={u.phone}>
-                      <tr className="group bg-white border-b border-gray-100 hover:bg-slate-50 transition-colors">
-                        <td className="px-3 py-3 align-middle" onClick={(e) => e.stopPropagation()}>
+                      <tr className="group border-b border-slate-100 bg-white transition-colors hover:bg-slate-50/80">
+                        <td className="px-4 py-3 align-middle" onClick={(e) => e.stopPropagation()}>
                           <input
                             type="checkbox"
                             checked={selectedPhones.has(u.phone)}
@@ -1807,39 +1730,39 @@ export default function WebinarProgress() {
                             aria-label={`Select ${u.fullName || u.phone}`}
                           />
                         </td>
-                        <td className="px-3 py-3 text-sm font-medium text-gray-900 align-middle">
+                        <td className="px-4 py-3 text-sm font-medium text-slate-900 align-middle">
                           <span className="line-clamp-2 break-words" title={u.fullName || undefined}>{u.fullName || '—'}</span>
                         </td>
-                        <td className="px-3 py-3 text-sm text-gray-600 tabular-nums align-middle whitespace-nowrap">{u.phone}</td>
-                        <td className="px-3 py-3 align-middle">
+                        <td className="px-4 py-3 text-sm text-slate-600 tabular-nums align-middle whitespace-nowrap">{u.phone}</td>
+                        <td className="px-4 py-3 align-middle">
                           <JoinTypeBadge isLegacyUser={!!u.isLegacyUser} />
                         </td>
-                        <td className="px-3 py-3 text-xs text-gray-600 align-middle whitespace-nowrap" title={u.firstJoinedAt || ''}>
+                        <td className="px-4 py-3 text-xs text-slate-600 align-middle whitespace-nowrap" title={u.firstJoinedAt || ''}>
                           {formatDateTime(u.firstJoinedAt)}
                         </td>
-                        <td className="px-3 py-3 align-middle">
+                        <td className="px-4 py-3 align-middle">
                           <div className="flex items-center gap-2 min-w-[120px]">
-                            <ProgressBar percent={u.overallPercent || 0} className="flex-1 h-2" />
+                            <ProgressBar percent={u.overallPercent || 0} className="flex-1 h-1.5" />
                             <span className={`text-xs font-semibold tabular-nums w-9 text-right shrink-0 ${statusColor}`}>{u.overallPercent || 0}%</span>
                           </div>
                         </td>
-                        <td className="px-3 py-3 align-middle">
+                        <td className="px-4 py-3 align-middle">
                           <StatusBadge status={overallStatus} />
                         </td>
-                        <td className="px-3 py-3 text-sm text-gray-700 align-top">
+                        <td className="px-4 py-3 text-sm text-slate-700 align-middle">
                           <span className="line-clamp-2 break-words leading-snug" title={MODULE_LABELS[u.lastActiveModule] || u.lastActiveModule || undefined}>
-                            {MODULE_LABELS[u.lastActiveModule] || u.lastActiveModule || '—'}
+                            {SHORT_MODULE_LABELS[u.lastActiveModule] || MODULE_LABELS[u.lastActiveModule] || u.lastActiveModule || '—'}
                           </span>
                         </td>
-                        <td className="px-3 py-3 text-sm text-gray-800 tabular-nums align-middle text-end font-medium">
+                        <td className="px-4 py-3 text-sm text-slate-800 tabular-nums align-middle text-end font-medium">
                           {completedCount}/{MODULE_ORDER.length}
                         </td>
-                        <td className="px-3 py-3 text-xs text-gray-600 align-middle text-end tabular-nums whitespace-nowrap">{timeAgo(u.lastActivityAt)}</td>
-                        <td className="px-3 py-3 align-middle text-center w-14">
+                        <td className="px-4 py-3 text-xs text-slate-600 align-middle text-end tabular-nums whitespace-nowrap">{timeAgo(u.lastActivityAt)}</td>
+                        <td className="px-4 py-3 align-middle text-center w-14">
                           <button
                             type="button"
                             onClick={() => setExpandedPhone(isExpanded ? null : u.phone)}
-                            className="p-1.5 rounded-lg text-gray-500 hover:bg-gray-100"
+                            className="rounded-lg p-1.5 text-slate-500 hover:bg-slate-100"
                             aria-expanded={isExpanded}
                           >
                             {isExpanded ? <FiChevronUp className="w-4 h-4" /> : <FiChevronDown className="w-4 h-4" />}
@@ -1851,6 +1774,7 @@ export default function WebinarProgress() {
                           <td colSpan={11} className="p-0 border-t border-gray-100">
                             <UserDetailPanel
                               user={u}
+                              api={api}
                               onUserUpdated={(updated) => {
                                 setUsers((prev) => prev.map((p) => (p.phone === updated.phone ? { ...p, ...updated } : p)));
                               }}
@@ -1867,8 +1791,8 @@ export default function WebinarProgress() {
         </div>
 
         {viewAll ? (
-          <div className="flex flex-wrap items-center justify-between gap-3 px-4 py-3 border-t border-gray-200 bg-gray-50/50">
-            <p className="text-sm text-gray-500">
+          <div className="flex flex-wrap items-center justify-between gap-3 border-t border-slate-100 bg-slate-50/70 px-4 py-3">
+            <p className="text-sm text-slate-500">
               {total > ADMIN_VIEW_ALL_LIMIT
                 ? `Showing first ${ADMIN_VIEW_ALL_LIMIT.toLocaleString()} of ${total} users`
                 : `Showing all ${total} users`}
@@ -1886,8 +1810,8 @@ export default function WebinarProgress() {
           </div>
         ) : (
           total > pageLimit && (
-            <div className="flex items-center justify-between px-4 py-3 border-t border-gray-200 bg-gray-50/50">
-              <p className="text-sm text-gray-500">
+            <div className="flex items-center justify-between border-t border-slate-100 bg-slate-50/70 px-4 py-3">
+              <p className="text-sm text-slate-500">
                 Showing {(page - 1) * pageLimit + 1}–{Math.min(page * pageLimit, total)} of {total}
               </p>
               <div className="flex items-center gap-1">
@@ -1929,6 +1853,7 @@ export default function WebinarProgress() {
         dedupeByPhoneKey="phone"
         loading={copyLoading}
       />
+      </div>
     </div>
   );
 }
