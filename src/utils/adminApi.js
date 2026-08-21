@@ -528,6 +528,19 @@ export const getTrainingFeedback = async (params = {}, token = getStoredToken())
   return adminRequest(`/training-feedback${query ? `?${query}` : ''}`, { method: 'GET' }, token);
 };
 
+export const getCertifiedCounsellors2627 = async (params = {}, token = getStoredToken()) => {
+  const search = new URLSearchParams();
+  if (params.page != null) search.set('page', params.page);
+  if (params.limit != null) search.set('limit', params.limit);
+  if (params.from) search.set('from', params.from);
+  if (params.to) search.set('to', params.to);
+  if (params.q) search.set('q', params.q);
+  if (params.gender) search.set('gender', params.gender);
+  if (params.occupation) search.set('occupation', params.occupation);
+  const query = search.toString();
+  return adminRequest(`/certified-counsellors-26-27${query ? `?${query}` : ''}`, { method: 'GET' }, token);
+};
+
 export const getCounsellorOccupations = async (params = {}, token = getStoredToken()) => {
   const search = new URLSearchParams();
   if (params.page != null) search.set('page', params.page);

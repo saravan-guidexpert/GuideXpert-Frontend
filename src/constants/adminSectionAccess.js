@@ -19,7 +19,7 @@ export const ADMIN_SECTION_OPTIONS = [
   { sectionKey: 'lead-intelligence', label: 'Chatbot Lead Intelligence' },
   { sectionKey: 'guidance-slot-bookings', label: 'Guidance Slot Bookings' },
   { sectionKey: 'one-on-one-counselors-admin', label: 'One-on-One Counselors' },
-  { sectionKey: 'training-feedback', label: 'Activation Form' },
+  { sectionKey: 'training-feedback', label: 'Onboarded / certified counsellor forms' },
   { sectionKey: 'counsellor-occupations', label: 'Counsellors occupations' },
   { sectionKey: 'influencer-tracking', label: 'Influencer / UTM Tracking' },
   { sectionKey: 'poster-downloads', label: 'Poster downloads' },

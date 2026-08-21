@@ -25,14 +25,19 @@ import {
 import { FiDownload, FiAward, FiExternalLink, FiCheckCircle, FiUser, FiCalendar, FiHash } from 'react-icons/fi';
 
 const EDUCATION_OPTIONS = [
-  'Below 10th',
-  '10th / SSLC',
-  '12th / PUC',
   'Diploma',
   "Bachelor's degree",
   "Master's degree",
   'PhD / Doctorate',
   'Other',
+];
+
+const OCCUPATION_OPTIONS = [
+  'Teachers',
+  'Working professionals',
+  'Graduation completed',
+  'Housewives (graduated)',
+  'Others',
 ];
 
 const inputBase =
@@ -78,8 +83,8 @@ function validateAddress(value) {
 }
 function validateOccupation(value) {
   const t = typeof value === 'string' ? value.trim() : '';
-  if (!t) return 'Required';
-  if (t.length > 200) return 'Maximum 200 characters';
+  if (!t) return 'Select an option';
+  if (!OCCUPATION_OPTIONS.includes(t)) return 'Select an option';
   return '';
 }
 function validateDob(value) {
@@ -430,7 +435,10 @@ export default function CertificatesPage() {
                   </div>
                   <div>
                     <label className="text-xs font-semibold text-gray-600">Occupation *</label>
-                    <input value={occupation} onChange={(e) => setOccupation(e.target.value)} className={`${inputBase} ${errors.occupation ? inputError : 'border-gray-300'}`} placeholder="Teacher, Student, etc." />
+                    <select value={occupation} onChange={(e) => setOccupation(e.target.value)} className={`${inputBase} ${errors.occupation ? inputError : 'border-gray-300'}`}>
+                      <option value="">Select</option>
+                      {OCCUPATION_OPTIONS.map((opt) => <option key={opt} value={opt}>{opt}</option>)}
+                    </select>
                     {errors.occupation && <p className="mt-1 text-xs text-amber-700">{errors.occupation}</p>}
                   </div>
                 </div>

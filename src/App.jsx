@@ -541,6 +541,7 @@ function App() {
             <Route path="meeting-attendance" element={<MeetingAttendance />} />
             <Route path="iit-meet-attendance" element={<IitMeetAttendance />} />
             <Route path="training-feedback" element={<TrainingFeedback />} />
+            <Route path="certified-counsellors-26-27" element={<TrainingFeedback cohort="26-27" />} />
             <Route path="counsellor-occupations" element={<CounsellorOccupations />} />
             <Route path="counsellor-support-requests" element={<CounsellorSupportRequests />} />
             <Route path="training-form-responses" element={<TrainingFormResponses />} />

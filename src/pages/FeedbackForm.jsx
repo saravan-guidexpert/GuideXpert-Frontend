@@ -3,14 +3,19 @@ import { useNavigate } from 'react-router-dom';
 import { submitTrainingFeedback } from '../utils/api';
 
 const EDUCATION_OPTIONS = [
-  'Below 10th',
-  '10th / SSLC',
-  '12th / PUC',
   'Diploma',
   "Bachelor's degree",
   "Master's degree",
   'PhD / Doctorate',
   'Other'
+];
+
+const OCCUPATION_OPTIONS = [
+  'Teachers',
+  'Working professionals',
+  'Graduation completed',
+  'Housewives (graduated)',
+  'Others',
 ];
 
 function validateName(value) {
@@ -45,8 +50,8 @@ function validateAddress(value) {
 
 function validateOccupation(value) {
   const t = typeof value === 'string' ? value.trim() : '';
-  if (!t) return 'Required';
-  if (t.length > 200) return 'Maximum 200 characters';
+  if (!t) return 'Select an option';
+  if (!OCCUPATION_OPTIONS.includes(t)) return 'Select an option';
   return '';
 }
 
@@ -298,17 +303,19 @@ export default function FeedbackForm() {
                   <label htmlFor="fb-occupation" className="block text-sm font-medium text-slate-700 mb-1.5">
                     Occupation <span className="text-amber-600">*</span>
                   </label>
-                  <input
-                    type="text"
+                  <select
                     id="fb-occupation"
                     value={occupation}
                     onChange={(e) => { setOccupation(e.target.value); setError('occupation', validateOccupation(e.target.value)); }}
                     onBlur={() => setError('occupation', validateOccupation(occupation))}
-                    placeholder="e.g. Teacher, Student"
                     className={`${inputBase} ${errors.occupation ? inputError : 'border-slate-300'}`}
                     disabled={loading}
-                    autoComplete="organization-title"
-                  />
+                  >
+                    <option value="">Select</option>
+                    {OCCUPATION_OPTIONS.map((opt) => (
+                      <option key={opt} value={opt}>{opt}</option>
+                    ))}
+                  </select>
                   {errors.occupation && <p className="mt-1.5 text-xs text-amber-700" role="alert">{errors.occupation}</p>}
                 </div>
               </div>

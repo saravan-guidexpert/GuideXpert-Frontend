@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef, Fragment } from 'react';
-import { getTrainingFeedback, getStoredToken } from '../../utils/adminApi';
+import { getTrainingFeedback, getCertifiedCounsellors2627, getStoredToken } from '../../utils/adminApi';
 import { useAuth } from '../../hooks/useAuth';
 import {
   FiMessageSquare,
@@ -52,7 +52,13 @@ function getFeedbackCellValue(row, key) {
   return String(v);
 }
 
-export default function TrainingFeedback() {
+export default function TrainingFeedback({ cohort = '25-26' } = {}) {
+  const is2627 = cohort === '26-27';
+  const title = is2627 ? 'Certified counsellors 26-27' : 'Onboarded counsellors 25-26';
+  const subtitle = is2627
+    ? 'Activation submissions from the 26–27 counsellor cohort'
+    : 'Activation submissions from the 25–26 counsellor cohort';
+  const fetchFn = is2627 ? getCertifiedCounsellors2627 : getTrainingFeedback;
   const { logout } = useAuth();
   const [records, setRecords] = useState([]);
   const [pagination, setPagination] = useState({ page: 1, limit: 25, total: 0, totalPages: 1 });
@@ -94,7 +100,7 @@ export default function TrainingFeedback() {
       setLoading(true);
       setError('');
     });
-    getTrainingFeedback(params, getStoredToken()).then((result) => {
+    fetchFn(params, getStoredToken()).then((result) => {
       if (cancelledRef.current) return;
       if (thisRequestId !== requestIdRef.current) return;
       setLoading(false);
@@ -105,7 +111,7 @@ export default function TrainingFeedback() {
           return;
         }
         setRecords([]);
-        setError(result.message || 'Failed to load training feedback');
+        setError(result.message || 'Failed to load submissions');
         return;
       }
       const raw = result.data;
@@ -122,7 +128,7 @@ export default function TrainingFeedback() {
       });
     });
     return () => { cancelledRef.current = true; };
-  }, [viewAll, pagination.page, pagination.limit, filters.q, filters.from, filters.to, filters.gender, filters.occupation, logout]);
+  }, [viewAll, pagination.page, pagination.limit, filters.q, filters.from, filters.to, filters.gender, filters.occupation, fetchFn, logout]);
 
   const goToPage = (p) => {
     const next = Math.max(1, Math.min(p, pagination.totalPages));
@@ -157,7 +163,7 @@ export default function TrainingFeedback() {
       occupation: filters.occupation.trim() || undefined
     };
     const result = await fetchAllPaginatedRows((page, limit) =>
-      getTrainingFeedback({ ...baseParams, page, limit }, getStoredToken())
+      fetchFn({ ...baseParams, page, limit }, getStoredToken())
     );
     setCopyLoading(false);
     if (!result.success) {
@@ -167,7 +173,7 @@ export default function TrainingFeedback() {
         window.location.href = '/admin/login';
         return;
       }
-      setError(r?.message || 'Failed to load feedback for copy');
+        setError(r?.message || 'Failed to load submissions for copy');
       return;
     }
     setCopyRecords(result.rows || []);
@@ -183,8 +189,8 @@ export default function TrainingFeedback() {
             <FiMessageSquare className="w-6 h-6" />
           </div>
           <div>
-            <h1 className="text-2xl font-bold text-gray-900 tracking-tight">Training Feedback</h1>
-            <p className="text-sm text-gray-500 mt-0.5">View and manage all training feedback submissions</p>
+            <h1 className="text-2xl font-bold text-gray-900 tracking-tight">{title}</h1>
+            <p className="text-sm text-gray-500 mt-0.5">{subtitle}</p>
           </div>
         </div>
       </div>
@@ -342,7 +348,7 @@ export default function TrainingFeedback() {
                 <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" />
               </svg>
             </div>
-            <p className="text-gray-600 font-medium">Loading feedback…</p>
+            <p className="text-gray-600 font-medium">Loading submissions…</p>
             <p className="text-sm text-gray-400 mt-1">Please wait</p>
           </div>
         </div>
@@ -352,9 +358,9 @@ export default function TrainingFeedback() {
             <div className="inline-flex items-center justify-center w-20 h-20 rounded-2xl bg-gray-100 text-gray-400 mb-5">
               <FiInbox className="w-10 h-10" />
             </div>
-            <h3 className="text-lg font-semibold text-gray-900 mb-1">No feedback yet</h3>
+            <h3 className="text-lg font-semibold text-gray-900 mb-1">No submissions yet</h3>
             <p className="text-gray-500 text-sm max-w-sm mx-auto">
-              {hasActiveFilters ? 'No submissions match your filters. Try clearing filters or adjusting dates.' : 'Training feedback will appear here once users submit the form.'}
+              {hasActiveFilters ? 'No submissions match your filters. Try clearing filters or adjusting dates.' : 'Activation submissions will appear here once users submit the form.'}
             </p>
             {hasActiveFilters && (
               <button
