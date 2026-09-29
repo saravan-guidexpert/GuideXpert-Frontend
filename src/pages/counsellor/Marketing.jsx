@@ -149,7 +149,7 @@ export default function Marketing() {
       if (cancelled) return;
       setDynamicLoading(false);
       if (res.success && Array.isArray(res.data?.posters)) {
-        setDynamicPosters(res.data.posters);
+        setDynamicPosters(res.data.posters.filter((poster) => poster?.audience !== 'pro'));
       } else {
         setDynamicPosters([]);
       }

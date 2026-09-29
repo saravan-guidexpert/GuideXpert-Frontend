@@ -565,6 +565,7 @@ function App() {
             <Route path="poster-downloads" element={<PosterDownloads />} />
             <Route path="college-comparisons" element={<CollegeComparisonsAdmin />} />
             <Route path="posters" element={<PosterAutomationAdminPage />} />
+            <Route path="pro-posters" element={<PosterAutomationAdminPage key="pro" audience="pro" />} />
             <Route path="assessment-results" element={<AssessmentResults />} />
             <Route path="assessment-2-results" element={<Navigate to="/admin/assessment-results?type=2" replace />} />
             <Route path="assessment-3-results" element={<Navigate to="/admin/assessment-results?type=3" replace />} />

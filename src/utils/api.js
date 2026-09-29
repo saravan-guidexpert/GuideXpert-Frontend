@@ -73,15 +73,17 @@ export async function getPosterByRoute(route) {
 }
 
 /** GET /posters/marketing-featured — published template highlighted for counsellor Marketing (or null). */
-export async function getMarketingFeaturedPoster() {
-  return apiRequest('/posters/marketing-featured', { method: 'GET' });
+export async function getMarketingFeaturedPoster(audience = 'counsellor') {
+  const library = audience === 'pro' ? 'pro' : 'counsellor';
+  return apiRequest(`/posters/marketing-featured?audience=${library}`, { method: 'GET' });
 }
 
-/** GET /posters/marketing — all published dynamic poster templates for counsellor Marketing. */
-export async function getMarketingPosters() {
-  const res = await apiRequest('/posters/marketing', { method: 'GET' });
+/** GET /posters/marketing — published dynamic poster templates for one marketing library. */
+export async function getMarketingPosters(audience = 'counsellor') {
+  const library = audience === 'pro' ? 'pro' : 'counsellor';
+  const res = await apiRequest(`/posters/marketing?audience=${library}`, { method: 'GET' });
   if (res.success || res.status !== 404) return res;
-  const fallback = await getMarketingFeaturedPoster();
+  const fallback = await getMarketingFeaturedPoster(library);
   if (!fallback.success) return fallback;
   const posters = Array.isArray(fallback.data?.posters)
     ? fallback.data.posters

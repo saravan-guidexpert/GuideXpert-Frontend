@@ -74,11 +74,36 @@ function defaultMobileField() {
   };
 }
 
-function emptyDraft() {
+const AUDIENCE_COPY = {
+  counsellor: {
+    title: 'Poster automation',
+    subtitle:
+      'Counsellor poster library only. PRO templates live under PRO’s poster automation and are not listed here.',
+    defaultRoute: '/p/my-campaign',
+    marketingLabel: 'Counsellor Marketing',
+    marketingPath: 'Counsellor → Marketing',
+    highlightAction: 'Highlight in counsellor Marketing',
+  },
+  pro: {
+    title: "PRO's poster automation",
+    subtitle:
+      'PRO poster library only. Counsellor Poster automation templates are a separate library and are not listed here.',
+    defaultRoute: '/p/pro-my-campaign',
+    marketingLabel: 'PRO Marketing',
+    marketingPath: 'PRO → Marketing',
+    highlightAction: 'Highlight in PRO Marketing',
+  },
+};
+
+function posterAudienceOf(poster) {
+  return poster?.audience === 'pro' ? 'pro' : 'counsellor';
+}
+
+function emptyDraft(audience = 'counsellor') {
   return {
     name: '',
     description: '',
-    route: '/p/my-campaign',
+    route: (AUDIENCE_COPY[audience] || AUDIENCE_COPY.counsellor).defaultRoute,
     svgTemplate: '',
     nameField: defaultNameField(),
     mobileField: defaultMobileField(),
@@ -239,13 +264,14 @@ function TemplateTokensReference({ previewVariables }) {
   );
 }
 
-export default function PosterAutomationAdminPage() {
+export default function PosterAutomationAdminPage({ audience = 'counsellor' }) {
+  const copy = AUDIENCE_COPY[audience] || AUDIENCE_COPY.counsellor;
   const [posters, setPosters] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   const [selectedId, setSelectedId] = useState(null);
   const [isNew, setIsNew] = useState(false);
-  const [draft, setDraft] = useState(() => emptyDraft());
+  const [draft, setDraft] = useState(() => emptyDraft(audience));
   const [baseline, setBaseline] = useState(null);
   const [selectedOverlayKey, setSelectedOverlayKey] = useState(null);
   const [saving, setSaving] = useState(false);
@@ -277,7 +303,7 @@ export default function PosterAutomationAdminPage() {
 
   const loadList = useCallback(async () => {
     setError('');
-    const res = await listPosterTemplates();
+    const res = await listPosterTemplates(audience);
     if (!res.success) {
       if (isPosterAdmin404(res)) {
         setPosterApiMisconfigured(true);
@@ -288,8 +314,9 @@ export default function PosterAutomationAdminPage() {
     }
     setPosterApiMisconfigured(false);
     const list = res.data?.posters ?? res.data?.data?.posters;
-    setPosters(Array.isArray(list) ? list : []);
-  }, []);
+    const rows = Array.isArray(list) ? list : [];
+    setPosters(rows.filter((poster) => posterAudienceOf(poster) === audience));
+  }, [audience]);
 
   useEffect(() => {
     let cancelled = false;
@@ -324,10 +351,10 @@ export default function PosterAutomationAdminPage() {
     // No baseline yet (never clicked "New template" or loaded one from the list): compare to empty draft
     // so editing name/route/SVG still marks Unsaved and enables Save.
     if (!baseline) {
-      return !posterDraftsEqual(draft, emptyDraft());
+      return !posterDraftsEqual(draft, emptyDraft(audience));
     }
     return !posterDraftsEqual(draft, baseline);
-  }, [draft, baseline, isNew]);
+  }, [draft, baseline, isNew, audience]);
 
   const selectPoster = (id) => {
     const p = posters.find((x) => x.id === id);
@@ -343,7 +370,7 @@ export default function PosterAutomationAdminPage() {
   const handleCreate = () => {
     setIsNew(true);
     setSelectedId(null);
-    const d = emptyDraft();
+    const d = emptyDraft(audience);
     setDraft(d);
     setBaseline(JSON.parse(JSON.stringify(d)));
     setSelectedOverlayKey(null);
@@ -401,6 +428,7 @@ export default function PosterAutomationAdminPage() {
         name: draft.name.trim(),
         description: String(draft.description ?? '').trim().slice(0, 500),
         route: routeNorm,
+        audience,
         svgTemplate: svgNorm,
         nameField: buildOverlayFieldPayload(draft.nameField, 'name'),
         mobileField: buildOverlayFieldPayload(draft.mobileField, 'mobile'),
@@ -496,7 +524,7 @@ export default function PosterAutomationAdminPage() {
     setMarketingFeatSaving(true);
     setError('');
     try {
-      const res = await setPosterMarketingFeatured(selectedId, featured);
+      const res = await setPosterMarketingFeatured(selectedId, featured, audience);
       if (!res.success) {
         setError(res.message || 'Could not update counsellor Marketing highlight.');
         return;
@@ -542,7 +570,7 @@ export default function PosterAutomationAdminPage() {
         return;
       }
 
-      const res = await publishPosterTemplate(id);
+      const res = await publishPosterTemplate(id, audience);
       if (!res.success) {
         if (isPosterAdmin404(res)) {
           setPosterApiMisconfigured(true);
@@ -569,7 +597,7 @@ export default function PosterAutomationAdminPage() {
     setPublishing(true);
     setError('');
     try {
-      const res = await unpublishPosterTemplate(selectedId);
+      const res = await unpublishPosterTemplate(selectedId, audience);
       if (!res.success) {
         if (isPosterAdmin404(res)) {
           setPosterApiMisconfigured(true);
@@ -594,7 +622,7 @@ export default function PosterAutomationAdminPage() {
     setError('');
     try {
       const routeBefore = normalizeRouteClient(draft.route);
-      const res = await deletePosterTemplate(selectedId);
+      const res = await deletePosterTemplate(selectedId, audience);
       if (!res.success) {
         const missing = isPosterAdmin404(res);
         if (missing) setPosterApiMisconfigured(true);
@@ -604,7 +632,7 @@ export default function PosterAutomationAdminPage() {
       clearPosterRouteCache(routeBefore);
       setSelectedId(null);
       setIsNew(false);
-      setDraft(emptyDraft());
+      setDraft(emptyDraft(audience));
       setBaseline(null);
       setSelectedOverlayKey(null);
       await loadList();
@@ -779,8 +807,8 @@ export default function PosterAutomationAdminPage() {
 
   return (
     <DashboardLayout
-      title="Poster automation"
-      subtitle="Design an SVG template, position name and mobile overlays, then Save template. Use Publish (or Save & publish) so the public /p/… page is available for downloads. Unpublish hides the live page."
+      title={copy.title}
+      subtitle={`${copy.subtitle} Design an SVG template, position name and mobile overlays, then Save template. Use Publish (or Save & publish) so the public /p/… page is available for downloads. Unpublish hides the live page.`}
     >
       {posterApiMisconfigured ? (
         <div
@@ -855,6 +883,11 @@ export default function PosterAutomationAdminPage() {
             onSelect={selectPoster}
             onCreate={handleCreate}
             disabled={loading || saving || publishing}
+            emptyHint={
+              audience === 'pro'
+                ? 'Create a PRO template here. Counsellor posters stay in Poster automation.'
+                : 'Create one to upload an SVG and map it to a route.'
+            }
           />
         </aside>
 
@@ -988,11 +1021,11 @@ export default function PosterAutomationAdminPage() {
               {!isNew && selectedId && draft.published ? (
                 <div className="mt-4 w-full rounded-xl border border-sky-200/90 bg-sky-50/90 px-4 py-3 sm:px-5">
                   <p className="text-[0.6875rem] font-semibold uppercase tracking-wide text-sky-900/90">
-                    Counsellor Marketing
+                    {copy.marketingLabel}
                   </p>
                   <p className="mt-1.5 text-sm leading-relaxed text-slate-700">
                     This published template appears as its own card on{' '}
-                    <span className="font-medium text-slate-800">Counsellor → Marketing</span>. You can optionally mark it
+                    <span className="font-medium text-slate-800">{copy.marketingPath}</span>. You can optionally mark it
                     as highlighted without hiding other published templates.
                   </p>
                   <div className="mt-3 flex flex-wrap gap-2">
@@ -1013,7 +1046,7 @@ export default function PosterAutomationAdminPage() {
                         ? 'Highlighted in Marketing'
                         : marketingFeatSaving
                           ? 'Applying…'
-                          : 'Highlight in counsellor Marketing'}
+                          : copy.highlightAction}
                     </button>
                     <button
                       type="button"

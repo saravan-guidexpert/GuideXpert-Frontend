@@ -48,6 +48,7 @@ const navItems = [
   { to: '/admin/influencer-tracking', label: 'Influencer / UTM Tracking', icon: FiLink, sectionKey: 'influencer-tracking', sidebarPlacement: 'counsellors' },
   { to: '/admin/poster-downloads', label: 'Poster downloads', icon: FiImage, sectionKey: 'poster-downloads', sidebarPlacement: 'counsellors' },
   { to: '/admin/posters', label: 'Poster automation', icon: FiLayers, sectionKey: 'poster-automation', sidebarPlacement: 'counsellors' },
+  { to: '/admin/pro-posters', label: "PRO's poster automation", icon: FiLayers, sectionKey: 'pro-poster-automation', sidebarPlacement: 'counsellors' },
   { to: '/admin/assessment-results', label: 'Custom Reports', icon: FiFileText, sectionKey: 'assessment-results', sidebarPlacement: 'counsellors' },
   { to: '/admin/webinar-progress', label: 'Training progress 25-26', icon: FiVideo, sectionKey: 'webinar-progress', sidebarPlacement: 'counsellors' },
   { to: '/admin/webinar-progress-26-27', label: 'Training progress 26-27', icon: FiVideo, sectionKey: 'webinar-progress', sidebarPlacement: 'counsellors' },

@@ -7,6 +7,7 @@ export default function PosterListSidebar({
   onSelect,
   onCreate,
   disabled,
+  emptyHint = 'Create one to upload an SVG and map it to a route.',
 }) {
   return (
     <div className="flex h-full min-h-[min(70vh,640px)] flex-col overflow-hidden rounded-2xl border border-gray-200/80 bg-white shadow-sm">
@@ -36,7 +37,7 @@ export default function PosterListSidebar({
             <FiLayers className="mx-auto h-8 w-8 text-gray-300" aria-hidden />
             <p className="mt-3 text-sm font-medium text-gray-700">No poster templates</p>
             <p className="mt-1 text-xs leading-relaxed text-gray-500">
-              Create one to upload an SVG and map it to a route.
+              {emptyHint}
             </p>
           </div>
         )}
