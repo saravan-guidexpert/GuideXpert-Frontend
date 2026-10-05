@@ -66,10 +66,14 @@ import CounsellorSupportRequests from './pages/admin/CounsellorSupportRequests';
 import TrainingFormResponses from './pages/admin/TrainingFormResponses';
 import CollegeDostFormSubmissions from './pages/admin/CollegeDostFormSubmissions';
 import OneOnOneCounselingLeads from './pages/admin/OneOnOneCounselingLeads';
+import JeeSessionLeads from './pages/admin/JeeSessionLeads';
+import MockTestLeads from './pages/admin/MockTestLeads';
 import LeadIntelligenceDashboard from './pages/admin/lead-intelligence/LeadIntelligenceDashboard';
 import GuidanceSlotBookings from './pages/admin/GuidanceSlotBookings';
 import OneOnOneCounselorsAdmin from './pages/admin/OneOnOneCounselorsAdmin';
 import OneOnOneSessionPage from './pages/OneOnOneSessionPage';
+import JeeSessionPage from './pages/JeeSessionPage';
+import MockTestPage from './pages/MockTestPage';
 import GuidanceBookingConfirmation from './pages/GuidanceBookingConfirmation';
 import GuidanceSessionMeet from './pages/GuidanceSessionMeet';
 import {
@@ -320,6 +324,10 @@ function App() {
             }
           />
           <Route path="/one-on-one-session" element={<OneOnOneSessionPage />} />
+          <Route path="/jee-session" element={<JeeSessionPage />} />
+          <Route path="/mock-test" element={<MockTestPage />} />
+          <Route path="/jee-sessions" element={<Navigate to="/jee-session" replace />} />
+          <Route path="/jee-sessioans" element={<Navigate to="/jee-session" replace />} />
           <Route path="/guidance-booking-confirmation" element={<GuidanceBookingConfirmation />} />
           <Route path="/guidance-session-meet" element={<GuidanceSessionMeet />} />
           <Route
@@ -557,6 +565,8 @@ function App() {
             <Route path="training-form-responses" element={<TrainingFormResponses />} />
             <Route path="college-dost" element={<CollegeDostFormSubmissions />} />
             <Route path="one-on-one-counseling" element={<OneOnOneCounselingLeads />} />
+            <Route path="jee-sessions" element={<JeeSessionLeads />} />
+            <Route path="mock-test" element={<MockTestLeads />} />
             <Route path="lead-intelligence" element={<LeadIntelligenceDashboard />} />
             <Route path="guidance-slot-bookings" element={<GuidanceSlotBookings />} />
             <Route path="one-on-one-counselors" element={<OneOnOneCounselorsAdmin />} />

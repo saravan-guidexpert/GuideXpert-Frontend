@@ -767,6 +767,38 @@ export const saveOneOnOneSection3 = async (payload) => {
   });
 };
 
+/** Save JEE session form step 1 (name, father's name, verified contact). */
+export const saveJeeSessionSection1 = async (payload) => {
+  return apiRequest('/jee-sessions/section1', {
+    method: 'POST',
+    body: JSON.stringify(payload),
+  });
+};
+
+/** Save JEE session form step 2 and complete the registration. */
+export const saveJeeSessionSection2 = async (payload) => {
+  return apiRequest('/jee-sessions/section2', {
+    method: 'POST',
+    body: JSON.stringify(payload),
+  });
+};
+
+/** Save mock test form step 1 (name + OTP-verified contact number). */
+export const saveMockTestSection1 = async (payload) => {
+  return apiRequest('/mock-test/section1', {
+    method: 'POST',
+    body: JSON.stringify(payload),
+  });
+};
+
+/** Save mock test form step 2 and complete the registration. */
+export const saveMockTestSection2 = async (payload) => {
+  return apiRequest('/mock-test/section2', {
+    method: 'POST',
+    body: JSON.stringify(payload),
+  });
+};
+
 /**
  * Check if this mobile already submitted the public training form (live or legacy DB row).
  * @param {string} phone - Phone string (digits normalized to 10)

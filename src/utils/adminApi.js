@@ -625,6 +625,30 @@ export const getIitainSessionFeedbackSubmissions = async (params = {}, token = g
   return adminRequest(`/iitain-session-feedback${query ? `?${query}` : ''}`, { method: 'GET' }, token);
 };
 
+export const getMockTestLeads = async (params = {}, token = getStoredToken()) => {
+  const search = new URLSearchParams();
+  if (params.page) search.set('page', String(params.page));
+  if (params.limit) search.set('limit', String(params.limit));
+  if (params.q) search.set('q', params.q);
+  if (params.from) search.set('from', params.from);
+  if (params.to) search.set('to', params.to);
+  if (params.status) search.set('status', params.status);
+  const query = search.toString();
+  return adminRequest(`/mock-test${query ? `?${query}` : ''}`, { method: 'GET' }, token);
+};
+
+export const getJeeSessionLeads = async (params = {}, token = getStoredToken()) => {
+  const search = new URLSearchParams();
+  if (params.page) search.set('page', String(params.page));
+  if (params.limit) search.set('limit', String(params.limit));
+  if (params.q) search.set('q', params.q);
+  if (params.from) search.set('from', params.from);
+  if (params.to) search.set('to', params.to);
+  if (params.status) search.set('status', params.status);
+  const query = search.toString();
+  return adminRequest(`/jee-sessions${query ? `?${query}` : ''}`, { method: 'GET' }, token);
+};
+
 export const getOneOnOneCounselingLeads = async (params = {}, token = getStoredToken()) => {
   const search = new URLSearchParams();
   if (params.page != null) search.set('page', params.page);
