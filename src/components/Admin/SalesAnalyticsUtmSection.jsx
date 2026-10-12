@@ -12,10 +12,12 @@ import {
   PLATFORMS,
   DEFAULT_CAMPAIGN,
   PLATFORM_TO_UTM_SOURCE,
+  DEFAULT_REGISTRATION_PAGE_URL,
+  ensureAbsoluteUtmUrl,
 } from '../../constants/influencerAdminConstants';
 
 const DEFAULT_REGISTER_BASE = (
-  import.meta.env.VITE_REGISTRATION_BASE_URL || 'https://guidexpert.co.in/register'
+  import.meta.env.VITE_REGISTRATION_BASE_URL || DEFAULT_REGISTRATION_PAGE_URL
 ).trim();
 
 function buildRegistrationShareUrl(baseUrl, { utm_source, utm_medium, utm_campaign, utm_content }) {

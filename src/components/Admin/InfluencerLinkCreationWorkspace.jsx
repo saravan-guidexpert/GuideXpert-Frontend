@@ -16,6 +16,7 @@ import {
   LINKS_SORT_OPTIONS,
   LINKS_COPY_FIELDS,
   normalizeInstagramHandle,
+  ensureAbsoluteUtmUrl,
 } from '../../constants/influencerAdminConstants';
 
 function formatDate(value) {
@@ -51,6 +52,7 @@ function formatCostPerLead(value) {
 }
 
 function getLinkCellValue(link, key) {
+  if (key === 'utmLink') return ensureAbsoluteUtmUrl(link.utmLink);
   const v = link[key];
   if (key === 'createdAt' || key === 'latestLeadAt') return v ? formatDate(v) : '';
   if (key === 'cost') return formatCost(v);
@@ -186,11 +188,11 @@ export default function InfluencerLinkCreationWorkspace({
       setLinkError(result.message || 'Failed to generate link');
       return;
     }
-    setGeneratedLink(result.data?.data?.utmLink ?? null);
+    setGeneratedLink(ensureAbsoluteUtmUrl(result.data?.data?.utmLink ?? null));
   };
 
   const handleCopy = (url, id) => {
-    const toCopy = url || generatedLink;
+    const toCopy = ensureAbsoluteUtmUrl(url || generatedLink);
     if (!toCopy) return;
     navigator.clipboard.writeText(toCopy).then(() => {
       if (id) {
@@ -228,7 +230,7 @@ export default function InfluencerLinkCreationWorkspace({
       setLinkError(result.message || 'Failed to save link');
       return;
     }
-    setGeneratedLink(result.data?.data?.utmLink ?? generatedLink);
+    setGeneratedLink(ensureAbsoluteUtmUrl(result.data?.data?.utmLink ?? generatedLink));
     fetchLinks();
     onLinksMutated?.();
     onAfterSave?.(form.influencerName.trim(), form.platform);
@@ -266,7 +268,7 @@ export default function InfluencerLinkCreationWorkspace({
       setIgQuickError(result.message || 'Failed to save link');
       return;
     }
-    const utm = result.data?.data?.utmLink ?? '';
+    const utm = ensureAbsoluteUtmUrl(result.data?.data?.utmLink ?? '');
     setIgQuickLink(utm);
     setForm((prev) => ({
       ...prev,
@@ -412,7 +414,7 @@ export default function InfluencerLinkCreationWorkspace({
       l.influencerName ?? '',
       l.platform ?? '',
       l.campaign ?? '',
-      l.utmLink ?? '',
+      l.utmLink ? ensureAbsoluteUtmUrl(l.utmLink) : '',
       l.createdAt ? formatDate(l.createdAt) : '',
       l.leadCount ?? 0,
       l.cost != null ? String(l.cost) : '',
@@ -794,9 +796,14 @@ export default function InfluencerLinkCreationWorkspace({
                       <td className="px-6 py-3 text-sm text-gray-600">{link.platform}</td>
                       <td className="px-6 py-3 text-sm text-gray-600">{link.campaign}</td>
                       <td className="px-6 py-3 text-sm max-w-[200px]">
-                        <a href={link.utmLink} target="_blank" rel="noopener noreferrer" title={link.utmLink} className="text-primary-navy hover:underline truncate block font-mono text-xs">
-                          {link.utmLink}
-                        </a>
+                        {(() => {
+                          const safeLink = ensureAbsoluteUtmUrl(link.utmLink);
+                          return (
+                            <a href={safeLink} target="_blank" rel="noopener noreferrer" title={safeLink} className="text-primary-navy hover:underline truncate block font-mono text-xs">
+                              {safeLink}
+                            </a>
+                          );
+                        })()}
                       </td>
                       <td className="px-6 py-3 text-sm text-gray-500">{formatDate(link.createdAt)}</td>
                       <td className="px-6 py-3 text-sm text-gray-900 text-right font-medium">{link.leadCount ?? 0}</td>

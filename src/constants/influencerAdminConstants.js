@@ -23,6 +23,36 @@ export const PLATFORM_TO_UTM_SOURCE = {
 
 export const DEFAULT_CAMPAIGN = 'guide_xperts';
 
+export const DEFAULT_REGISTRATION_PAGE_URL = (
+  import.meta.env.VITE_REGISTRATION_BASE_URL || 'https://www.guidexpert.co.in/become-counsellor'
+).trim();
+
+/**
+ * Ensures a UTM link is a valid absolute URL pointing to the registration/counsellor landing page.
+ * Fixes links generated with page titles or relative paths so they open the page directly.
+ */
+export function ensureAbsoluteUtmUrl(rawUrl, defaultBase = DEFAULT_REGISTRATION_PAGE_URL) {
+  if (!rawUrl || typeof rawUrl !== 'string') return '';
+  const trimmed = rawUrl.trim();
+  const baseClean = (defaultBase || 'https://www.guidexpert.co.in/become-counsellor').replace(/\/+$/, '');
+
+  if (/^https?:\/\//i.test(trimmed)) {
+    return trimmed.replace(/\/register(\?|$)/, '/become-counsellor$1');
+  }
+
+  if (trimmed.startsWith('?')) {
+    return `${baseClean}${trimmed}`;
+  }
+
+  const queryIndex = trimmed.indexOf('?');
+  if (queryIndex !== -1) {
+    const query = trimmed.slice(queryIndex);
+    return `${baseClean}${query}`;
+  }
+
+  return baseClean;
+}
+
 /** Landing pages for Admin → IIT Counselling UTM (not registration influencer tracking). */
 export const IIT_COUNSELLING_UTM_LINK_TARGETS = [
   { value: 'iitCounselling', label: 'IIT counselling (/iit-counselling)', tabLabel: 'IIT counselling' },
