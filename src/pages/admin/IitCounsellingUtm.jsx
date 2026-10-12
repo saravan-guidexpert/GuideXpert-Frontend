@@ -69,6 +69,10 @@ const DEFAULT_GUIDANCE_BOOKING_CONFIRMATION_PAGE_URL = (
     || 'https://www.guidexpert.co.in/guidance-booking-confirmation'
 ).trim();
 
+const DEFAULT_BECOME_COUNSELLOR_PAGE_URL = (
+  import.meta.env.VITE_BECOME_COUNSELLOR_PAGE_URL || 'https://www.guidexpert.co.in/become-counsellor'
+).trim();
+
 function buildIitCounsellingShareUrl(baseUrl, { utm_source, utm_medium, utm_campaign, utm_content }) {
   const base = String(baseUrl || '').trim().replace(/\/+$/, '');
   if (!base) return '';
@@ -562,13 +566,14 @@ export default function IitCounsellingUtm() {
       getIitCounsellingSavedUtmLinks(t, { linkTarget: 'iitCounselling' }),
       getIitCounsellingSavedUtmLinks(t, { linkTarget: 'oneOnOneSession' }),
       getIitCounsellingSavedUtmLinks(t, { linkTarget: 'guidanceBookingConfirmation' }),
-    ]).then(([iitRes, oneOnOneRes, guidanceRes]) => {
+      getIitCounsellingSavedUtmLinks(t, { linkTarget: 'becomeCounsellor' }),
+    ]).then(([iitRes, oneOnOneRes, guidanceRes, becomeCounsellorRes]) => {
       const pick = (result) => {
         if (!result.success) return [];
         const body = result.data;
         return Array.isArray(body?.data) ? body.data : Array.isArray(body) ? body : [];
       };
-      const merged = [...pick(iitRes), ...pick(oneOnOneRes), ...pick(guidanceRes)];
+      const merged = [...pick(iitRes), ...pick(oneOnOneRes), ...pick(guidanceRes), ...pick(becomeCounsellorRes)];
       merged.sort((a, b) => new Date(b.createdAt || 0).getTime() - new Date(a.createdAt || 0).getTime());
       setSavedLinksForLookup(merged);
     });
@@ -603,12 +608,16 @@ export default function IitCounsellingUtm() {
     ? '1-on-1 session UTM analytics'
     : analyticsLinkTarget === 'guidanceBookingConfirmation'
       ? 'Guidance booking confirmation UTM analytics'
-      : 'IIT Counselling UTM analytics';
+      : analyticsLinkTarget === 'becomeCounsellor'
+        ? 'Become a counsellor UTM analytics'
+        : 'IIT Counselling UTM analytics';
   const analyticsLinkedHelp = analyticsLinkTarget === 'oneOnOneSession'
     ? 'Linked = visit tied to a 1-on-1 form submission.'
     : analyticsLinkTarget === 'guidanceBookingConfirmation'
       ? 'Linked = visit tied to a confirmed guidance slot booking.'
-      : 'Linked = visit tied to section 1 save.';
+      : analyticsLinkTarget === 'becomeCounsellor'
+        ? 'Linked = visit tied to a counsellor registration submission.'
+        : 'Linked = visit tied to section 1 save.';
   const isSavedLinksOnlyTarget = isIitUtmSavedLinksOnlyTarget(analyticsLinkTarget);
 
   const savedLinkComboKeys = useMemo(() => {
@@ -794,7 +803,9 @@ export default function IitCounsellingUtm() {
     ? DEFAULT_ONE_ON_ONE_SESSION_PAGE_URL
     : genLinkTarget === 'guidanceBookingConfirmation'
       ? DEFAULT_GUIDANCE_BOOKING_CONFIRMATION_PAGE_URL
-      : DEFAULT_IIT_COUNSELLING_PAGE_URL;
+      : genLinkTarget === 'becomeCounsellor'
+        ? DEFAULT_BECOME_COUNSELLOR_PAGE_URL
+        : DEFAULT_IIT_COUNSELLING_PAGE_URL;
 
   const generatedIitUtmLink = useMemo(() => {
     const name = genInfluencerName.trim();

@@ -32,9 +32,14 @@ export const IIT_COUNSELLING_UTM_LINK_TARGETS = [
     label: 'Guidance booking confirmation (/guidance-booking-confirmation)',
     tabLabel: 'Guidance booking',
   },
+  {
+    value: 'becomeCounsellor',
+    label: 'Become a counsellor (/become-counsellor)',
+    tabLabel: 'Become counsellor',
+  },
 ];
 
-export const IIT_UTM_SAVED_LINKS_ONLY_TARGETS = new Set(['oneOnOneSession', 'guidanceBookingConfirmation']);
+export const IIT_UTM_SAVED_LINKS_ONLY_TARGETS = new Set(['oneOnOneSession', 'guidanceBookingConfirmation', 'becomeCounsellor']);
 
 export function isIitUtmSavedLinksOnlyTarget(linkTarget) {
   return IIT_UTM_SAVED_LINKS_ONLY_TARGETS.has(linkTarget);
@@ -43,6 +48,7 @@ export function isIitUtmSavedLinksOnlyTarget(linkTarget) {
 export function getIitUtmPagePath(linkTarget) {
   if (linkTarget === 'oneOnOneSession') return '/one-on-one-session';
   if (linkTarget === 'guidanceBookingConfirmation') return '/guidance-booking-confirmation';
+  if (linkTarget === 'becomeCounsellor') return '/become-counsellor';
   return '/iit-counselling';
 }
 
