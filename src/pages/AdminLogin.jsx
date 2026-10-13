@@ -95,7 +95,7 @@ export default function AdminLogin() {
       }
       setPhoneStep(2);
       setOtp(['', '', '', '', '', '']);
-      setInfo('OTP sent successfully to your mobile number');
+      setInfo('OTP request submitted. Please check your SMS messages.');
       setTimeout(() => otpInputRefs.current[0]?.focus(), 100);
     } catch {
       setError('Network error. Please try again.');
