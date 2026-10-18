@@ -279,7 +279,7 @@ export default function IitCounsellingPage() {
       setOtpSent(true);
       setOtp('');
       setResendIn(30);
-      setOtpInfo('OTP sent to your mobile number.');
+      setOtpInfo(result?.message || 'OTP request submitted. Please check your SMS messages.');
     } catch (error) {
       const message = error?.message || 'Could not send OTP. Please try again.';
       const friendly = /failed to fetch|networkerror|typeerror/i.test(message)

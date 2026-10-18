@@ -38,6 +38,8 @@ export const ADMIN_SECTION_OPTIONS = [
   { sectionKey: 'whatsapp-ops', label: 'WhatsApp ops' },
   { sectionKey: 'student-workspace', label: 'Student panel' },
   { sectionKey: 'resources', label: 'Resources' },
+  { sectionKey: 'consultancy-crm', label: 'Consultancy CRM' },
+  { sectionKey: 'consultancy-crm-manager', label: 'CRM manager — referral source correction' },
   // Legacy keys — still valid for existing admin grants; prefer student-workspace for new access
   { sectionKey: 'student-workspace-updates', label: 'Student panel (updates, legacy)' },
   { sectionKey: 'student-testimonials', label: 'Student panel (testimonials, legacy)' },
@@ -95,13 +97,14 @@ export const ADMIN_SECTION_GROUPS = [
       'lead-intelligence',
       'student-workspace',
       'resources',
+      'consultancy-crm',
       'system-prompt',
     ],
   },
   {
     id: 'admin',
     label: 'Admin',
-    sectionKeys: ['settings'],
+    sectionKeys: ['settings', 'consultancy-crm-manager'],
   },
 ];
 

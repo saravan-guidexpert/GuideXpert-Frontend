@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { FiMessageSquare, FiSend, FiX, FiLoader, FiRotateCcw, FiColumns, FiSearch, FiTrendingUp } from 'react-icons/fi';
-import { Link } from 'react-router-dom';
+import { Link, useLocation } from 'react-router-dom';
 import { useStudentAuth } from '../../contexts/StudentAuthContext';
 import { resetWebChatSession, sendWebChatMessage } from '../../utils/api';
 import ChatTypingIndicator from './ChatTypingIndicator';
@@ -170,6 +170,7 @@ function MessageBubble({ msg }) {
 }
 
 export default function WebsiteChatWidget() {
+  const { pathname } = useLocation();
   const { session } = useStudentAuth() || {};
   const [open, setOpen] = useState(false);
   const [input, setInput] = useState('');
@@ -309,10 +310,7 @@ export default function WebsiteChatWidget() {
     }
   };
 
-  const hiddenOnAdmin =
-    typeof window !== 'undefined' && window.location.pathname.startsWith('/admin');
-
-  if (hiddenOnAdmin) return null;
+  if (pathname.startsWith('/admin') || pathname.startsWith('/crm')) return null;
 
   return (
     <div className="font-sw-body">
