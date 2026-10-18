@@ -1,5 +1,6 @@
 import { Suspense, lazy, useEffect } from 'react';
 import { BrowserRouter, Routes, Route, Navigate, useLocation, useNavigate } from 'react-router-dom';
+import { SpeedInsights } from '@vercel/speed-insights/react';
 import { AuthProvider } from './contexts/AuthContext';
 import { useAuth } from './hooks/useAuth';
 import { CounsellorAuthProvider, useCounsellorAuth } from './contexts/CounsellorAuthContext';
@@ -38,6 +39,23 @@ import AssessmentFormCounsellorTest from './pages/AssessmentFormCounsellorTest';
 import AssessmentLayout from './components/Layout/AssessmentLayout';
 import AdminLayout from './components/Admin/AdminLayout';
 import Overview from './pages/admin/Overview';
+import ConsultanciesPage from './pages/admin/crm/ConsultanciesPage';
+import ConsultancyProfilePage from './pages/admin/crm/ConsultancyProfilePage';
+import StudentsPage from './pages/admin/crm/StudentsPage';
+import CrmStudentProfilePage from './pages/admin/crm/StudentProfilePage';
+import CrmAnalyticsPage from './pages/admin/crm/AnalyticsPage';
+import CrmCalendarPage from './pages/admin/crm/CalendarPage';
+import CrmDemoLayout from './pages/crm-demo/CrmDemoLayout';
+import CrmDemoOverviewPage from './pages/crm-demo/OverviewPage';
+import CrmDemoConsultanciesPage from './pages/crm-demo/ConsultanciesPage';
+import CrmDemoConsultancyProfilePage from './pages/crm-demo/ConsultancyProfilePage';
+import CrmDemoStudentsPage from './pages/crm-demo/StudentsPage';
+import CrmDemoStudentProfilePage from './pages/crm-demo/StudentProfilePage';
+import CrmDemoReferralsPage from './pages/crm-demo/ReferralsPage';
+import CrmDemoAuditPage from './pages/crm-demo/AuditPage';
+import CrmDemoSettingsPage from './pages/crm-demo/SettingsPage';
+import CrmDemoAnalyticsPage from './pages/crm-demo/AnalyticsPage';
+import CrmDemoCalendarPage from './pages/crm-demo/CalendarPage';
 import ExecutiveDashboard from './pages/admin/ExecutiveDashboard';
 import AlertsDashboard from './pages/admin/AlertsDashboard';
 import ReportsDashboard from './pages/admin/ReportsDashboard';
@@ -267,9 +285,15 @@ function SessionExpiryRedirects() {
   return null;
 }
 
+function AppSpeedInsights() {
+  const { pathname } = useLocation();
+  return <SpeedInsights route={pathname} />;
+}
+
 function App() {
   return (
     <BrowserRouter>
+      <AppSpeedInsights />
       <AuthProvider>
         <CounsellorAuthProvider>
           <WebinarAuthProvider>
@@ -516,6 +540,18 @@ function App() {
           <Route path="/assessment-5" element={<AssessmentForm5 />} />
           <Route path="/assessment-career-dna" element={<AssessmentLayout hideNavAndFooter><AssessmentFormCounsellorTest type="career-dna" /></AssessmentLayout>} />
           <Route path="/assessment-course-fit" element={<AssessmentLayout hideNavAndFooter><AssessmentFormCounsellorTest type="course-fit" /></AssessmentLayout>} />
+          <Route path="/crm" element={<CrmDemoLayout />}>
+            <Route index element={<CrmDemoOverviewPage />} />
+            <Route path="analytics" element={<CrmDemoAnalyticsPage />} />
+            <Route path="calendar" element={<CrmDemoCalendarPage />} />
+            <Route path="consultancies" element={<CrmDemoConsultanciesPage />} />
+            <Route path="consultancies/:id" element={<CrmDemoConsultancyProfilePage />} />
+            <Route path="students" element={<CrmDemoStudentsPage />} />
+            <Route path="students/:id" element={<CrmDemoStudentProfilePage />} />
+            <Route path="referrals" element={<CrmDemoReferralsPage />} />
+            <Route path="audit" element={<CrmDemoAuditPage />} />
+            <Route path="settings" element={<CrmDemoSettingsPage />} />
+          </Route>
           <Route path="/admin/login" element={<AdminLogin />} />
           <Route
             path="/admin"
@@ -527,6 +563,12 @@ function App() {
           >
             <Route index element={<Navigate to="/admin/dashboard" replace />} />
             <Route path="dashboard" element={<Overview />} />
+            <Route path="crm/consultancies" element={<ConsultanciesPage />} />
+            <Route path="crm/consultancies/:id" element={<ConsultancyProfilePage />} />
+            <Route path="crm/students" element={<StudentsPage />} />
+            <Route path="crm/students/:id" element={<CrmStudentProfilePage />} />
+            <Route path="crm/analytics" element={<CrmAnalyticsPage />} />
+            <Route path="crm/calendar" element={<CrmCalendarPage />} />
             <Route path="executive-dashboard" element={<ExecutiveDashboard />} />
             <Route path="analytics/alerts" element={<AlertsDashboard />} />
             <Route path="analytics/reports" element={<ReportsDashboard />} />

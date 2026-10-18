@@ -26,7 +26,7 @@
       "destination": "https://gxp-new-backend.vercel.app/api/:path*"
     },
     {
-      "source": "/((?!assets/|favicon.ico|robots.txt|sitemap.xml|api/).*)",
+      "source": "/((?!assets/|favicon.ico|robots.txt|sitemap.xml|api/|_vercel/).*)",
       "destination": "/index.html"
     }
   ]

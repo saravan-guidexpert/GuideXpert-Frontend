@@ -69,6 +69,10 @@ const navItems = [
   { to: '/admin/iit-ai-calls-summary', label: 'IITian AI Calls Summary', icon: FiPhone, sectionKey: 'iit-ai-calls-summary', sidebarPlacement: 'students' },
   { to: '/admin/whatsapp-ops', label: 'WhatsApp ops', icon: FiSend, sectionKey: 'whatsapp-ops', sidebarPlacement: 'students' },
   { to: '/admin/lead-intelligence', label: 'Chatbot Lead Intelligence', icon: FiMessageSquare, sectionKey: 'lead-intelligence', sidebarPlacement: 'students' },
+  { to: '/admin/crm/consultancies', label: 'Consultancies', icon: FiBriefcase, sectionKey: 'consultancy-crm', sidebarPlacement: 'students' },
+  { to: '/admin/crm/students', label: 'CRM Students', icon: FiUsers, sectionKey: 'consultancy-crm', sidebarPlacement: 'students' },
+  { to: '/admin/crm/analytics', label: 'CRM analytics', icon: FiBarChart2, sectionKey: 'consultancy-crm', sidebarPlacement: 'students' },
+  { to: '/admin/crm/calendar', label: 'CRM calendar', icon: FiCalendar, sectionKey: 'consultancy-crm', sidebarPlacement: 'students' },
   { to: '/admin/student-panel', label: 'Student panel', icon: FiLayers, sectionKey: 'student-workspace', sidebarPlacement: 'students' },
   { to: '/admin/resources', label: 'Resources', icon: FiBookOpen, sectionKey: 'resources', sidebarPlacement: 'students' },
   { to: '/admin/system-prompt', label: 'System Prompt', icon: FiEdit3, sectionKey: 'system-prompt', sidebarPlacement: 'students' },
@@ -306,7 +310,8 @@ export default function AdminLayout() {
     currentPath.startsWith('/admin/calling-data') ||
     currentPath.startsWith('/admin/ai-calls') ||
     currentPath.startsWith('/admin/iit-ai-calls-summary') ||
-    currentPath.startsWith('/admin/lead-intelligence');
+    currentPath.startsWith('/admin/lead-intelligence') ||
+    currentPath.startsWith('/admin/crm');
   useEffect(() => {
     const firstAllowed = visibleNavItems[0];
     if (user && !user.isSuperAdmin && !isPathAllowed && firstAllowed) {
