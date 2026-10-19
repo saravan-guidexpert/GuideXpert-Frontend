@@ -42,6 +42,12 @@ const ACTIVITY_TITLES = {
   'referral.created': 'Referral recorded',
   'referral.source_corrected': 'Referral source corrected',
   'demo_manager.simulated': 'Demo manager changed',
+  'demo_role.previewed': 'Demo role preview',
+  'consultancy.follow_up': 'Follow-up updated',
+  'consultancy.follow_up_cancelled': 'Follow-up cancelled',
+  'consultancy.remark_added': 'Remark added',
+  'consultancy.remark_edited': 'Remark edited',
+  'consultancy.owner_reassigned': 'Owner reassigned',
 };
 
 export function activityTitle(action) {
