@@ -4,6 +4,8 @@
  * Callers in demo mode must use this module instead of crmApi.js.
  */
 
+import { createVolumeState } from './crmVolumeSeed.js';
+
 export const CRM_DEMO_STORAGE_KEY = 'guidexpert_crm_demo_v1';
 
 export const ADMISSION_STATUSES = ['Not started', 'Contacted', 'Counselling', 'Applied', 'Admitted', 'Enrolled', 'Not proceeding'];
@@ -1122,6 +1124,12 @@ export function createCrmDemoRepository(storage) {
       const written = writeState(store(), state);
       if (written.error) return written.error;
       return ok(200, 'Demo data was reset to the fictional starter set.', { counts: counts(state) });
+    },
+    loadVolumeData() {
+      const state = createVolumeState();
+      const written = writeState(store(), state);
+      if (written.error) return written.error;
+      return ok(200, 'A large fictional sample is loaded in this browser.', { counts: counts(state) });
     },
   };
 }

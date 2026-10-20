@@ -540,3 +540,30 @@ test('original referral ownership stays put when the current source changes', ()
   assert.equal(crm.getStudent(created.data.student.id).status, 200);
   assert.equal(crm.listRemarks('con_1', page()).success, true);
 });
+
+test('volume sample replaces the starter set with a large fictional workspace', () => {
+  const crm = repo();
+  const loaded = crm.loadVolumeData();
+  assert.equal(loaded.success, true);
+  assert.equal(loaded.data.counts.students, 800);
+  assert.equal(loaded.data.counts.consultancies, 64);
+  assert.ok(loaded.data.counts.referrals > 700);
+  const phones = new Set();
+  const students = loadAll((page) => crm.listStudents({ page, limit: 100 }));
+  assert.equal(students.ok, true);
+  assert.equal(students.items.length, 800);
+  students.items.forEach((student) => {
+    assert.equal(normalizeIndianMobile(student.phone), student.phone);
+    assert.equal(phones.has(student.phone), false);
+    phones.add(student.phone);
+  });
+  const consultancies = loadAll((page) => crm.listConsultancies({ page, limit: 100 }));
+  assert.equal(consultancies.ok, true);
+  assert.equal(consultancies.items.length, 64);
+  assert.equal(new Set(consultancies.items.map((row) => row.name)).size, 64);
+  const overview = crm.overview();
+  assert.equal(overview.data.demoRole, 'super_admin');
+  assert.equal(overview.data.students, 800);
+  const reset = crm.resetDemoData();
+  assert.equal(reset.data.counts.students, 4);
+});
