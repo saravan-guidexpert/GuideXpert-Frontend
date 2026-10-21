@@ -42,7 +42,7 @@ export default function RecentActivityFeed({ entries, total, now, error, onRetry
             const Icon = ICONS[item.kind] || FiActivity;
             return (
               <li key={row.id}>
-                <span className="gx-ov-act-ico" aria-hidden="true"><Icon size={14} strokeWidth={1.75} /></span>
+                <span className="gx-ov-act-ico" aria-hidden="true"><Icon size={15} strokeWidth={1.75} /></span>
                 <span className="gx-ov-act-copy">
                   <strong>{item.title}</strong>
                   {item.context ? <span className="gx-ov-act-context">{item.context}</span> : null}
