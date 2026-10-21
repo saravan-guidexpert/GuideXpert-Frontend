@@ -996,7 +996,22 @@
 .gx-pipe i { display: block; height: 8px; border-radius: 99px; background: var(--paper); overflow: hidden; }
 .gx-pipe b { display: block; height: 100%; border-radius: 99px; background: var(--lime); }
 .gx-cal-day.is-today { box-shadow: inset 0 0 0 1px var(--ink); }
-.gx-sr { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); }
+.gx-sr {
+  display: block;
+  position: absolute;
+  left: 0;
+  top: 0;
+  width: 1px;
+  max-width: 1px;
+  height: 1px;
+  margin: -1px;
+  padding: 0;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+  clip-path: inset(50%);
+  white-space: nowrap;
+  border: 0;
+}
 @media (max-width: 1100px) {
   .gx-dash, .gx-kpis { grid-template-columns: 1fr; }
 }

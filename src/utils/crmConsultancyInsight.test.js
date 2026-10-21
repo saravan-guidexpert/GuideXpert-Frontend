@@ -9,6 +9,8 @@ import {
   insightRange,
   monthlySeries,
   pipelineCounts,
+  referralTrendSeries,
+  trendHasEvents,
 } from './crmConsultancyInsight.js';
 
 const now = new Date(2026, 9, 19, 12, 0, 0);
@@ -53,6 +55,46 @@ test('a selected range drops records outside it and a zero previous period stays
   assert.equal(comparison.message, 'No records in previous period');
   assert.equal(compareCounts(4, 2).percent, 100);
   assert.equal(formatRate(completionRate([], range)), 'No base');
+});
+
+test('referral trend buckets follow the selected range and do not invent points', () => {
+  const dayNow = new Date(2026, 9, 19, 12, 0, 0);
+  const week = referralTrendSeries([], [], insightRange('7', dayNow));
+  assert.equal(week.length, 7);
+  assert.equal(week[0].interval, 'day');
+  assert.equal(week[0].key, '2026-10-13');
+  assert.equal(week.at(-1).key, '2026-10-19');
+  assert.equal(trendHasEvents(week), false);
+
+  const month = referralTrendSeries(
+    [{ createdAt: '2026-10-10T09:00:00.000Z' }, { createdAt: '2026-04-02T09:30:00.000Z' }],
+    [{ createdAt: '2026-10-01T09:00:00.000Z' }],
+    insightRange('30', dayNow),
+  );
+  assert.equal(month.length, 30);
+  assert.equal(month.every((point) => point.interval === 'day'), true);
+  assert.equal(month.reduce((sum, point) => sum + point.referrals, 0), 1);
+  assert.equal(month.reduce((sum, point) => sum + point.registrations, 0), 1);
+  assert.equal(month.find((point) => point.referrals === 1).key, '2026-10-10');
+
+  const quarters = referralTrendSeries(
+    [{ createdAt: '2026-09-01T09:00:00.000Z' }, { createdAt: '2026-10-10T09:00:00.000Z' }],
+    [],
+    insightRange('90', dayNow),
+  );
+  assert.equal(quarters[0].interval, 'week');
+  assert.equal(quarters.reduce((sum, point) => sum + point.referrals, 0), 2);
+
+  const year = referralTrendSeries(
+    [{ createdAt: '2026-01-05T09:00:00.000Z' }, { createdAt: '2026-08-02T09:00:00.000Z' }],
+    [{ createdAt: '2026-08-03T09:00:00.000Z' }],
+    insightRange('year', dayNow),
+  );
+  assert.equal(year[0].interval, 'month');
+  assert.equal(year.reduce((sum, point) => sum + point.referrals, 0), 2);
+  assert.equal(year.find((point) => point.key === '2026-08').registrations, 1);
+  assert.deepEqual(referralTrendSeries([{ createdAt: '2026-10-01T09:00:00.000Z' }], [], insightRange('custom', dayNow, {})), []);
+  assert.deepEqual(referralTrendSeries([], [], insightRange('all', dayNow)), []);
 });
 
 test('pipeline keeps every admission status and follow-up buckets use saved dates', () => {

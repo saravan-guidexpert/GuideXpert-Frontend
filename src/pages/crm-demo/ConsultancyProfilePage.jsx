@@ -1,7 +1,7 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { Link, useParams } from 'react-router-dom';
-import { Bar, BarChart, CartesianGrid, Legend, Line, LineChart, ResponsiveContainer, Tooltip, XAxis, YAxis } from 'recharts';
-import { FiAlertCircle, FiCalendar, FiCheckCircle, FiClock, FiPhone, FiUsers } from 'react-icons/fi';
+import { Bar, BarChart, CartesianGrid, Line, LineChart, ResponsiveContainer, Tooltip, XAxis, YAxis } from 'recharts';
+import { FiAlertCircle, FiCalendar, FiCheckCircle, FiPhone, FiUsers } from 'react-icons/fi';
 import { interpretCrmResult } from '../../utils/crmAccess';
 import {
   compareCounts,
@@ -14,6 +14,7 @@ import {
   monthlySeries,
   pipelineCounts,
   previousCount,
+  referralTrendSeries,
 } from '../../utils/crmConsultancyInsight';
 import { localDayKey, monthCells } from '../../utils/crmAnalytics';
 import { ADMISSION_STATUSES, CALLING_STATUSES, CONSULTANCY_STATUSES, DEMO_ACTOR, DEMO_SEED_ACTOR, isFollowUpOverdue } from '../../utils/crmDemoStore';
@@ -21,6 +22,12 @@ import { Badge, DataTable, Dialog, Notice, SearchField } from './CrmKit';
 import { activityTitle, shortDate } from './crmFormat';
 import { loadAll } from './dashboard/dashboardModel';
 import { useCrmDemo } from './useCrmDemo';
+import ConsultancyHeader from './consultancy/ConsultancyHeader';
+import ConsultancyOverview from './consultancy/ConsultancyOverview';
+import ConsultancyTabs from './consultancy/ConsultancyTabs';
+import { attentionItems, referralPeriodHint, selectNextAction } from './consultancy/overviewModel';
+import useMatchMedia from './consultancy/useMatchMedia';
+import './consultancy/consultancyOverview.css';
 
 const TABS = [
   ['overview', 'Overview'],
@@ -32,6 +39,7 @@ const TABS = [
   ['settings', 'Settings and ownership'],
 ];
 const RANGES = [
+  ['7', 'Last 7 days'],
   ['30', 'Last 30 days'],
   ['90', 'Last 90 days'],
   ['month', 'This month'],
@@ -46,22 +54,6 @@ const EMPTY_STATUS = { followUpStatus: 'Fresh Lead', callingStatus: '', schedule
 function messageOf(result) {
   const view = interpretCrmResult(result);
   return { tone: view.state === 'ok' ? 'success' : view.state === 'conflict' ? 'warning' : 'error', message: view.message, state: view.state };
-}
-
-function followTone(status) {
-  if (status === 'Interested' || status === 'Meeting Completed' || status === 'On - Boarded') return 'on';
-  if (status === 'Not Interested' || status === 'Discontinued') return 'off';
-  if (status === 'Meeting Scheduled' || status === 'Follow-up Required' || status === 'Onboarding in Progress') return 'warn';
-  if (status === 'On Hold') return 'hold';
-  return 'pending';
-}
-
-function callTone(status) {
-  if (status === 'Connected' || status === 'WhatsApp Call Connected' || status === 'Interested') return 'on';
-  if (status === 'Not Interested' || status === 'Invalid Number' || status === 'Switched Off') return 'off';
-  if (status === 'Call Back Requested' || status === 'Meeting Scheduled' || status === 'Follow-up Required' || status === 'Busy') return 'warn';
-  if (status === 'Not Answered') return 'hold';
-  return 'pending';
 }
 
 function ChartFrame({ data, children, caption }) {
@@ -105,6 +97,13 @@ export default function ConsultancyProfilePage() {
   const [studentQuery, setStudentQuery] = useState('');
   const [studentStatus, setStudentStatus] = useState('all');
   const [remarkQuery, setRemarkQuery] = useState('');
+  const [calendarFocus, setCalendarFocus] = useState('');
+  const stacked = useMatchMedia('(max-width: 960px)');
+
+  useEffect(() => {
+    if (tab !== 'calendar' || !calendarFocus) return;
+    document.getElementById(`gx-follow-${calendarFocus}`)?.scrollIntoView({ block: 'nearest' });
+  }, [tab, calendarFocus]);
 
   const loaded = client.getConsultancy(id);
   const consultancy = loaded.success ? loaded.data.consultancy : null;
@@ -133,6 +132,7 @@ export default function ConsultancyProfilePage() {
   const linkedStudents = original.map((row) => studentsById.get(row.crmStudentId)).filter(Boolean);
   const pipeline = pipelineCounts(linkedStudents);
   const points = monthlySeries(original, linkedStudents, range);
+  const trendPoints = referralTrendSeries(original, linkedStudents, range);
   const cumulative = cumulativeSeries(points);
   const buckets = followUpBuckets(followLoad.items, now);
   const completedInRange = followLoad.items.filter((row) => row.completedAt && !row.cancelledAt && new Date(row.completedAt) >= (range.start || new Date(0)) && (!range.end || new Date(row.completedAt) <= range.end));
@@ -140,7 +140,8 @@ export default function ConsultancyProfilePage() {
   const comparison = priorReferrals == null ? null : compareCounts(countCreated(original, range), priorReferrals);
   const rate = completionRate(followLoad.items, range);
   const related = new Set([id, ...original.flatMap((row) => [row.id, row.crmStudentId])]);
-  const activity = auditsLoad.items.filter((row) => related.has(row.entityId)).slice(0, 8);
+  const relatedActivity = auditsLoad.items.filter((row) => related.has(row.entityId));
+  const activity = relatedActivity.slice(0, 8);
   const unreferred = studentsLoad.items.filter((row) => !referralsLoad.items.some((item) => item.crmStudentId === row.id));
   const year = monthCursor.getFullYear();
   const monthIndex = monthCursor.getMonth();
@@ -176,126 +177,111 @@ export default function ConsultancyProfilePage() {
     }
   }
 
-  function openStudents(status) {
-    setStudentStatus(status || 'all');
-    setTab('students');
+  function selectTab(key) {
+    setCalendarFocus('');
+    setTab(key);
   }
 
+  function openStudents(status) {
+    setStudentStatus(status || 'all');
+    selectTab('students');
+  }
+
+  function openCalendar(bucket) {
+    setCalendarFocus(bucket || '');
+    setTab('calendar');
+  }
+
+  function openStatus() {
+    setStatusForm({ ...EMPTY_STATUS, followUpStatus: consultancy.followUpStatus, callingStatus: consultancy.callingStatus || '' });
+    setStatusOpen(true);
+  }
+
+  function openEdit() {
+    setEditForm({ name: consultancy.name, status: consultancy.status, notes: consultancy.notes || '', followUpStatus: consultancy.followUpStatus || 'Fresh Lead', callingStatus: consultancy.callingStatus || '' });
+    setEditing(true);
+  }
+
+  function completeFollowUp(row) {
+    run(() => client.setFollowUp(id, {
+      followUpStatus: 'Meeting Completed',
+      outcome: 'Completed from calendar',
+      notes: row?.notes || 'Completed in the demo.',
+    }));
+  }
+
+  const referralsReady = referralsLoad.ok;
+  const studentsReady = studentsLoad.ok;
+  const followReady = followLoad.ok;
+  const nextAction = selectNextAction(followReady ? followLoad.items : [], consultancy, now);
+  const urgent = Boolean(nextAction && (nextAction.state === 'overdue' || nextAction.state === 'due'));
+  const seriesError = referralsReady && studentsReady ? '' : (referralsLoad.message || studentsLoad.message || 'Could not load referral trends.');
   const kpis = [
-    { label: 'Original referrals', value: original.length, hint: 'First source is this consultancy', icon: FiUsers, onClick: () => openStudents('all') },
-    { label: 'Linked students', value: linkedStudents.length, hint: 'Profiles behind those referrals', icon: FiUsers, onClick: () => openStudents('all') },
-    { label: 'Follow-ups due', value: buckets.dueToday.length, hint: 'Scheduled for today', icon: FiCalendar, onClick: () => setTab('calendar') },
-    { label: 'Overdue', value: buckets.overdue.length, hint: 'Open and already past', icon: FiAlertCircle, onClick: () => setTab('calendar') },
-    { label: 'Completed in range', value: completedInRange.length, hint: range.label, icon: FiCheckCircle, onClick: () => setTab('calendar') },
-    { label: 'Last contact', value: shortDate(consultancy.lastContactAt), hint: consultancy.callingStatus || 'No calling status', icon: FiPhone, text: true, onClick: () => setTab('calendar') },
-    { label: 'Consultancy status', value: consultancy.followUpStatus, hint: consultancy.callingStatus || (consultancy.status === 'active' ? 'Active consultancy' : 'Inactive consultancy'), icon: FiClock, text: true, onClick: () => { setStatusForm({ ...EMPTY_STATUS, followUpStatus: consultancy.followUpStatus, callingStatus: consultancy.callingStatus || '' }); setStatusOpen(true); } },
+    { label: 'Original referrals', value: referralsReady ? original.length : '—', hint: referralsReady ? referralPeriodHint(comparison, range) : 'Could not load referrals', icon: FiUsers, onClick: referralsReady ? () => openStudents('all') : refresh },
+    { label: 'Linked students', value: referralsReady && studentsReady ? linkedStudents.length : '—', hint: referralsReady && studentsReady ? 'Profiles behind those referrals' : 'Could not load students', icon: FiUsers, onClick: referralsReady && studentsReady ? () => openStudents('all') : refresh },
+    { label: 'Follow-ups due', value: followReady ? buckets.dueToday.length : '—', hint: followReady ? 'Scheduled for today' : 'Could not load follow-ups', icon: FiCalendar, tone: followReady && buckets.dueToday.length ? 'warn' : '', onClick: followReady ? () => openCalendar('dueToday') : refresh },
+    { label: 'Overdue', value: followReady ? buckets.overdue.length : '—', hint: followReady ? 'Open and already past' : 'Could not load follow-ups', icon: FiAlertCircle, tone: followReady && buckets.overdue.length ? 'danger' : '', onClick: followReady ? () => openCalendar('overdue') : refresh },
+    { label: 'Completed in range', value: !followReady || range.invalid ? '—' : completedInRange.length, hint: range.invalid ? 'Choose a valid date range' : followReady ? range.label : 'Could not load follow-ups', icon: FiCheckCircle, onClick: followReady && !range.invalid ? () => openCalendar('completed') : refresh },
+    { label: 'Last contact', value: shortDate(consultancy.lastContactAt), hint: consultancy.callingStatus || 'No calling status', icon: FiPhone, onClick: () => openCalendar('') },
   ];
 
   return (
     <div className="gx-co">
-      <header className="gx-co-head">
-        <div className="gx-co-id">
-          <p className="gx-crumb"><Link to="/crm/consultancies">Consultancies</Link> <span>/</span> {consultancy.name}</p>
-          <h2 className="gx-title">{consultancy.name}</h2>
-          <p className="gx-subtitle">{consultancy.primaryContact ? `${consultancy.primaryContact.name}${consultancy.primaryContact.phone ? ` · ${consultancy.primaryContact.phone}` : ''}${consultancy.primaryContact.email ? ` · ${consultancy.primaryContact.email}` : ''}` : 'No primary contact'}</p>
-          <div className="gx-co-meta">
-            <Badge tone={consultancy.status === 'active' ? 'on' : 'off'}>{consultancy.status}</Badge>
-            <Badge tone={followTone(consultancy.followUpStatus)}>{consultancy.followUpStatus}</Badge>
-            <Badge tone={callTone(consultancy.callingStatus)}>{consultancy.callingStatus || 'No calling status'}</Badge>
-            {isFollowUpOverdue(consultancy, now) ? <Badge tone="off">Overdue</Badge> : null}
-            <span className="gx-co-facts">Owner {consultancy.ownerName} · Last contact {shortDate(consultancy.lastContactAt)} · Next {shortDate(consultancy.nextFollowUpAt)} · {original.length} original referrals</span>
-          </div>
-        </div>
-        <div className="gx-co-actions">
-          <Link className="gx-btn" to="/crm/consultancies">Back</Link>
-          <button type="button" className="gx-btn" onClick={() => { setEditForm({ name: consultancy.name, status: consultancy.status, notes: consultancy.notes || '', followUpStatus: consultancy.followUpStatus || 'Fresh Lead', callingStatus: consultancy.callingStatus || '' }); setEditing(true); }}>Edit</button>
-          <button type="button" className="gx-btn" onClick={() => { setStatusForm({ ...EMPTY_STATUS, followUpStatus: consultancy.followUpStatus, callingStatus: consultancy.callingStatus || '' }); setStatusOpen(true); }}>Update status</button>
-          <button type="button" className="gx-btn" onClick={() => { setRemarkText(''); setRemarking(true); }}>Add remark</button>
-          <button type="button" className="gx-btn" onClick={() => { setWhen(''); setScheduling(true); }}>Schedule call</button>
-          <button type="button" className="gx-lime" onClick={() => openStudents('all')}>View referred students</button>
-        </div>
-      </header>
-      <p className="gx-co-note">Browser storage is not access control.</p>
+      <ConsultancyHeader
+        consultancy={consultancy}
+        originalCount={referralsReady ? original.length : null}
+        overdue={isFollowUpOverdue(consultancy, now)}
+        urgent={urgent}
+        saving={saving}
+        onSchedule={() => { setWhen(''); setScheduling(true); }}
+        onOpenFollowUp={() => openCalendar(nextAction?.bucket || '')}
+        onRemark={() => { setRemarkText(''); setRemarking(true); }}
+        onStatus={openStatus}
+        onEdit={openEdit}
+        onStudents={() => openStudents('all')}
+      />
       {loadError ? <div className="gx-notice error" role="alert"><p>{loadError}</p><button type="button" className="gx-btn" onClick={refresh}>Retry</button></div> : null}
       <Notice notice={notice} />
-      <div className="gx-tabs" role="tablist" aria-label="Consultancy sections">
-        {TABS.map(([key, label]) => (
-          <button key={key} type="button" role="tab" aria-selected={tab === key} className={`gx-tab${tab === key ? ' active' : ''}`} onClick={() => setTab(key)}>{label}</button>
-        ))}
-      </div>
-
+      <ConsultancyTabs tabs={TABS} active={tab} onChange={selectTab} />
+      <div role="tabpanel" id={`gx-panel-${tab}`} aria-labelledby={`gx-tab-${tab}`}>
       {tab === 'overview' ? (
-        <div className="gx-co-body">
-          <section className="gx-co-kpis" aria-label="Consultancy metrics">
-            {kpis.map((card) => {
-              const Icon = card.icon;
-              return (
-                <button key={card.label} type="button" className="gx-stat" onClick={card.onClick}>
-                  <span className="gx-stat-k"><span className="gx-stat-ico"><Icon size={14} aria-hidden="true" /></span>{card.label}</span>
-                  <span className={`gx-stat-v${card.text ? ' is-text' : ''}`}>{card.value}</span>
-                  <span className="gx-stat-h">{card.hint}</span>
-                </button>
-              );
-            })}
-          </section>
-          <div className="gx-co-grid">
-            <div className="gx-co-main">
-              <section className="gx-card">
-                <div className="gx-card-head">
-                  <h3>Referral trends</h3>
-                  <RangeSelect period={period} setPeriod={setPeriod} customFrom={customFrom} customTo={customTo} setCustomFrom={setCustomFrom} setCustomTo={setCustomTo} />
-                </div>
-                {range.invalid ? <p className="gx-note">Choose a start date that is on or before the end date.</p> : points.length === 0 ? <p className="gx-note">No referral or registration dates in this range.</p> : (
-                  <ChartFrame data={points} caption="Monthly original referrals and student registrations">
-                    <ResponsiveContainer width="100%" height="100%">
-                      <BarChart data={points}>
-                        <CartesianGrid vertical={false} stroke="var(--line)" />
-                        <XAxis dataKey="label" tick={{ fontSize: 12, fontFamily: 'Plus Jakarta Sans, Satoshi, sans-serif', fill: '#6d6f73' }} axisLine={false} tickLine={false} interval="preserveStartEnd" />
-                        <YAxis allowDecimals={false} width={28} tick={{ fontSize: 12, fontFamily: 'Plus Jakarta Sans, Satoshi, sans-serif', fill: '#6d6f73' }} axisLine={false} tickLine={false} />
-                        <Tooltip />
-                        <Legend />
-                        <Bar dataKey="referrals" name="Original referrals" fill="#1c1c1a" radius={[8, 8, 0, 0]} />
-                        <Bar dataKey="registrations" name="Student registrations" fill="#c6f000" radius={[8, 8, 0, 0]} />
-                      </BarChart>
-                    </ResponsiveContainer>
-                  </ChartFrame>
-                )}
-              </section>
-              <section className="gx-card">
-                <h3>Student pipeline</h3>
-                <div className="gx-pipe">
-                  {pipeline.map((row) => (
-                    <button key={row.status} type="button" onClick={() => openStudents(row.status)}>
-                      <span>{row.status}</span>
-                      <i><b style={{ width: `${pipeline.reduce((max, item) => Math.max(max, item.count), 0) ? (row.count / Math.max(...pipeline.map((item) => item.count), 1)) * 100 : 0}%` }} /></i>
-                      <strong>{row.count}</strong>
-                    </button>
-                  ))}
-                </div>
-              </section>
-            </div>
-            <aside className="gx-co-side">
-              <section className="gx-card">
-                <div className="gx-card-head"><h3>Recent activity</h3><button type="button" className="gx-text" onClick={() => setTab('remarks')}>View all</button></div>
-                {activity.length === 0 ? <p className="gx-note">No recorded events for this consultancy.</p> : (
-                  <ul className="gx-feed">
-                    {activity.map((row) => <li key={row.id}><strong>{activityTitle(row.action)}</strong><span className="gx-sub">{row.actorLabel || 'Demo'} · {shortDate(row.createdAt)}</span></li>)}
-                  </ul>
-                )}
-              </section>
-              <section className="gx-card">
-                <h3>Needs attention</h3>
-                <div className="gx-attn">
-                  <button type="button" onClick={() => setTab('calendar')}>{buckets.overdue.length} overdue follow-ups</button>
-                  <button type="button" onClick={() => setTab('calendar')}>{buckets.dueSoon.length} follow-ups due within 7 days</button>
-                  {!consultancy.lastContactAt ? <button type="button" onClick={() => setTab('calendar')}>No recorded contact yet</button> : null}
-                  {!consultancy.primaryContact ? <button type="button" onClick={() => setTab('contacts')}>Missing primary contact</button> : null}
-                  {unreferred.length ? <Link to="/crm/students?tab=open">{unreferred.length} students have no referral</Link> : null}
-                </div>
-              </section>
-            </aside>
-          </div>
-        </div>
+        <ConsultancyOverview
+          stacked={stacked}
+          nextAction={nextAction}
+          saving={saving}
+          onSchedule={() => { setWhen(''); setScheduling(true); }}
+          onOpenFollowUp={() => openCalendar(nextAction?.bucket || '')}
+          onComplete={() => completeFollowUp(nextAction?.followUp)}
+          kpis={kpis}
+          points={trendPoints}
+          rangeLabel={range.label}
+          rangeInvalid={range.invalid}
+          seriesError={seriesError}
+          onRetry={refresh}
+          rangeControl={<RangeSelect period={period} setPeriod={setPeriod} customFrom={customFrom} customTo={customTo} setCustomFrom={setCustomFrom} setCustomTo={setCustomTo} />}
+          pipeline={pipeline}
+          linkedTotal={linkedStudents.length}
+          onOpenStatus={openStudents}
+          attention={attentionItems({ buckets, consultancy, unreferredCount: unreferred.length, followUpsAvailable: followReady })}
+          attentionError={followReady ? '' : followLoad.message}
+          onOpenAttention={(item) => {
+            if (item.action === 'schedule') {
+              setWhen('');
+              setScheduling(true);
+              return;
+            }
+            if (item.action === 'contacts') {
+              selectTab('contacts');
+              return;
+            }
+            if (item.action === 'calendar') openCalendar(item.bucket);
+          }}
+          activity={auditsLoad.ok ? activity : []}
+          activityTotal={auditsLoad.ok ? relatedActivity.length : 0}
+          activityError={auditsLoad.ok ? '' : auditsLoad.message}
+          now={now}
+          onViewActivity={() => selectTab('remarks')}
+        />
       ) : null}
 
       {tab === 'students' ? (
@@ -399,7 +385,7 @@ export default function ConsultancyProfilePage() {
             <h3>Follow-ups</h3>
             {['dueToday', 'upcoming', 'overdue', 'completed'].map((key) => (
               <div key={key}>
-                <h4>{key === 'dueToday' ? 'Due today' : key[0].toUpperCase() + key.slice(1)} ({buckets[key].length})</h4>
+                <h4 id={`gx-follow-${key}`}>{key === 'dueToday' ? 'Due today' : key[0].toUpperCase() + key.slice(1)} ({buckets[key].length})</h4>
                 {buckets[key].length === 0 ? <p className="gx-note">None</p> : (
                   <ul className="gx-list">
                     {buckets[key].map((row) => (
@@ -408,7 +394,7 @@ export default function ConsultancyProfilePage() {
                         <span className="gx-sub">{row.actorName} · {shortDate(row.scheduledAt || row.completedAt)}{row.notes ? ` · ${row.notes}` : ''}</span>
                         {!row.completedAt && !row.cancelledAt ? (
                           <span className="gx-row-actions">
-                            <button type="button" className="gx-text" onClick={() => run(() => client.setFollowUp(id, { followUpStatus: 'Meeting Completed', outcome: 'Completed from calendar', notes: row.notes || 'Completed in the demo.' }))}>Complete</button>
+                            <button type="button" className="gx-text" onClick={() => completeFollowUp(row)}>Complete</button>
                             <button type="button" className="gx-text" onClick={() => run(() => client.cancelFollowUp(id, row.id))}>Cancel</button>
                           </span>
                         ) : null}
@@ -499,6 +485,7 @@ export default function ConsultancyProfilePage() {
           ) : null}
         </section>
       ) : null}
+      </div>
 
       {editing ? (
         <Dialog title="Edit consultancy" onClose={() => setEditing(false)}>

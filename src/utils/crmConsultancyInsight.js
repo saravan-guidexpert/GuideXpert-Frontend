@@ -1,10 +1,12 @@
 import {
   endOfLocalDay,
   formatRate,
+  localDayKey,
   parseIso,
   previousRange,
   ratio,
   resolveRange,
+  startOfLocalDay,
   statusOf,
   within,
 } from './crmAnalytics.js';
@@ -69,6 +71,87 @@ export function monthlySeries(referrals, students, range) {
     });
   }
   return points;
+}
+
+function addDays(date, count) {
+  return new Date(date.getFullYear(), date.getMonth(), date.getDate() + count);
+}
+
+function startOfWeek(date) {
+  const start = startOfLocalDay(date);
+  return addDays(start, -start.getDay());
+}
+
+function spanDays(start, end) {
+  const ms = endOfLocalDay(end).getTime() - startOfLocalDay(start).getTime();
+  return Math.floor(ms / 86400000) + 1;
+}
+
+function trendWindow(range, referrals, students) {
+  if (range?.invalid) return null;
+  if (range?.start && range?.end) return { start: startOfLocalDay(range.start), end: range.end };
+  const times = [...(referrals || []), ...(students || [])]
+    .map((row) => parseIso(row.createdAt))
+    .filter(Boolean)
+    .map((date) => date.getTime());
+  if (!times.length) return null;
+  return { start: startOfLocalDay(new Date(Math.min(...times))), end: new Date(Math.max(...times)) };
+}
+
+function dayLabel(date) {
+  return date.toLocaleDateString('en-IN', { day: 'numeric', month: 'short' });
+}
+
+function bucketLabel(from, to) {
+  if (from.getFullYear() === to.getFullYear() && from.getMonth() === to.getMonth() && from.getDate() === to.getDate()) {
+    return dayLabel(from);
+  }
+  if (from.getMonth() === to.getMonth() && from.getFullYear() === to.getFullYear()) {
+    return `${from.getDate()}–${to.getDate()} ${from.toLocaleDateString('en-IN', { month: 'short' })}`;
+  }
+  return `${dayLabel(from)} – ${dayLabel(to)}`;
+}
+
+function countBetween(rows, from, to, range) {
+  return (rows || []).filter((row) => {
+    const date = parseIso(row.createdAt);
+    return date && within(row.createdAt, range) && date >= from && date <= to;
+  }).length;
+}
+
+export function referralTrendSeries(referrals, students, range) {
+  const window = trendWindow(range, referrals, students);
+  if (!window) return [];
+  const interval = spanDays(window.start, window.end) <= 45
+    ? 'day'
+    : spanDays(window.start, window.end) <= 120
+      ? 'week'
+      : 'month';
+  if (interval === 'month') {
+    return monthlySeries(referrals, students, range).map((point) => ({ ...point, interval: 'month' }));
+  }
+  const step = interval === 'week' ? 7 : 1;
+  let cursor = interval === 'week' ? startOfWeek(window.start) : startOfLocalDay(window.start);
+  const points = [];
+  while (cursor <= window.end && points.length < 400) {
+    const bucketStart = cursor;
+    const bucketEnd = endOfLocalDay(addDays(cursor, step - 1));
+    const from = bucketStart < window.start ? window.start : bucketStart;
+    const to = bucketEnd > window.end ? window.end : bucketEnd;
+    points.push({
+      key: localDayKey(from),
+      label: interval === 'week' ? bucketLabel(from, to) : dayLabel(from),
+      referrals: countBetween(referrals, bucketStart, bucketEnd, range),
+      registrations: countBetween(students, bucketStart, bucketEnd, range),
+      interval,
+    });
+    cursor = addDays(cursor, step);
+  }
+  return points;
+}
+
+export function trendHasEvents(points) {
+  return (points || []).some((point) => (point.referrals || 0) > 0 || (point.registrations || 0) > 0);
 }
 
 export function cumulativeSeries(points) {
