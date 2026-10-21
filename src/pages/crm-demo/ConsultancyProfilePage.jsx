@@ -16,7 +16,7 @@ import {
   previousCount,
 } from '../../utils/crmConsultancyInsight';
 import { localDayKey, monthCells } from '../../utils/crmAnalytics';
-import { ADMISSION_STATUSES, DEMO_ACTOR, DEMO_SEED_ACTOR, FOLLOW_UP_STATUSES, isFollowUpOverdue } from '../../utils/crmDemoStore';
+import { ADMISSION_STATUSES, CALLING_STATUSES, CONSULTANCY_STATUSES, DEMO_ACTOR, DEMO_SEED_ACTOR, isFollowUpOverdue } from '../../utils/crmDemoStore';
 import { Badge, DataTable, Dialog, Notice, SearchField } from './CrmKit';
 import { activityTitle, shortDate } from './crmFormat';
 import { loadAll } from './dashboard/dashboardModel';
@@ -41,7 +41,7 @@ const RANGES = [
   ['custom', 'Custom'],
 ];
 const EMPTY_CONTACT = { name: '', phone: '', email: '', role: '' };
-const EMPTY_STATUS = { followUpStatus: 'Pending', scheduledAt: '', outcome: '', notes: '', nextAction: '', reason: '' };
+const EMPTY_STATUS = { followUpStatus: 'Fresh Lead', callingStatus: '', scheduledAt: '', outcome: '', notes: '', nextAction: '', reason: '' };
 
 function messageOf(result) {
   const view = interpretCrmResult(result);
@@ -49,10 +49,18 @@ function messageOf(result) {
 }
 
 function followTone(status) {
-  if (status === 'Interested' || status === 'Call Completed') return 'on';
-  if (status === 'Not Interested') return 'off';
-  if (status === 'Call Scheduled' || status === 'Follow-up Required') return 'warn';
-  if (status === 'On Hold' || status === 'Not Lifted') return 'hold';
+  if (status === 'Interested' || status === 'Meeting Completed' || status === 'On - Boarded') return 'on';
+  if (status === 'Not Interested' || status === 'Discontinued') return 'off';
+  if (status === 'Meeting Scheduled' || status === 'Follow-up Required' || status === 'Onboarding in Progress') return 'warn';
+  if (status === 'On Hold') return 'hold';
+  return 'pending';
+}
+
+function callTone(status) {
+  if (status === 'Connected' || status === 'WhatsApp Call Connected' || status === 'Interested') return 'on';
+  if (status === 'Not Interested' || status === 'Invalid Number' || status === 'Switched Off') return 'off';
+  if (status === 'Call Back Requested' || status === 'Meeting Scheduled' || status === 'Follow-up Required' || status === 'Busy') return 'warn';
+  if (status === 'Not Answered') return 'hold';
   return 'pending';
 }
 
@@ -81,7 +89,7 @@ export default function ConsultancyProfilePage() {
   const [notice, setNotice] = useState(null);
   const [saving, setSaving] = useState(false);
   const [editing, setEditing] = useState(false);
-  const [editForm, setEditForm] = useState({ name: '', status: 'active', notes: '' });
+  const [editForm, setEditForm] = useState({ name: '', status: 'active', notes: '', followUpStatus: 'Fresh Lead', callingStatus: '' });
   const [scheduling, setScheduling] = useState(false);
   const [when, setWhen] = useState('');
   const [remarking, setRemarking] = useState(false);
@@ -179,8 +187,8 @@ export default function ConsultancyProfilePage() {
     { label: 'Follow-ups due', value: buckets.dueToday.length, hint: 'Scheduled for today', icon: FiCalendar, onClick: () => setTab('calendar') },
     { label: 'Overdue', value: buckets.overdue.length, hint: 'Open and already past', icon: FiAlertCircle, onClick: () => setTab('calendar') },
     { label: 'Completed in range', value: completedInRange.length, hint: range.label, icon: FiCheckCircle, onClick: () => setTab('calendar') },
-    { label: 'Last contact', value: shortDate(consultancy.lastContactAt), hint: consultancy.followUpStatus, icon: FiPhone, text: true, onClick: () => setTab('calendar') },
-    { label: 'Relationship', value: consultancy.followUpStatus, hint: consultancy.status === 'active' ? 'Active consultancy' : 'Inactive consultancy', icon: FiClock, text: true, onClick: () => setTab('settings') },
+    { label: 'Last contact', value: shortDate(consultancy.lastContactAt), hint: consultancy.callingStatus || 'No calling status', icon: FiPhone, text: true, onClick: () => setTab('calendar') },
+    { label: 'Consultancy status', value: consultancy.followUpStatus, hint: consultancy.callingStatus || (consultancy.status === 'active' ? 'Active consultancy' : 'Inactive consultancy'), icon: FiClock, text: true, onClick: () => { setStatusForm({ ...EMPTY_STATUS, followUpStatus: consultancy.followUpStatus, callingStatus: consultancy.callingStatus || '' }); setStatusOpen(true); } },
   ];
 
   return (
@@ -193,14 +201,15 @@ export default function ConsultancyProfilePage() {
           <div className="gx-co-meta">
             <Badge tone={consultancy.status === 'active' ? 'on' : 'off'}>{consultancy.status}</Badge>
             <Badge tone={followTone(consultancy.followUpStatus)}>{consultancy.followUpStatus}</Badge>
+            <Badge tone={callTone(consultancy.callingStatus)}>{consultancy.callingStatus || 'No calling status'}</Badge>
             {isFollowUpOverdue(consultancy, now) ? <Badge tone="off">Overdue</Badge> : null}
             <span className="gx-co-facts">Owner {consultancy.ownerName} · Last contact {shortDate(consultancy.lastContactAt)} · Next {shortDate(consultancy.nextFollowUpAt)} · {original.length} original referrals</span>
           </div>
         </div>
         <div className="gx-co-actions">
           <Link className="gx-btn" to="/crm/consultancies">Back</Link>
-          <button type="button" className="gx-btn" onClick={() => { setEditForm({ name: consultancy.name, status: consultancy.status, notes: consultancy.notes || '' }); setEditing(true); }}>Edit</button>
-          <button type="button" className="gx-btn" onClick={() => { setStatusForm({ ...EMPTY_STATUS, followUpStatus: consultancy.followUpStatus }); setStatusOpen(true); }}>Update status</button>
+          <button type="button" className="gx-btn" onClick={() => { setEditForm({ name: consultancy.name, status: consultancy.status, notes: consultancy.notes || '', followUpStatus: consultancy.followUpStatus || 'Fresh Lead', callingStatus: consultancy.callingStatus || '' }); setEditing(true); }}>Edit</button>
+          <button type="button" className="gx-btn" onClick={() => { setStatusForm({ ...EMPTY_STATUS, followUpStatus: consultancy.followUpStatus, callingStatus: consultancy.callingStatus || '' }); setStatusOpen(true); }}>Update status</button>
           <button type="button" className="gx-btn" onClick={() => { setRemarkText(''); setRemarking(true); }}>Add remark</button>
           <button type="button" className="gx-btn" onClick={() => { setWhen(''); setScheduling(true); }}>Schedule call</button>
           <button type="button" className="gx-lime" onClick={() => openStudents('all')}>View referred students</button>
@@ -399,7 +408,7 @@ export default function ConsultancyProfilePage() {
                         <span className="gx-sub">{row.actorName} · {shortDate(row.scheduledAt || row.completedAt)}{row.notes ? ` · ${row.notes}` : ''}</span>
                         {!row.completedAt && !row.cancelledAt ? (
                           <span className="gx-row-actions">
-                            <button type="button" className="gx-text" onClick={() => run(() => client.setFollowUp(id, { followUpStatus: 'Call Completed', outcome: 'Completed from calendar', notes: row.notes || 'Completed in the demo.' }))}>Complete</button>
+                            <button type="button" className="gx-text" onClick={() => run(() => client.setFollowUp(id, { followUpStatus: 'Meeting Completed', outcome: 'Completed from calendar', notes: row.notes || 'Completed in the demo.' }))}>Complete</button>
                             <button type="button" className="gx-text" onClick={() => run(() => client.cancelFollowUp(id, row.id))}>Cancel</button>
                           </span>
                         ) : null}
@@ -476,7 +485,7 @@ export default function ConsultancyProfilePage() {
             <label>Notes<textarea defaultValue={consultancy.notes || ''} onChange={(event) => setEditForm({ name: editForm.name || consultancy.name, status: editForm.status || consultancy.status, notes: event.target.value })} /></label>
             <button className="gx-lime" type="submit" disabled={saving}>Save profile</button>
           </form>
-          <p className="gx-note">Relationship status is {consultancy.followUpStatus}. Use Update status to change it. Demo staff and Demo seed are preview labels, not sign-in accounts.</p>
+          <p className="gx-note">Consultancy status is {consultancy.followUpStatus}. Calling status is {consultancy.callingStatus || 'not set'}. Use Update status to change either one. Demo staff and Demo seed are preview labels, not sign-in accounts.</p>
           {superAdmin ? (
             <form className="gx-inline" onSubmit={(event) => { event.preventDefault(); run(() => client.reassignOwner(id, { ownerId: ownerId || consultancy.ownerId })); }}>
               <label>Owner
@@ -501,17 +510,29 @@ export default function ConsultancyProfilePage() {
                 <option value="inactive">Inactive</option>
               </select>
             </label>
+            <label>Consultancy status
+              <select value={editForm.followUpStatus} onChange={(event) => setEditForm({ ...editForm, followUpStatus: event.target.value })}>
+                {CONSULTANCY_STATUSES.map((item) => <option key={item} value={item}>{item}</option>)}
+              </select>
+            </label>
+            <label>Calling status
+              <select value={editForm.callingStatus} onChange={(event) => setEditForm({ ...editForm, callingStatus: event.target.value })}>
+                <option value="">No calling status</option>
+                {CALLING_STATUSES.map((item) => <option key={item} value={item}>{item}</option>)}
+              </select>
+            </label>
             <label>Notes<textarea value={editForm.notes} onChange={(event) => setEditForm({ ...editForm, notes: event.target.value })} /></label>
             <button className="gx-lime" type="submit" disabled={saving}>Save</button>
           </form>
         </Dialog>
       ) : null}
       {statusOpen ? (
-        <Dialog title="Update relationship status" onClose={() => setStatusOpen(false)}>
+        <Dialog title="Update status" onClose={() => setStatusOpen(false)}>
           <form className="gx-form" onSubmit={(event) => {
             event.preventDefault();
             run(() => client.setFollowUp(id, {
               followUpStatus: statusForm.followUpStatus,
+              callingStatus: statusForm.callingStatus,
               notes: statusForm.notes,
               outcome: statusForm.outcome,
               nextAction: statusForm.nextAction,
@@ -520,13 +541,19 @@ export default function ConsultancyProfilePage() {
             }), () => setStatusOpen(false));
           }}
           >
-            <label>Status
+            <label>Consultancy status
               <select value={statusForm.followUpStatus} onChange={(event) => setStatusForm({ ...statusForm, followUpStatus: event.target.value })}>
-                {FOLLOW_UP_STATUSES.map((item) => <option key={item} value={item}>{item}</option>)}
+                {CONSULTANCY_STATUSES.map((item) => <option key={item} value={item}>{item}</option>)}
               </select>
             </label>
-            {statusForm.followUpStatus === 'Call Scheduled' || statusForm.followUpStatus === 'Follow-up Required' ? <label>Date and time<input type="datetime-local" value={statusForm.scheduledAt} onChange={(event) => setStatusForm({ ...statusForm, scheduledAt: event.target.value })} /></label> : null}
-            {statusForm.followUpStatus === 'Call Completed' ? <label>Outcome<input value={statusForm.outcome} onChange={(event) => setStatusForm({ ...statusForm, outcome: event.target.value })} /></label> : null}
+            <label>Calling status
+              <select value={statusForm.callingStatus} onChange={(event) => setStatusForm({ ...statusForm, callingStatus: event.target.value })}>
+                <option value="">No calling status</option>
+                {CALLING_STATUSES.map((item) => <option key={item} value={item}>{item}</option>)}
+              </select>
+            </label>
+            {statusForm.followUpStatus === 'Meeting Scheduled' || statusForm.followUpStatus === 'Follow-up Required' ? <label>Date and time<input type="datetime-local" value={statusForm.scheduledAt} onChange={(event) => setStatusForm({ ...statusForm, scheduledAt: event.target.value })} /></label> : null}
+            {statusForm.followUpStatus === 'Meeting Completed' ? <label>Outcome<input value={statusForm.outcome} onChange={(event) => setStatusForm({ ...statusForm, outcome: event.target.value })} /></label> : null}
             {statusForm.followUpStatus === 'Follow-up Required' ? <label>Next action<input value={statusForm.nextAction} onChange={(event) => setStatusForm({ ...statusForm, nextAction: event.target.value })} /></label> : null}
             {statusForm.followUpStatus === 'Not Interested' ? <label>Reason<input value={statusForm.reason} onChange={(event) => setStatusForm({ ...statusForm, reason: event.target.value })} /></label> : null}
             <label>Remark<textarea value={statusForm.notes} onChange={(event) => setStatusForm({ ...statusForm, notes: event.target.value })} /></label>
@@ -536,7 +563,7 @@ export default function ConsultancyProfilePage() {
       ) : null}
       {scheduling ? (
         <Dialog title="Schedule call" onClose={() => setScheduling(false)}>
-          <form className="gx-form" onSubmit={(event) => { event.preventDefault(); run(() => client.setFollowUp(id, { followUpStatus: 'Call Scheduled', scheduledAt: new Date(when).toISOString() }), () => setScheduling(false)); }}>
+          <form className="gx-form" onSubmit={(event) => { event.preventDefault(); run(() => client.setFollowUp(id, { followUpStatus: 'Meeting Scheduled', scheduledAt: new Date(when).toISOString() }), () => setScheduling(false)); }}>
             <label>Future date and time<input type="datetime-local" required value={when} onChange={(event) => setWhen(event.target.value)} /></label>
             <button className="gx-lime" type="submit" disabled={saving}>Schedule</button>
           </form>

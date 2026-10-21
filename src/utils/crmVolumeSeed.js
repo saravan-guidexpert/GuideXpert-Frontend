@@ -3,7 +3,7 @@
  * Every name, phone, and email is invented. Nothing here is a real person.
  */
 
-import { ADMISSION_STATUSES, DEMO_ACTOR, DEMO_SEED_ACTOR, FOLLOW_UP_STATUSES } from './crmDemoStore.js';
+import { ADMISSION_STATUSES, CALLING_STATUSES, CONSULTANCY_STATUSES, DEMO_ACTOR, DEMO_SEED_ACTOR } from './crmDemoStore.js';
 
 export const VOLUME_STUDENT_COUNT = 800;
 export const VOLUME_CONSULTANCY_COUNT = 64;
@@ -100,17 +100,18 @@ export function createVolumeState(now = new Date()) {
     const name = `${brand} ${city}`;
     const owner = index % 5 === 0 ? DEMO_SEED_ACTOR : DEMO_ACTOR;
     const status = index >= inactiveFrom ? 'inactive' : 'active';
-    const followUpStatus = FOLLOW_UP_STATUSES[index % FOLLOW_UP_STATUSES.length];
+    const followUpStatus = CONSULTANCY_STATUSES[index % CONSULTANCY_STATUSES.length];
+    const callingStatus = CALLING_STATUSES[index % CALLING_STATUSES.length];
     const createdAt = daysAgo(now, 400 - index * 3, 9);
     let lastContactAt = null;
     let nextFollowUpAt = null;
-    if (followUpStatus === 'Call Scheduled') {
+    if (followUpStatus === 'Meeting Scheduled') {
       nextFollowUpAt = daysAgo(now, index % 2 === 0 ? -4 - (index % 10) : 2 + (index % 8), 11);
     } else if (followUpStatus === 'Follow-up Required') {
       nextFollowUpAt = daysAgo(now, index % 2 === 0 ? -2 - (index % 6) : 1 + (index % 5), 15);
-    } else if (followUpStatus === 'Call Completed' || followUpStatus === 'Not Lifted') {
+    } else if (followUpStatus === 'Meeting Completed' || followUpStatus === 'Contacted') {
       lastContactAt = daysAgo(now, 1 + (index % 12), 16);
-    } else if (followUpStatus === 'Interested' || followUpStatus === 'On Hold') {
+    } else if (followUpStatus === 'Interested' || followUpStatus === 'On Hold' || followUpStatus === 'Onboarding in Progress' || followUpStatus === 'On - Boarded') {
       lastContactAt = daysAgo(now, 3 + (index % 9), 14);
       nextFollowUpAt = daysAgo(now, -6 - (index % 7), 11);
     }
@@ -126,6 +127,7 @@ export function createVolumeState(now = new Date()) {
       ownerId: owner.id,
       ownerName: owner.name,
       followUpStatus,
+      callingStatus,
       lastContactAt,
       nextFollowUpAt,
       createdAt,
@@ -159,7 +161,7 @@ export function createVolumeState(now = new Date()) {
         consultancyId: id,
         contactId: primary ? primary.id : null,
         type: history === 0 ? 'call' : 'follow_up',
-        status: history === 0 ? 'Call Completed' : followUpStatus,
+        status: history === 0 ? 'Meeting Completed' : followUpStatus,
         scheduledAt: nextFollowUpAt,
         completedAt: history === 0 ? stamp : null,
         outcome: history === 0 ? 'Spoke' : '',
@@ -266,7 +268,7 @@ export function createVolumeState(now = new Date()) {
       entityId: consultancy.id,
       actorLabel: consultancy.ownerName,
       reason: '',
-      before: { followUpStatus: 'Pending' },
+      before: { followUpStatus: 'Fresh Lead', callingStatus: '' },
       after: { followUpStatus: consultancy.followUpStatus, consultancyName: consultancy.name },
       createdAt: daysAgo(now, index % 5, 17),
     });

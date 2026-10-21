@@ -82,6 +82,29 @@ test('duplicate active consultancy names are rejected after normalization', () =
   assert.equal(listed.data.total, 1);
 });
 
+test('a new consultancy keeps the chosen consultancy and calling status', () => {
+  const crm = repo();
+  const created = crm.createConsultancy({
+    name: 'West Desk',
+    status: 'active',
+    followUpStatus: 'Meeting Scheduled',
+    callingStatus: 'Connected',
+  });
+  assert.equal(created.status, 201);
+  assert.equal(created.data.consultancy.followUpStatus, 'Meeting Scheduled');
+  assert.equal(created.data.consultancy.callingStatus, 'Connected');
+  const updated = crm.updateConsultancy(created.data.consultancy.id, {
+    followUpStatus: 'On Hold',
+    callingStatus: 'Busy',
+  });
+  assert.equal(updated.status, 200);
+  assert.equal(updated.data.consultancy.followUpStatus, 'On Hold');
+  assert.equal(updated.data.consultancy.callingStatus, 'Busy');
+  const cleared = crm.updateConsultancy(created.data.consultancy.id, { callingStatus: 'Not a status' });
+  assert.equal(cleared.data.consultancy.callingStatus, '');
+  assert.equal(cleared.data.consultancy.followUpStatus, 'On Hold');
+});
+
 test('the first referral wins and a second referral does not change it', () => {
   const crm = repo();
   const existing = crm.getStudentReferral('st_1');
@@ -342,7 +365,8 @@ test('missing fields and an unknown status are shown safely and left unchanged',
   assert.equal(stored.students.length, state.students.length);
   assert.equal(stored.referrals.length, state.referrals.length);
   assert.equal(stored.consultancies.find((row) => row.id === 'con_x').ownerId, 'staff_me');
-  assert.equal(stored.consultancies.find((row) => row.id === 'con_x').followUpStatus, 'Pending');
+  assert.equal(stored.consultancies.find((row) => row.id === 'con_x').followUpStatus, 'Fresh Lead');
+  assert.equal(stored.consultancies.find((row) => row.id === 'con_x').callingStatus, '');
 });
 
 test('a reopened repository keeps edits, and rejected referral writes do not land', () => {
@@ -444,7 +468,8 @@ test('version 1 records migrate in place and stay owned by demo staff', () => {
   const horizon = listed.data.items.find((row) => row.id === 'con_1');
   assert.equal(horizon.createdById, 'staff_me');
   assert.equal(horizon.ownerId, 'staff_me');
-  assert.equal(horizon.followUpStatus, 'Pending');
+  assert.equal(horizon.followUpStatus, 'Fresh Lead');
+  assert.equal(horizon.callingStatus, '');
   const saved = JSON.parse(storage.getItem(CRM_DEMO_STORAGE_KEY));
   assert.equal(saved.version, 2);
   assert.equal(saved.students.length, studentCount);
@@ -473,19 +498,25 @@ test('staff sees owned consultancies and reassignment keeps the creator', () => 
 test('follow-up rules record activity and derive overdue without moving last contact', () => {
   const crm = repo();
   const now = new Date('2026-10-19T00:00:00.000Z');
-  assert.equal(crm.setFollowUp('con_1', { followUpStatus: 'Call Scheduled', scheduledAt: '2020-01-01T00:00:00.000Z' }, now).status, 400);
+  assert.equal(crm.setFollowUp('con_1', { followUpStatus: 'Meeting Scheduled', scheduledAt: '2020-01-01T00:00:00.000Z' }, now).status, 400);
   const future = '2026-10-20T10:00:00.000Z';
-  const scheduled = crm.setFollowUp('con_1', { followUpStatus: 'Call Scheduled', scheduledAt: future }, now);
+  const scheduled = crm.setFollowUp('con_1', { followUpStatus: 'Meeting Scheduled', scheduledAt: future }, now);
   assert.equal(scheduled.status, 200);
-  assert.equal(scheduled.data.consultancy.followUpStatus, 'Call Scheduled');
+  assert.equal(scheduled.data.consultancy.followUpStatus, 'Meeting Scheduled');
+  assert.equal(scheduled.data.consultancy.callingStatus, '');
   assert.equal(scheduled.data.consultancy.nextFollowUpAt, future);
   assert.equal(scheduled.data.consultancy.lastContactAt, null);
+  const called = crm.setFollowUp('con_1', { callingStatus: 'Not Answered' }, now);
+  assert.equal(called.status, 200);
+  assert.equal(called.data.consultancy.callingStatus, 'Not Answered');
+  assert.equal(called.data.consultancy.followUpStatus, 'Meeting Scheduled');
+  assert.equal(called.data.consultancy.lastContactAt, null);
   assert.equal(isFollowUpOverdue(scheduled.data.consultancy, now), false);
-  assert.equal(crm.setFollowUp('con_1', { followUpStatus: 'Call Completed', outcome: 'Spoke' }, now).status, 400);
+  assert.equal(crm.setFollowUp('con_1', { followUpStatus: 'Meeting Completed', outcome: 'Spoke' }, now).status, 400);
   const completedAt = new Date('2026-10-19T04:00:00.000Z');
-  const completed = crm.setFollowUp('con_1', { followUpStatus: 'Call Completed', outcome: 'Spoke', notes: 'Asked for the brochure.' }, completedAt);
+  const completed = crm.setFollowUp('con_1', { followUpStatus: 'Meeting Completed', outcome: 'Spoke', notes: 'Asked for the brochure.' }, completedAt);
   assert.equal(completed.data.consultancy.lastContactAt, completedAt.toISOString());
-  const again = crm.setFollowUp('con_1', { followUpStatus: 'Call Scheduled', scheduledAt: future }, now);
+  const again = crm.setFollowUp('con_1', { followUpStatus: 'Meeting Scheduled', scheduledAt: future }, now);
   assert.equal(again.data.consultancy.lastContactAt, completedAt.toISOString());
   const required = crm.setFollowUp('con_1', {
     followUpStatus: 'Follow-up Required',
@@ -531,7 +562,7 @@ test('original referral ownership stays put when the current source changes', ()
   const inactive = crm.createStudent({ fullName: 'Closed Desk', phone: '9000077772', consultancyId: 'con_3' });
   assert.equal(inactive.code, 'consultancy_not_eligible');
   assert.equal(crm.updateConsultancy('con_1', { status: 'inactive' }).status, 200);
-  const scheduled = crm.setFollowUp('con_2', { followUpStatus: 'Call Scheduled', scheduledAt: '2099-01-01T00:00:00.000Z' });
+  const scheduled = crm.setFollowUp('con_2', { followUpStatus: 'Meeting Scheduled', scheduledAt: '2099-01-01T00:00:00.000Z' });
   const beforeStatus = scheduled.data.consultancy.followUpStatus;
   const cancelled = crm.cancelFollowUp('con_2', scheduled.data.followUp.id);
   assert.equal(cancelled.status, 200);

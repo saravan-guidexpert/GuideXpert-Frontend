@@ -9,7 +9,14 @@ import { createVolumeState } from './crmVolumeSeed.js';
 export const CRM_DEMO_STORAGE_KEY = 'guidexpert_crm_demo_v1';
 
 export const ADMISSION_STATUSES = ['Not started', 'Contacted', 'Counselling', 'Applied', 'Admitted', 'Enrolled', 'Not proceeding'];
-export const FOLLOW_UP_STATUSES = ['Pending', 'Not Lifted', 'Call Scheduled', 'Call Completed', 'Interested', 'Not Interested', 'Follow-up Required', 'On Hold'];
+export const CONSULTANCY_STATUSES = ['Fresh Lead', 'Contacted', 'Meeting Scheduled', 'Meeting Completed', 'Interested', 'Onboarding in Progress', 'Not Interested', 'Follow-up Required', 'On Hold', 'Discontinued', 'On - Boarded'];
+export const CALLING_STATUSES = ['Connected', 'Not Answered', 'Busy', 'Switched Off', 'Invalid Number', 'Call Back Requested', 'Follow-up Required', 'Interested', 'Not Interested', 'Meeting Scheduled', 'WhatsApp Message Sent', 'WhatsApp Call Connected'];
+const LEGACY_CONSULTANCY_STATUS = {
+  Pending: 'Fresh Lead',
+  'Not Lifted': 'Contacted',
+  'Call Scheduled': 'Meeting Scheduled',
+  'Call Completed': 'Meeting Completed',
+};
 export const DEMO_ACTOR = { id: 'staff_me', name: 'Demo staff' };
 export const DEMO_SEED_ACTOR = { id: 'staff_seed', name: 'Demo seed' };
 const DEMO_OWNERS = [DEMO_ACTOR, DEMO_SEED_ACTOR];
@@ -77,9 +84,9 @@ export function createSeedState() {
     demoManager: false,
     demoRole: 'staff',
     consultancies: [
-      { id: 'con_1', name: 'Horizon Study Circle', normalizedName: 'horizon study circle', status: 'active', notes: 'Fictional Hyderabad counselling desk.', createdById: DEMO_ACTOR.id, createdByName: DEMO_ACTOR.name, ownerId: DEMO_ACTOR.id, ownerName: DEMO_ACTOR.name, followUpStatus: 'Pending', lastContactAt: null, nextFollowUpAt: null, createdAt: at, updatedAt: at },
-      { id: 'con_2', name: 'North Star Guidance', normalizedName: 'north star guidance', status: 'active', notes: 'Fictional Bengaluru partner.', createdById: DEMO_ACTOR.id, createdByName: DEMO_ACTOR.name, ownerId: DEMO_ACTOR.id, ownerName: DEMO_ACTOR.name, followUpStatus: 'Pending', lastContactAt: null, nextFollowUpAt: null, createdAt: at, updatedAt: at },
-      { id: 'con_3', name: 'South Gate Advisors', normalizedName: 'south gate advisors', status: 'inactive', notes: 'Fictional inactive desk kept for history.', createdById: DEMO_ACTOR.id, createdByName: DEMO_ACTOR.name, ownerId: DEMO_ACTOR.id, ownerName: DEMO_ACTOR.name, followUpStatus: 'Pending', lastContactAt: null, nextFollowUpAt: null, createdAt: at, updatedAt: at },
+      { id: 'con_1', name: 'Horizon Study Circle', normalizedName: 'horizon study circle', status: 'active', notes: 'Fictional Hyderabad counselling desk.', createdById: DEMO_ACTOR.id, createdByName: DEMO_ACTOR.name, ownerId: DEMO_ACTOR.id, ownerName: DEMO_ACTOR.name, followUpStatus: 'Fresh Lead', callingStatus: '', lastContactAt: null, nextFollowUpAt: null, createdAt: at, updatedAt: at },
+      { id: 'con_2', name: 'North Star Guidance', normalizedName: 'north star guidance', status: 'active', notes: 'Fictional Bengaluru partner.', createdById: DEMO_ACTOR.id, createdByName: DEMO_ACTOR.name, ownerId: DEMO_ACTOR.id, ownerName: DEMO_ACTOR.name, followUpStatus: 'Fresh Lead', callingStatus: '', lastContactAt: null, nextFollowUpAt: null, createdAt: at, updatedAt: at },
+      { id: 'con_3', name: 'South Gate Advisors', normalizedName: 'south gate advisors', status: 'inactive', notes: 'Fictional inactive desk kept for history.', createdById: DEMO_ACTOR.id, createdByName: DEMO_ACTOR.name, ownerId: DEMO_ACTOR.id, ownerName: DEMO_ACTOR.name, followUpStatus: 'Fresh Lead', callingStatus: '', lastContactAt: null, nextFollowUpAt: null, createdAt: at, updatedAt: at },
     ],
     contacts: [
       { id: 'ct_1', consultancyId: 'con_1', name: 'Anita Rao', phone: '9000011111', email: '', role: 'Owner', status: 'active', deactivatedAt: null, createdAt: at, updatedAt: at },
@@ -203,9 +210,19 @@ function migrateState(state) {
       row.ownerName = DEMO_ACTOR.name;
       changed = true;
     }
-    if (!FOLLOW_UP_STATUSES.includes(row.followUpStatus)) {
-      row.followUpStatus = 'Pending';
+    const consultancyStatus = consultancyStatusOf(row.followUpStatus);
+    if (row.followUpStatus !== consultancyStatus) {
+      row.followUpStatus = consultancyStatus;
       changed = true;
+    }
+    if (!CALLING_STATUSES.includes(row.callingStatus)) {
+      if (row.callingStatus) {
+        row.callingStatus = '';
+        changed = true;
+      } else if (row.callingStatus == null) {
+        row.callingStatus = '';
+        changed = true;
+      }
     }
     if (!Object.prototype.hasOwnProperty.call(row, 'lastContactAt')) {
       row.lastContactAt = null;
@@ -219,9 +236,14 @@ function migrateState(state) {
   return changed;
 }
 
+function consultancyStatusOf(value) {
+  if (CONSULTANCY_STATUSES.includes(value)) return value;
+  return LEGACY_CONSULTANCY_STATUS[value] || 'Fresh Lead';
+}
+
 export function isFollowUpOverdue(row, now = new Date()) {
   if (!row || !row.nextFollowUpAt) return false;
-  if (row.followUpStatus !== 'Call Scheduled' && row.followUpStatus !== 'Follow-up Required') return false;
+  if (row.followUpStatus !== 'Meeting Scheduled' && row.followUpStatus !== 'Follow-up Required') return false;
   const when = new Date(row.nextFollowUpAt);
   return !Number.isNaN(when.getTime()) && when.getTime() < now.getTime();
 }
@@ -361,7 +383,8 @@ function consultancyDto(row, state) {
     createdByName: row.createdByName,
     ownerId: row.ownerId,
     ownerName: row.ownerName,
-    followUpStatus: row.followUpStatus || 'Pending',
+    followUpStatus: consultancyStatusOf(row.followUpStatus),
+    callingStatus: CALLING_STATUSES.includes(row.callingStatus) ? row.callingStatus : '',
     lastContactAt: row.lastContactAt || null,
     nextFollowUpAt: row.nextFollowUpAt || null,
     latestRemark: remark ? {
@@ -487,7 +510,8 @@ export function createCrmDemoRepository(storage) {
           createdByName: DEMO_ACTOR.name,
           ownerId: DEMO_ACTOR.id,
           ownerName: DEMO_ACTOR.name,
-          followUpStatus: 'Pending',
+          followUpStatus: CONSULTANCY_STATUSES.includes(body.followUpStatus) ? body.followUpStatus : 'Fresh Lead',
+          callingStatus: CALLING_STATUSES.includes(body.callingStatus) ? body.callingStatus : '',
           lastContactAt: null,
           nextFollowUpAt: null,
           createdAt: now,
@@ -509,7 +533,7 @@ export function createCrmDemoRepository(storage) {
       return commit(store(), (state) => {
         const row = findVisible(state, id);
         if (!row) return { write: false, state, response: fail(404, 'Consultancy not found.', 'not_found') };
-        const before = { name: row.name, status: row.status, notes: row.notes };
+        const before = { name: row.name, status: row.status, notes: row.notes, followUpStatus: row.followUpStatus, callingStatus: row.callingStatus || '' };
         if (Object.prototype.hasOwnProperty.call(body, 'name')) {
           try {
             row.name = text(body.name, 'Name', 2, 200);
@@ -520,11 +544,23 @@ export function createCrmDemoRepository(storage) {
         }
         if (Object.prototype.hasOwnProperty.call(body, 'notes')) row.notes = String(body.notes || '').trim().slice(0, 2000);
         if (Object.prototype.hasOwnProperty.call(body, 'status')) row.status = body.status === 'inactive' ? 'inactive' : 'active';
+        if (Object.prototype.hasOwnProperty.call(body, 'followUpStatus') && CONSULTANCY_STATUSES.includes(body.followUpStatus)) {
+          row.followUpStatus = body.followUpStatus;
+        }
+        if (Object.prototype.hasOwnProperty.call(body, 'callingStatus')) {
+          row.callingStatus = CALLING_STATUSES.includes(body.callingStatus) ? body.callingStatus : '';
+        }
         if (row.status === 'active' && activeNameOwner(state, row.normalizedName, row.id)) {
           return { write: false, state, response: fail(409, 'An active consultancy with this name already exists.', 'duplicate_consultancy') };
         }
         row.updatedAt = new Date().toISOString();
-        addAudit(state, { action: 'consultancy.updated', entityType: 'consultancy', entityId: row.id, before, after: { name: row.name, status: row.status, notes: row.notes } });
+        addAudit(state, {
+          action: 'consultancy.updated',
+          entityType: 'consultancy',
+          entityId: row.id,
+          before,
+          after: { name: row.name, status: row.status, notes: row.notes, followUpStatus: row.followUpStatus, callingStatus: row.callingStatus || '' },
+        });
         return { write: true, state, response: ok(200, 'Consultancy updated.', { consultancy: consultancyDto(row, state) }) };
       });
     },
@@ -894,24 +930,33 @@ export function createCrmDemoRepository(storage) {
       return commit(store(), (state) => {
         const row = findVisible(state, id);
         if (!row) return { write: false, state, response: fail(404, 'Consultancy not found.', 'not_found') };
-        const status = body.followUpStatus;
-        if (!FOLLOW_UP_STATUSES.includes(status)) {
-          return { write: false, state, response: fail(400, 'Choose a follow-up status.', 'invalid_body') };
+        const hasStatus = body.consultancyStatus != null || body.followUpStatus != null;
+        const status = hasStatus ? (body.consultancyStatus || body.followUpStatus) : null;
+        const hasCalling = Object.prototype.hasOwnProperty.call(body, 'callingStatus');
+        const calling = hasCalling ? body.callingStatus : null;
+        if (!hasStatus && !hasCalling) {
+          return { write: false, state, response: fail(400, 'Choose a consultancy status or a calling status.', 'invalid_body') };
+        }
+        if (hasStatus && !CONSULTANCY_STATUSES.includes(status)) {
+          return { write: false, state, response: fail(400, 'Choose a consultancy status.', 'invalid_body') };
+        }
+        if (hasCalling && calling && !CALLING_STATUSES.includes(calling)) {
+          return { write: false, state, response: fail(400, 'Choose a calling status.', 'invalid_body') };
         }
         const notes = String(body.notes || '').trim().slice(0, REMARK_MAX);
         const outcome = String(body.outcome || '').trim().slice(0, 160);
         const nextAction = String(body.nextAction || '').trim().slice(0, 160);
         const reason = String(body.reason || '').trim().slice(0, REMARK_MAX);
         let scheduledAt = null;
-        if (status === 'Call Scheduled') {
+        if (status === 'Meeting Scheduled') {
           const when = new Date(body.scheduledAt);
           if (!body.scheduledAt || Number.isNaN(when.getTime()) || when.getTime() <= now.getTime()) {
-            return { write: false, state, response: fail(400, 'Call Scheduled needs a future date and time.', 'invalid_body') };
+            return { write: false, state, response: fail(400, 'Meeting Scheduled needs a future date and time.', 'invalid_body') };
           }
           scheduledAt = when.toISOString();
         }
-        if (status === 'Call Completed' && (outcome.length < 2 || notes.length < 1)) {
-          return { write: false, state, response: fail(400, 'Call Completed needs an outcome and a remark.', 'invalid_body') };
+        if (status === 'Meeting Completed' && (outcome.length < 2 || notes.length < 1)) {
+          return { write: false, state, response: fail(400, 'Meeting Completed needs an outcome and a remark.', 'invalid_body') };
         }
         if (status === 'Follow-up Required') {
           const when = new Date(body.scheduledAt);
@@ -923,64 +968,69 @@ export function createCrmDemoRepository(storage) {
         if (status === 'Not Interested' && reason.length < 2 && notes.length < 2) {
           return { write: false, state, response: fail(400, 'Not Interested needs a reason.', 'invalid_body') };
         }
-        const before = { followUpStatus: row.followUpStatus, lastContactAt: row.lastContactAt, nextFollowUpAt: row.nextFollowUpAt };
+        const before = { followUpStatus: row.followUpStatus, callingStatus: row.callingStatus || '', lastContactAt: row.lastContactAt, nextFollowUpAt: row.nextFollowUpAt };
         const stamp = now.toISOString();
-        row.followUpStatus = status;
         row.updatedAt = stamp;
-        if (status === 'Call Scheduled' || status === 'Follow-up Required') {
-          row.nextFollowUpAt = scheduledAt;
-        } else if (status === 'Call Completed' || status === 'Not Lifted') {
-          row.lastContactAt = stamp;
-          if (body.nextFollowUpAt) {
-            const next = new Date(body.nextFollowUpAt);
+        if (hasCalling) row.callingStatus = calling || '';
+        if (calling === 'Connected' || calling === 'WhatsApp Call Connected') row.lastContactAt = stamp;
+        let followUp = null;
+        if (hasStatus) {
+          row.followUpStatus = status;
+          if (status === 'Meeting Scheduled' || status === 'Follow-up Required') {
+            row.nextFollowUpAt = scheduledAt;
+          } else if (status === 'Meeting Completed' || status === 'Contacted') {
+            row.lastContactAt = stamp;
+            if (body.nextFollowUpAt) {
+              const next = new Date(body.nextFollowUpAt);
+              if (!Number.isNaN(next.getTime())) row.nextFollowUpAt = next.toISOString();
+            } else if (status === 'Meeting Completed') {
+              row.nextFollowUpAt = null;
+            }
+          } else if ((status === 'Interested' || status === 'On Hold' || status === 'Onboarding in Progress' || status === 'On - Boarded') && body.scheduledAt) {
+            const next = new Date(body.scheduledAt);
             if (!Number.isNaN(next.getTime())) row.nextFollowUpAt = next.toISOString();
-          } else if (status === 'Call Completed') {
+          } else if (status === 'Fresh Lead' || status === 'Not Interested' || status === 'Discontinued') {
             row.nextFollowUpAt = null;
           }
-        } else if ((status === 'Interested' || status === 'On Hold') && body.scheduledAt) {
-          const next = new Date(body.scheduledAt);
-          if (!Number.isNaN(next.getTime())) row.nextFollowUpAt = next.toISOString();
-        } else if (status === 'Pending' || status === 'Not Interested') {
-          row.nextFollowUpAt = null;
-        }
-        const followUp = {
-          id: nextId(state, 'fu'),
-          consultancyId: row.id,
-          contactId: body.contactId || null,
-          type: status === 'Call Scheduled' || status === 'Call Completed' || status === 'Not Lifted' ? 'call' : 'follow_up',
-          status,
-          scheduledAt,
-          completedAt: status === 'Call Completed' || status === 'Not Lifted' ? stamp : null,
-          outcome,
-          nextAction,
-          reason,
-          notes,
-          actorId: DEMO_ACTOR.id,
-          actorName: DEMO_ACTOR.name,
-          createdAt: stamp,
-        };
-        state.followUps.unshift(followUp);
-        if (notes) {
-          state.remarks.unshift({
-            id: nextId(state, 'rm'),
+          followUp = {
+            id: nextId(state, 'fu'),
             consultancyId: row.id,
-            text: notes,
-            authorId: DEMO_ACTOR.id,
-            authorName: DEMO_ACTOR.name,
+            contactId: body.contactId || null,
+            type: status === 'Meeting Scheduled' || status === 'Meeting Completed' || status === 'Contacted' ? 'call' : 'follow_up',
+            status,
+            scheduledAt,
+            completedAt: status === 'Meeting Completed' || status === 'Contacted' ? stamp : null,
+            outcome,
+            nextAction,
+            reason,
+            notes,
+            actorId: DEMO_ACTOR.id,
+            actorName: DEMO_ACTOR.name,
             createdAt: stamp,
-            updatedAt: stamp,
-            previousText: null,
-            history: [],
-          });
+          };
+          state.followUps.unshift(followUp);
+          if (notes) {
+            state.remarks.unshift({
+              id: nextId(state, 'rm'),
+              consultancyId: row.id,
+              text: notes,
+              authorId: DEMO_ACTOR.id,
+              authorName: DEMO_ACTOR.name,
+              createdAt: stamp,
+              updatedAt: stamp,
+              previousText: null,
+              history: [],
+            });
+          }
         }
         addAudit(state, {
-          action: 'consultancy.follow_up',
+          action: hasStatus ? 'consultancy.follow_up' : 'consultancy.calling_status',
           entityType: 'consultancy',
           entityId: row.id,
           before,
-          after: { followUpStatus: status, lastContactAt: row.lastContactAt, nextFollowUpAt: row.nextFollowUpAt, followUpId: followUp.id },
+          after: { followUpStatus: row.followUpStatus, callingStatus: row.callingStatus || '', lastContactAt: row.lastContactAt, nextFollowUpAt: row.nextFollowUpAt, followUpId: followUp ? followUp.id : null },
         });
-        return { write: true, state, response: ok(200, 'Follow-up saved in this browser.', { consultancy: consultancyDto(row, state), followUp }) };
+        return { write: true, state, response: ok(200, hasStatus ? 'Consultancy status saved in this browser.' : 'Calling status saved in this browser.', { consultancy: consultancyDto(row, state), followUp }) };
       });
     },
     addRemark(id, body = {}) {

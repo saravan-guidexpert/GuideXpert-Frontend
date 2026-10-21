@@ -1,13 +1,13 @@
 import { useState } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { interpretCrmResult } from '../../utils/crmAccess';
-import { FOLLOW_UP_STATUSES, isFollowUpOverdue } from '../../utils/crmDemoStore';
+import { CALLING_STATUSES, CONSULTANCY_STATUSES, isFollowUpOverdue } from '../../utils/crmDemoStore';
 import { Badge, DataTable, Dialog, Notice, PageHeader, SearchField } from './CrmKit';
 import { shortDate } from './crmFormat';
 import { loadAll } from './dashboard/dashboardModel';
 import { useCrmDemo } from './useCrmDemo';
 
-const EMPTY = { name: '', status: 'active', notes: '' };
+const EMPTY = { name: '', status: 'active', notes: '', followUpStatus: 'Fresh Lead', callingStatus: '' };
 const QUIET_DAYS = 30;
 
 function messageOf(result) {
@@ -23,10 +23,18 @@ function dayKey(iso) {
 }
 
 function followTone(status) {
-  if (status === 'Interested' || status === 'Call Completed') return 'on';
-  if (status === 'Not Interested') return 'off';
-  if (status === 'Call Scheduled' || status === 'Follow-up Required') return 'warn';
-  if (status === 'On Hold' || status === 'Not Lifted') return 'hold';
+  if (status === 'Interested' || status === 'Meeting Completed' || status === 'On - Boarded') return 'on';
+  if (status === 'Not Interested' || status === 'Discontinued') return 'off';
+  if (status === 'Meeting Scheduled' || status === 'Follow-up Required' || status === 'Onboarding in Progress') return 'warn';
+  if (status === 'On Hold') return 'hold';
+  return 'pending';
+}
+
+function callTone(status) {
+  if (status === 'Connected' || status === 'WhatsApp Call Connected' || status === 'Interested') return 'on';
+  if (status === 'Not Interested' || status === 'Invalid Number' || status === 'Switched Off') return 'off';
+  if (status === 'Call Back Requested' || status === 'Meeting Scheduled' || status === 'Follow-up Required' || status === 'Busy') return 'warn';
+  if (status === 'Not Answered') return 'hold';
   return 'pending';
 }
 
@@ -37,7 +45,8 @@ export default function ConsultanciesPage() {
   const superAdmin = demoRole === 'super_admin';
   const search = params.get('q') || '';
   const relationship = params.get('status') === 'active' || params.get('status') === 'inactive' ? params.get('status') : 'all';
-  const follow = FOLLOW_UP_STATUSES.includes(params.get('follow') || '') ? params.get('follow') : 'all';
+  const follow = CONSULTANCY_STATUSES.includes(params.get('follow') || '') ? params.get('follow') : 'all';
+  const calling = CALLING_STATUSES.includes(params.get('calling') || '') ? params.get('calling') : 'all';
   const owner = params.get('owner') || 'all';
   const creator = params.get('creator') || 'all';
   const dueToday = params.get('due') === 'today';
@@ -52,7 +61,7 @@ export default function ConsultanciesPage() {
   const [remarkFor, setRemarkFor] = useState(null);
   const [remarkText, setRemarkText] = useState('');
   const [statusFor, setStatusFor] = useState(null);
-  const [statusForm, setStatusForm] = useState({ followUpStatus: 'Pending', scheduledAt: '', outcome: '', notes: '', nextAction: '', reason: '' });
+  const [statusForm, setStatusForm] = useState({ followUpStatus: 'Fresh Lead', callingStatus: '', scheduledAt: '', outcome: '', notes: '', nextAction: '', reason: '' });
 
   const consultanciesLoad = loadAll((page) => client.listConsultancies({ page, limit: 100 }));
   const directoryError = consultanciesLoad.ok ? '' : consultanciesLoad.message;
@@ -79,6 +88,7 @@ export default function ConsultanciesPage() {
   const rows = visible.filter((row) => {
     if (relationship !== 'all' && row.status !== relationship) return false;
     if (follow !== 'all' && row.followUpStatus !== follow) return false;
+    if (calling !== 'all' && (row.callingStatus || '') !== calling) return false;
     if (superAdmin && owner !== 'all' && row.ownerId !== owner) return false;
     if (superAdmin && creator !== 'all' && row.createdById !== creator) return false;
     if (dueToday && dayKey(row.nextFollowUpAt) !== today) return false;
@@ -115,6 +125,7 @@ export default function ConsultanciesPage() {
   const chips = [
     relationship !== 'all' ? ['status', relationship === 'active' ? 'Active' : 'Inactive'] : null,
     follow !== 'all' ? ['follow', follow] : null,
+    calling !== 'all' ? ['calling', calling] : null,
     superAdmin && owner !== 'all' ? ['owner', `Owner ${owners.find(([id]) => id === owner)?.[1] || owner}`] : null,
     superAdmin && creator !== 'all' ? ['creator', `Creator ${creators.find(([id]) => id === creator)?.[1] || creator}`] : null,
     dueToday ? ['due', 'Due today'] : null,
@@ -126,13 +137,13 @@ export default function ConsultanciesPage() {
 
   function clearChip(key) {
     replaceParams((copy) => {
-      if (key === 'status' || key === 'follow' || key === 'owner' || key === 'creator' || key === 'due' || key === 'overdue' || key === 'quiet' || key === 'referrals' || key === 'q') copy.delete(key);
+      if (key === 'status' || key === 'follow' || key === 'calling' || key === 'owner' || key === 'creator' || key === 'due' || key === 'overdue' || key === 'quiet' || key === 'referrals' || key === 'q') copy.delete(key);
     });
   }
 
   function resetFilters() {
     replaceParams((copy) => {
-      ['q', 'status', 'follow', 'owner', 'creator', 'due', 'overdue', 'quiet', 'referrals', 'sort'].forEach((key) => copy.delete(key));
+      ['q', 'status', 'follow', 'calling', 'owner', 'creator', 'due', 'overdue', 'quiet', 'referrals', 'sort'].forEach((key) => copy.delete(key));
     });
   }
 
@@ -170,6 +181,7 @@ export default function ConsultanciesPage() {
     setSaving(true);
     const body = {
       followUpStatus: statusForm.followUpStatus,
+      callingStatus: statusForm.callingStatus,
       notes: statusForm.notes,
       outcome: statusForm.outcome,
       nextAction: statusForm.nextAction,
@@ -204,14 +216,18 @@ export default function ConsultanciesPage() {
     },
     {
       key: 'follow',
-      label: 'Follow-up',
+      label: 'Consultancy status',
       render: (row) => (
         <span className="gx-status-stack">
           <Badge tone={followTone(row.followUpStatus)}>{row.followUpStatus}</Badge>
           {isFollowUpOverdue(row, now) ? <Badge tone="off">Overdue</Badge> : null}
-          <Badge tone={row.status === 'active' ? 'on' : 'off'}>{row.status}</Badge>
         </span>
       ),
+    },
+    {
+      key: 'calling',
+      label: 'Calling status',
+      render: (row) => (row.callingStatus ? <Badge tone={callTone(row.callingStatus)}>{row.callingStatus}</Badge> : '—'),
     },
     { key: 'last', label: 'Last contact', render: (row) => shortDate(row.lastContactAt) },
     { key: 'next', label: 'Next follow-up', render: (row) => shortDate(row.nextFollowUpAt) },
@@ -232,7 +248,7 @@ export default function ConsultanciesPage() {
       render: (row) => (
         <span className="gx-row-actions">
           <button type="button" className="gx-text" onClick={(event) => { event.stopPropagation(); navigate({ pathname: `/crm/consultancies/${row.id}`, search: directoryQuery() }); }}>Open</button>
-          <button type="button" className="gx-text" onClick={(event) => { event.stopPropagation(); setStatusFor(row); setStatusForm({ followUpStatus: row.followUpStatus || 'Pending', scheduledAt: '', outcome: '', notes: '', nextAction: '', reason: '' }); }}>Status</button>
+          <button type="button" className="gx-text" onClick={(event) => { event.stopPropagation(); setStatusFor(row); setStatusForm({ followUpStatus: row.followUpStatus || 'Fresh Lead', callingStatus: row.callingStatus || '', scheduledAt: '', outcome: '', notes: '', nextAction: '', reason: '' }); }}>Status</button>
           <button type="button" className="gx-text" onClick={(event) => { event.stopPropagation(); setRemarkFor(row); setRemarkText(''); }}>Remark</button>
         </span>
       ),
@@ -262,9 +278,13 @@ export default function ConsultanciesPage() {
           </section>
           <div className="gx-toolbar">
             <SearchField value={search} onChange={(value) => replaceParams((copy) => { if (value) copy.set('q', value); else copy.delete('q'); })} label="Search name, contact, phone, or email" />
-            <select className="gx-select" aria-label="Follow-up status" value={follow} onChange={(event) => replaceParams((copy) => { if (event.target.value === 'all') copy.delete('follow'); else copy.set('follow', event.target.value); })}>
-              <option value="all">All follow-ups</option>
-              {FOLLOW_UP_STATUSES.map((item) => <option key={item} value={item}>{item}</option>)}
+            <select className="gx-select" aria-label="Consultancy status" value={follow} onChange={(event) => replaceParams((copy) => { if (event.target.value === 'all') copy.delete('follow'); else copy.set('follow', event.target.value); })}>
+              <option value="all">All consultancy statuses</option>
+              {CONSULTANCY_STATUSES.map((item) => <option key={item} value={item}>{item}</option>)}
+            </select>
+            <select className="gx-select" aria-label="Calling status" value={calling} onChange={(event) => replaceParams((copy) => { if (event.target.value === 'all') copy.delete('calling'); else copy.set('calling', event.target.value); })}>
+              <option value="all">All calling statuses</option>
+              {CALLING_STATUSES.map((item) => <option key={item} value={item}>{item}</option>)}
             </select>
             <select className="gx-select" aria-label="Relationship" value={relationship} onChange={(event) => replaceParams((copy) => { if (event.target.value === 'all') copy.delete('status'); else copy.set('status', event.target.value); })}>
               <option value="all">Active and inactive</option>
@@ -323,6 +343,17 @@ export default function ConsultanciesPage() {
                 <option value="inactive">Inactive</option>
               </select>
             </label>
+            <label>Consultancy status
+              <select value={form.followUpStatus} onChange={(event) => setForm({ ...form, followUpStatus: event.target.value })}>
+                {CONSULTANCY_STATUSES.map((item) => <option key={item} value={item}>{item}</option>)}
+              </select>
+            </label>
+            <label>Calling status
+              <select value={form.callingStatus} onChange={(event) => setForm({ ...form, callingStatus: event.target.value })}>
+                <option value="">No calling status</option>
+                {CALLING_STATUSES.map((item) => <option key={item} value={item}>{item}</option>)}
+              </select>
+            </label>
             <label>Notes
               <textarea value={form.notes} onChange={(event) => setForm({ ...form, notes: event.target.value })} />
             </label>
@@ -343,19 +374,25 @@ export default function ConsultanciesPage() {
         </Dialog>
       ) : null}
       {statusFor ? (
-        <Dialog title={`Follow-up for ${statusFor.name}`} onClose={() => setStatusFor(null)}>
+        <Dialog title={`Status for ${statusFor.name}`} onClose={() => setStatusFor(null)}>
           <form className="gx-form" onSubmit={onStatus}>
-            <label>Follow-up status
+            <label>Consultancy status
               <select value={statusForm.followUpStatus} onChange={(event) => setStatusForm({ ...statusForm, followUpStatus: event.target.value })}>
-                {FOLLOW_UP_STATUSES.map((item) => <option key={item} value={item}>{item}</option>)}
+                {CONSULTANCY_STATUSES.map((item) => <option key={item} value={item}>{item}</option>)}
               </select>
             </label>
-            {statusForm.followUpStatus === 'Call Scheduled' || statusForm.followUpStatus === 'Follow-up Required' || statusForm.followUpStatus === 'Interested' || statusForm.followUpStatus === 'On Hold' ? (
-              <label>{statusForm.followUpStatus === 'Call Scheduled' ? 'Call date and time' : 'Date'}
+            <label>Calling status
+              <select value={statusForm.callingStatus} onChange={(event) => setStatusForm({ ...statusForm, callingStatus: event.target.value })}>
+                <option value="">No calling status</option>
+                {CALLING_STATUSES.map((item) => <option key={item} value={item}>{item}</option>)}
+              </select>
+            </label>
+            {statusForm.followUpStatus === 'Meeting Scheduled' || statusForm.followUpStatus === 'Follow-up Required' || statusForm.followUpStatus === 'Interested' || statusForm.followUpStatus === 'On Hold' || statusForm.followUpStatus === 'Onboarding in Progress' ? (
+              <label>{statusForm.followUpStatus === 'Meeting Scheduled' ? 'Meeting date and time' : 'Date'}
                 <input type="datetime-local" value={statusForm.scheduledAt} onChange={(event) => setStatusForm({ ...statusForm, scheduledAt: event.target.value })} />
               </label>
             ) : null}
-            {statusForm.followUpStatus === 'Call Completed' ? (
+            {statusForm.followUpStatus === 'Meeting Completed' ? (
               <label>Outcome
                 <input value={statusForm.outcome} onChange={(event) => setStatusForm({ ...statusForm, outcome: event.target.value })} />
               </label>
@@ -373,8 +410,8 @@ export default function ConsultanciesPage() {
             <label>Remark
               <textarea value={statusForm.notes} maxLength={500} onChange={(event) => setStatusForm({ ...statusForm, notes: event.target.value })} />
             </label>
-            <p className="gx-help">Scheduling a future call does not change the last contact time. Overdue is shown when a scheduled or required follow-up is already past.</p>
-            <button className="gx-lime" type="submit" disabled={saving}>Save follow-up</button>
+            <p className="gx-help">A future meeting does not change the last contact time. Overdue is shown when a meeting or required follow-up is already past.</p>
+            <button className="gx-lime" type="submit" disabled={saving}>Save status</button>
           </form>
         </Dialog>
       ) : null}
