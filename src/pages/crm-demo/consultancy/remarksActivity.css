@@ -1,0 +1,435 @@
+.gx-ra {
+  display: grid;
+  gap: 14px;
+  min-width: 0;
+  margin-top: 2px;
+}
+
+.gx-ra-head {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 16px 20px;
+}
+.gx-ra-head h2 {
+  margin: 0;
+  font-size: 20px;
+  font-weight: 700;
+  letter-spacing: -0.03em;
+  line-height: 1.2;
+}
+.gx-ra-lead {
+  margin: 4px 0 0;
+  max-width: 46ch;
+  color: var(--muted);
+  font-size: 13.5px;
+  line-height: 1.45;
+}
+.gx-ra-counts {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0;
+  margin: 8px 0 0;
+  color: var(--ink-soft);
+  font-size: 12.5px;
+  font-weight: 650;
+}
+.gx-ra-counts span + span::before {
+  content: "·";
+  margin: 0 8px;
+  color: var(--muted);
+  font-weight: 500;
+}
+.gx-ra-store {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+  margin: 8px 0 0;
+  color: var(--muted);
+  font-size: 12.5px;
+  line-height: 1.45;
+}
+.gx-ra-store svg { flex: 0 0 auto; margin-top: 2px; }
+
+.gx-ra-bar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-end;
+  gap: 8px 10px;
+  min-width: 0;
+}
+.gx-ra-bar .gx-search { flex: 1 1 240px; min-width: min(100%, 200px); }
+.gx-ra-bar .gx-search input { height: 36px; border-radius: 10px; font-size: 13px; }
+.gx-ra-seg {
+  display: inline-flex;
+  align-items: center;
+  height: 36px;
+  padding: 3px;
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  background: var(--white);
+}
+.gx-ra-seg button {
+  height: 28px;
+  padding: 0 10px;
+  border: 0;
+  border-radius: 8px;
+  background: transparent;
+  color: var(--muted);
+  font: inherit;
+  font-size: 12.5px;
+  font-weight: 650;
+  white-space: nowrap;
+  cursor: pointer;
+  transition: background-color 160ms ease, color 160ms ease, box-shadow 160ms ease;
+}
+.gx-ra-seg button:hover { color: var(--ink); background: var(--hover); }
+.gx-ra-seg button.is-on {
+  background: var(--wash);
+  color: var(--ink);
+  box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--lime) 55%, var(--line));
+}
+.gx-ra-seg button.is-on:hover { background: var(--wash); }
+.gx-ra-dates { display: flex; flex-wrap: wrap; gap: 8px; min-width: 0; }
+.gx-ra-date { display: grid; gap: 4px; flex: 0 1 168px; min-width: 0; }
+.gx-ra-date span { color: var(--muted); font-size: 11px; font-weight: 650; }
+.gx-ra-date input {
+  width: 100%;
+  min-width: 0;
+  height: 36px;
+  padding: 0 10px;
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  background: var(--white);
+  color: var(--ink);
+  font: inherit;
+  font-size: 13px;
+}
+.gx-ra-clear, .gx-ra-edit, .gx-ra-more, .gx-ra-pop button {
+  border: 0;
+  background: transparent;
+  color: var(--ink-soft);
+  font: inherit;
+  font-weight: 650;
+  cursor: pointer;
+}
+.gx-ra-clear {
+  height: 36px;
+  padding: 0 10px;
+  border-radius: 10px;
+  font-size: 13px;
+}
+.gx-ra-clear:hover, .gx-ra-edit:hover, .gx-ra-more:hover, .gx-ra-pop button:hover {
+  background: var(--hover);
+  color: var(--ink);
+}
+.gx-ra-showing { color: var(--muted); font-size: 12.5px; font-weight: 600; line-height: 36px; }
+.gx-ra-range {
+  margin: -6px 0 0;
+  color: var(--ink-soft);
+  font-size: 13px;
+}
+
+.gx-ra-list {
+  display: grid;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  min-width: 0;
+}
+.gx-ra-item {
+  position: relative;
+  display: grid;
+  grid-template-columns: 36px minmax(0, 1fr);
+  gap: 12px;
+  min-width: 0;
+  padding-bottom: 14px;
+}
+.gx-ra-item:last-child { padding-bottom: 0; }
+.gx-ra-item:not(:last-child)::before {
+  content: "";
+  position: absolute;
+  top: 38px;
+  bottom: 2px;
+  left: 17px;
+  width: 1px;
+  background: var(--line);
+}
+.gx-ra-item:has(.gx-ra-pop) { z-index: 3; }
+.gx-ra-mark {
+  position: relative;
+  z-index: 1;
+  display: grid;
+  place-items: center;
+  width: 36px;
+  height: 36px;
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  background: var(--white);
+  color: var(--ink-soft);
+}
+.gx-ra-item.is-remark .gx-ra-mark {
+  border-color: transparent;
+  background: var(--wash);
+  color: var(--ink);
+}
+.gx-ra-mark.is-call, .gx-ra-mark.is-status { background: var(--paper); }
+.gx-ra-mark.is-done { background: var(--ok-wash); color: var(--ink); }
+.gx-ra-mark.is-cancelled { background: var(--error-wash); color: var(--ink); }
+.gx-ra-mark.is-student, .gx-ra-mark.is-referral, .gx-ra-mark.is-owner, .gx-ra-mark.is-contact, .gx-ra-mark.is-edit {
+  background: var(--paper);
+}
+
+.gx-ra-card {
+  min-width: 0;
+  padding: 12px 14px 14px;
+  border: 1px solid var(--line);
+  border-radius: 14px;
+  background: var(--white);
+  box-shadow: 0 1px 2px rgba(28, 28, 26, 0.04);
+  transition: border-color 160ms ease, background-color 160ms ease;
+}
+.gx-ra-card:hover { border-color: color-mix(in srgb, var(--ink) 14%, var(--line)); }
+.gx-ra-card-head {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  min-width: 0;
+}
+.gx-ra-avatar {
+  display: grid;
+  place-items: center;
+  width: 32px;
+  height: 32px;
+  flex: 0 0 auto;
+  border-radius: 999px;
+  color: #1c1c1a;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.02em;
+}
+.gx-ra-who { min-width: 0; flex: 1 1 auto; }
+.gx-ra-name-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-width: 0;
+}
+.gx-ra-name-row strong, .gx-ra-event-top strong {
+  min-width: 0;
+  overflow: hidden;
+  color: var(--ink);
+  font-size: 13.5px;
+  font-weight: 650;
+  letter-spacing: -0.02em;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.gx-ra-kind {
+  display: inline-flex;
+  align-items: center;
+  flex: 0 0 auto;
+  height: 20px;
+  padding: 0 7px;
+  border-radius: 999px;
+  background: var(--paper);
+  color: var(--ink-soft);
+  font-size: 11px;
+  font-weight: 650;
+}
+.gx-ra-item.is-remark .gx-ra-kind { background: var(--wash); color: var(--ink); }
+.gx-ra-meta {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  margin-top: 2px;
+  color: var(--muted);
+  font-size: 12px;
+  line-height: 1.4;
+}
+.gx-ra-meta > * + *::before {
+  content: "·";
+  margin: 0 6px;
+  color: color-mix(in srgb, var(--muted) 70%, var(--line));
+}
+.gx-ra-card-actions {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 2px;
+  margin-left: auto;
+  flex: 0 0 auto;
+}
+.gx-ra-edit, .gx-ra-more {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  height: 32px;
+  padding: 0 8px;
+  border-radius: 8px;
+  font-size: 13px;
+}
+.gx-ra-more { width: 32px; padding: 0; }
+.gx-ra-menu { position: relative; }
+.gx-ra-pop {
+  position: absolute;
+  top: calc(100% + 4px);
+  right: 0;
+  z-index: 4;
+  min-width: 196px;
+  padding: 4px;
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  background: var(--white);
+  box-shadow: 0 10px 24px rgba(32, 35, 31, 0.1);
+}
+.gx-ra-pop button {
+  display: flex;
+  align-items: center;
+  width: 100%;
+  min-height: 34px;
+  padding: 0 10px;
+  border-radius: 8px;
+  font-size: 13px;
+  text-align: left;
+}
+.gx-ra-body {
+  margin: 10px 0 0;
+  color: var(--ink);
+  font-size: 14px;
+  line-height: 1.55;
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+}
+.gx-ra-previous {
+  display: grid;
+  gap: 8px;
+  margin-top: 10px;
+  padding-top: 10px;
+  border-top: 1px solid var(--line);
+}
+.gx-ra-previous-label {
+  margin: 0;
+  color: var(--muted);
+  font-size: 12px;
+  font-weight: 650;
+}
+.gx-ra-previous p {
+  margin: 0;
+  color: var(--ink-soft);
+  font-size: 13px;
+  line-height: 1.5;
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+}
+.gx-ra-previous time { display: block; margin-top: 2px; color: var(--muted); font-size: 12px; }
+
+.gx-ra-event {
+  min-width: 0;
+  padding: 6px 10px 8px;
+  border-radius: 12px;
+  transition: background-color 160ms ease;
+}
+.gx-ra-item.is-event:hover .gx-ra-event { background: color-mix(in srgb, var(--white) 72%, transparent); }
+.gx-ra-event-top {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 8px;
+  min-width: 0;
+}
+.gx-ra-event-top strong { white-space: normal; overflow-wrap: anywhere; }
+.gx-ra-detail {
+  margin: 3px 0 0;
+  color: var(--ink-soft);
+  font-size: 13px;
+  line-height: 1.45;
+  overflow-wrap: anywhere;
+}
+
+.gx-ra-empty {
+  margin: 0;
+  padding: 28px 16px;
+  border: 1px dashed var(--line);
+  border-radius: 14px;
+  background: var(--white);
+  text-align: center;
+}
+.gx-ra-empty strong {
+  display: block;
+  margin-bottom: 4px;
+  color: var(--ink);
+  font-size: 14px;
+  font-weight: 650;
+}
+.gx-ra-empty p { margin: 0; color: var(--muted); font-size: 13px; line-height: 1.45; }
+.gx-ra-empty .gx-btn { margin-top: 12px; }
+
+.gx-ra-dialog { width: min(560px, 100%); }
+.gx-ra-dialog textarea {
+  min-height: 140px;
+  resize: vertical;
+  line-height: 1.5;
+}
+.gx-ra-dialog .gx-help { margin: 0; }
+.gx-ra-composer-meta {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 12px;
+}
+.gx-ra-count {
+  flex: 0 0 auto;
+  color: var(--muted);
+  font-size: 12px;
+  font-variant-numeric: tabular-nums;
+}
+.gx-ra-form-error {
+  margin: 0;
+  padding: 8px 10px;
+  border-radius: 10px;
+  background: var(--error-wash);
+  color: var(--ink);
+  font-size: 13px;
+  line-height: 1.4;
+}
+.gx-ra-dialog .gx-form-actions { justify-content: flex-end; margin-top: 4px; }
+
+.gx-ra-edit:focus-visible,
+.gx-ra-more:focus-visible,
+.gx-ra-clear:focus-visible,
+.gx-ra-seg button:focus-visible,
+.gx-ra-pop button:focus-visible,
+.gx-ra-date input:focus-visible,
+.gx-ra-head .gx-lime:focus-visible {
+  outline: 2px solid var(--inverse);
+  outline-offset: 2px;
+}
+
+@media (max-width: 720px) {
+  .gx-ra-head { flex-direction: column; align-items: stretch; }
+  .gx-ra-head .gx-lime { width: 100%; min-height: 44px; }
+  .gx-ra-date { flex: 1 1 140px; }
+  .gx-ra-card-head { flex-wrap: wrap; }
+  .gx-ra-card-actions {
+    width: 100%;
+    margin-left: 0;
+    justify-content: flex-end;
+  }
+  .gx-ra-edit, .gx-ra-more { min-height: 44px; }
+  .gx-ra-more { width: 44px; }
+  .gx-ra-seg { max-width: 100%; overflow-x: auto; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .gx-ra-seg button,
+  .gx-ra-card,
+  .gx-ra-event,
+  .gx-ra-edit,
+  .gx-ra-more,
+  .gx-ra-clear,
+  .gx-ra-pop button {
+    transition: none;
+  }
+}

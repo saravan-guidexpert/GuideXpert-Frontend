@@ -16,16 +16,19 @@ import {
   previousCount,
   referralTrendSeries,
 } from '../../utils/crmConsultancyInsight';
-import { localDayKey, monthCells } from '../../utils/crmAnalytics';
+import { localDayKey } from '../../utils/crmAnalytics';
 import { ADMISSION_STATUSES, CALLING_STATUSES, CONSULTANCY_STATUSES, DEMO_ACTOR, DEMO_SEED_ACTOR, isFollowUpOverdue } from '../../utils/crmDemoStore';
-import { Badge, DataTable, Dialog, Notice, SearchField } from './CrmKit';
+import { DataTable, Dialog, Notice, SearchField } from './CrmKit';
 import { activityTitle, shortDate } from './crmFormat';
 import { loadAll } from './dashboard/dashboardModel';
 import { useCrmDemo } from './useCrmDemo';
+import ConsultancyContacts from './consultancy/ConsultancyContacts';
 import ConsultancyHeader from './consultancy/ConsultancyHeader';
 import ConsultancyOverview from './consultancy/ConsultancyOverview';
 import ConsultancyTabs from './consultancy/ConsultancyTabs';
 import { attentionItems, referralPeriodHint, selectNextAction } from './consultancy/overviewModel';
+import FollowUpCalendar from './consultancy/FollowUpCalendar';
+import { followUpInputValue, scheduleInputValue } from './consultancy/followUpCalendarModel';
 import useMatchMedia from './consultancy/useMatchMedia';
 import './consultancy/consultancyOverview.css';
 
@@ -48,7 +51,6 @@ const RANGES = [
   ['all', 'All time'],
   ['custom', 'Custom'],
 ];
-const EMPTY_CONTACT = { name: '', phone: '', email: '', role: '' };
 const EMPTY_STATUS = { followUpStatus: 'Fresh Lead', callingStatus: '', scheduledAt: '', outcome: '', notes: '', nextAction: '', reason: '' };
 
 function messageOf(result) {
@@ -89,11 +91,7 @@ export default function ConsultancyProfilePage() {
   const [editingRemark, setEditingRemark] = useState(null);
   const [statusOpen, setStatusOpen] = useState(false);
   const [statusForm, setStatusForm] = useState(EMPTY_STATUS);
-  const [addingContact, setAddingContact] = useState(false);
-  const [contactForm, setContactForm] = useState(EMPTY_CONTACT);
   const [ownerId, setOwnerId] = useState('');
-  const [monthCursor, setMonthCursor] = useState(() => new Date());
-  const [selectedDay, setSelectedDay] = useState('');
   const [studentQuery, setStudentQuery] = useState('');
   const [studentStatus, setStudentStatus] = useState('all');
   const [remarkQuery, setRemarkQuery] = useState('');
@@ -143,16 +141,6 @@ export default function ConsultancyProfilePage() {
   const relatedActivity = auditsLoad.items.filter((row) => related.has(row.entityId));
   const activity = relatedActivity.slice(0, 8);
   const unreferred = studentsLoad.items.filter((row) => !referralsLoad.items.some((item) => item.crmStudentId === row.id));
-  const year = monthCursor.getFullYear();
-  const monthIndex = monthCursor.getMonth();
-  const todayKey = localDayKey(now.toISOString());
-  const cells = monthCells(year, monthIndex).map((day) => {
-    if (!day) return { day: null, key: '', items: [] };
-    const key = `${year}-${String(monthIndex + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
-    const items = followLoad.items.filter((row) => localDayKey(row.scheduledAt || row.completedAt) === key && !row.cancelledAt);
-    return { day, key, items };
-  });
-  const chosen = selectedDay ? cells.find((cell) => cell.key === selectedDay) : null;
   const needle = studentQuery.trim().toLowerCase();
   const referredRows = original.filter((row) => {
     const student = studentsById.get(row.crmStudentId);
@@ -167,13 +155,17 @@ export default function ConsultancyProfilePage() {
 
   async function run(action, after) {
     setSaving(true);
-    const result = await Promise.resolve(action());
-    setSaving(false);
-    const view = messageOf(result);
-    setNotice(view);
-    if (view.state === 'ok') {
-      refresh();
-      if (after) after();
+    try {
+      const result = await Promise.resolve(action());
+      const view = messageOf(result);
+      setNotice(view);
+      if (view.state === 'ok') {
+        refresh();
+        if (after) after();
+      }
+      return view;
+    } finally {
+      setSaving(false);
     }
   }
 
@@ -363,66 +355,50 @@ export default function ConsultancyProfilePage() {
       ) : null}
 
       {tab === 'calendar' ? (
-        <div className="gx-dash">
-          <section className="gx-card">
-            <div className="gx-cal-nav">
-              <button type="button" className="gx-btn" onClick={() => setMonthCursor(new Date(year, monthIndex - 1, 1))}>Previous</button>
-              <strong>{monthCursor.toLocaleDateString('en-IN', { month: 'long', year: 'numeric' })}</strong>
-              <button type="button" className="gx-btn" onClick={() => setMonthCursor(new Date(year, monthIndex + 1, 1))}>Next</button>
-            </div>
-            <div className="gx-cal">
-              {['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'].map((label) => <span key={label} className="gx-cal-dow">{label}</span>)}
-              {cells.map((cell, index) => (
-                <button key={cell.key || `empty-${index}`} type="button" className={`gx-cal-day${cell.key === selectedDay ? ' is-on' : ''}${cell.key === todayKey ? ' is-today' : ''}`} disabled={!cell.day} onClick={() => setSelectedDay(cell.key)}>
-                  <span>{cell.day || ''}</span>
-                  {cell.items.length ? <small>{cell.items.length}</small> : null}
-                </button>
-              ))}
-            </div>
-            {chosen ? (chosen.items.length ? <ul className="gx-list">{chosen.items.map((row) => <li key={row.id}>{row.status} · {shortDate(row.scheduledAt)}{row.notes ? ` · ${row.notes}` : ''}</li>)}</ul> : <p className="gx-note">Nothing scheduled on {chosen.key}.</p>) : <p className="gx-note">Choose a day to see its follow-ups.</p>}
-          </section>
-          <section className="gx-card">
-            <h3>Follow-ups</h3>
-            {['dueToday', 'upcoming', 'overdue', 'completed'].map((key) => (
-              <div key={key}>
-                <h4 id={`gx-follow-${key}`}>{key === 'dueToday' ? 'Due today' : key[0].toUpperCase() + key.slice(1)} ({buckets[key].length})</h4>
-                {buckets[key].length === 0 ? <p className="gx-note">None</p> : (
-                  <ul className="gx-list">
-                    {buckets[key].map((row) => (
-                      <li key={row.id}>
-                        <strong>{row.status}</strong>
-                        <span className="gx-sub">{row.actorName} · {shortDate(row.scheduledAt || row.completedAt)}{row.notes ? ` · ${row.notes}` : ''}</span>
-                        {!row.completedAt && !row.cancelledAt ? (
-                          <span className="gx-row-actions">
-                            <button type="button" className="gx-text" onClick={() => completeFollowUp(row)}>Complete</button>
-                            <button type="button" className="gx-text" onClick={() => run(() => client.cancelFollowUp(id, row.id))}>Cancel</button>
-                          </span>
-                        ) : null}
-                      </li>
-                    ))}
-                  </ul>
-                )}
-              </div>
-            ))}
-          </section>
-        </div>
+        <FollowUpCalendar
+          items={followReady ? followLoad.items : []}
+          error={followReady ? '' : (followLoad.message || 'Could not load follow-ups.')}
+          consultancyName={consultancy.name}
+          saving={saving}
+          focusBucket={calendarFocus}
+          now={now}
+          onRetry={refresh}
+          onComplete={completeFollowUp}
+          onCancel={(row) => run(() => client.cancelFollowUp(id, row.id))}
+          onScheduleCall={(dateKey) => { setWhen(scheduleInputValue(dateKey, new Date())); setScheduling(true); }}
+          onCreateFollowUp={(dateKey) => {
+            setStatusForm({ ...EMPTY_STATUS, followUpStatus: 'Follow-up Required', scheduledAt: followUpInputValue(dateKey) });
+            setStatusOpen(true);
+          }}
+          onReschedule={(row) => {
+            const key = localDayKey(row.scheduledAt) || '';
+            const call = row.type === 'call' || row.status === 'Meeting Scheduled';
+            if (call) {
+              setWhen(scheduleInputValue(key, new Date()));
+              setScheduling(true);
+              return;
+            }
+            setStatusForm({
+              ...EMPTY_STATUS,
+              followUpStatus: 'Follow-up Required',
+              nextAction: row.nextAction || '',
+              scheduledAt: followUpInputValue(key),
+            });
+            setStatusOpen(true);
+          }}
+          onOpenConsultancy={() => selectTab('overview')}
+        />
       ) : null}
 
       {tab === 'contacts' ? (
-        <section className="gx-card">
-          <button type="button" className="gx-btn" onClick={() => setAddingContact(true)}>Add contact</button>
-          {contactsLoad.items.length === 0 ? <p className="gx-note">No contacts yet.</p> : (
-            <ul className="gx-list">
-              {contactsLoad.items.map((row) => (
-                <li key={row.id}>
-                  <strong>{row.name}</strong> {row.id === consultancy.primaryContact?.id ? <Badge tone="on">Primary</Badge> : null} <Badge tone={row.status === 'active' ? 'on' : 'off'}>{row.status}</Badge>
-                  <span className="gx-sub">{[row.role, row.phone, row.email].filter(Boolean).join(' · ') || 'No phone or email'}</span>
-                  {row.status === 'active' ? <button type="button" className="gx-text" onClick={() => run(() => client.deactivateContact(id, row.id))}>Deactivate</button> : null}
-                </li>
-              ))}
-            </ul>
-          )}
-        </section>
+        <ConsultancyContacts
+          consultancyId={id}
+          contactsLoad={contactsLoad}
+          primaryContactId={consultancy.primaryContact?.id || ''}
+          saving={saving}
+          run={run}
+          onRetry={refresh}
+        />
       ) : null}
 
       {tab === 'remarks' ? (
@@ -453,37 +429,88 @@ export default function ConsultancyProfilePage() {
       ) : null}
 
       {tab === 'settings' ? (
-        <section className="gx-card">
-          <dl className="gx-facts">
-            <div><dt>Created</dt><dd>{shortDate(consultancy.createdAt)}</dd></div>
-            <div><dt>Updated</dt><dd>{shortDate(consultancy.updatedAt)}</dd></div>
-            <div><dt>Created by</dt><dd>{consultancy.createdByName}</dd></div>
-            <div><dt>Owner</dt><dd>{consultancy.ownerName}</dd></div>
-          </dl>
-          <form className="gx-form" onSubmit={(event) => { event.preventDefault(); run(() => client.updateConsultancy(id, editForm.name ? editForm : { name: consultancy.name, status: consultancy.status, notes: consultancy.notes || '' })); }}>
-            <label>Name<input defaultValue={consultancy.name} required minLength={2} onChange={(event) => setEditForm({ name: event.target.value, status: editForm.status || consultancy.status, notes: editForm.notes ?? consultancy.notes })} /></label>
-            <label>Relationship flag
-              <select defaultValue={consultancy.status} onChange={(event) => setEditForm({ name: editForm.name || consultancy.name, status: event.target.value, notes: editForm.notes ?? consultancy.notes })}>
-                <option value="active">Active</option>
-                <option value="inactive">Inactive</option>
-              </select>
-            </label>
-            <label>Notes<textarea defaultValue={consultancy.notes || ''} onChange={(event) => setEditForm({ name: editForm.name || consultancy.name, status: editForm.status || consultancy.status, notes: event.target.value })} /></label>
-            <button className="gx-lime" type="submit" disabled={saving}>Save profile</button>
-          </form>
-          <p className="gx-note">Consultancy status is {consultancy.followUpStatus}. Calling status is {consultancy.callingStatus || 'not set'}. Use Update status to change either one. Demo staff and Demo seed are preview labels, not sign-in accounts.</p>
-          {superAdmin ? (
-            <form className="gx-inline" onSubmit={(event) => { event.preventDefault(); run(() => client.reassignOwner(id, { ownerId: ownerId || consultancy.ownerId })); }}>
-              <label>Owner
-                <select aria-label="Owner" value={ownerId || consultancy.ownerId} onChange={(event) => setOwnerId(event.target.value)}>
-                  <option value={DEMO_ACTOR.id}>{DEMO_ACTOR.name}</option>
-                  <option value={DEMO_SEED_ACTOR.id}>{DEMO_SEED_ACTOR.name}</option>
-                </select>
+        <div className="gx-set">
+          <section className="gx-set-card" aria-labelledby="gx-set-profile">
+            <header className="gx-set-head">
+              <div>
+                <h3 id="gx-set-profile">Profile</h3>
+                <p>The name shown in the directory, and whether this consultancy can receive new referrals.</p>
+              </div>
+            </header>
+            <form
+              className="gx-set-form"
+              key={`${consultancy.id}:${consultancy.updatedAt}`}
+              onSubmit={(event) => {
+                event.preventDefault();
+                const data = new FormData(event.currentTarget);
+                run(() => client.updateConsultancy(id, {
+                  name: String(data.get('name') || '').trim(),
+                  status: String(data.get('status') || consultancy.status),
+                  notes: String(data.get('notes') || ''),
+                }));
+              }}
+            >
+              <div className="gx-set-grid">
+                <label>Consultancy name
+                  <input name="name" defaultValue={consultancy.name} required minLength={2} autoComplete="organization" />
+                </label>
+                <label>Account status
+                  <select name="status" defaultValue={consultancy.status}>
+                    <option value="active">Active</option>
+                    <option value="inactive">Inactive</option>
+                  </select>
+                  <span className="gx-set-hint">Inactive accounts stay on file. New referrals need an active account.</span>
+                </label>
+              </div>
+              <label>Internal notes
+                <textarea name="notes" rows={4} defaultValue={consultancy.notes || ''} placeholder="Context for the team working this account." />
               </label>
-              <button className="gx-btn" type="submit" disabled={saving}>Save owner</button>
+              <div className="gx-set-actions">
+                <button className="gx-lime" type="submit" disabled={saving}>{saving ? 'Saving…' : 'Save changes'}</button>
+              </div>
             </form>
-          ) : null}
-        </section>
+          </section>
+
+          <section className="gx-set-card" aria-labelledby="gx-set-record">
+            <header className="gx-set-head">
+              <div>
+                <h3 id="gx-set-record">Record</h3>
+                <p>Creation and ownership for this consultancy.</p>
+              </div>
+            </header>
+            <dl className="gx-set-facts">
+              <div><dt>Created</dt><dd>{shortDate(consultancy.createdAt)}</dd></div>
+              <div><dt>Last updated</dt><dd>{shortDate(consultancy.updatedAt)}</dd></div>
+              <div><dt>Created by</dt><dd>{consultancy.createdByName || '—'}</dd></div>
+              <div><dt>Owner</dt><dd>{consultancy.ownerName || '—'}</dd></div>
+            </dl>
+            {superAdmin ? (
+              <form className="gx-set-owner" onSubmit={(event) => { event.preventDefault(); run(() => client.reassignOwner(id, { ownerId: ownerId || consultancy.ownerId })); }}>
+                <label>Reassign owner
+                  <select aria-label="Owner" value={ownerId || consultancy.ownerId} onChange={(event) => setOwnerId(event.target.value)}>
+                    <option value={DEMO_ACTOR.id}>{DEMO_ACTOR.name}</option>
+                    <option value={DEMO_SEED_ACTOR.id}>{DEMO_SEED_ACTOR.name}</option>
+                  </select>
+                </label>
+                <button className="gx-btn" type="submit" disabled={saving}>Save owner</button>
+              </form>
+            ) : null}
+          </section>
+
+          <section className="gx-set-card" aria-labelledby="gx-set-pipeline">
+            <header className="gx-set-head">
+              <div>
+                <h3 id="gx-set-pipeline">Pipeline</h3>
+                <p>Consultancy status and calling status are updated from Update status.</p>
+              </div>
+              <button type="button" className="gx-btn" onClick={openStatus}>Update status</button>
+            </header>
+            <dl className="gx-set-facts gx-set-facts-2">
+              <div><dt>Consultancy status</dt><dd>{consultancy.followUpStatus || '—'}</dd></div>
+              <div><dt>Calling status</dt><dd>{consultancy.callingStatus || 'Not set'}</dd></div>
+            </dl>
+          </section>
+        </div>
       ) : null}
       </div>
 
@@ -570,17 +597,6 @@ export default function ConsultancyProfilePage() {
             <label>Remark<textarea required maxLength={500} value={remarkText} onChange={(event) => setRemarkText(event.target.value)} /></label>
             <p className="gx-help">The previous wording stays on the remark.</p>
             <button className="gx-lime" type="submit" disabled={saving}>Update remark</button>
-          </form>
-        </Dialog>
-      ) : null}
-      {addingContact ? (
-        <Dialog title="Add contact" onClose={() => setAddingContact(false)}>
-          <form className="gx-form" onSubmit={(event) => { event.preventDefault(); run(() => client.createContact(id, contactForm), () => { setAddingContact(false); setContactForm(EMPTY_CONTACT); }); }}>
-            <label>Name<input required value={contactForm.name} onChange={(event) => setContactForm({ ...contactForm, name: event.target.value })} /></label>
-            <label>Phone<input value={contactForm.phone} onChange={(event) => setContactForm({ ...contactForm, phone: event.target.value })} /></label>
-            <label>Email<input value={contactForm.email} onChange={(event) => setContactForm({ ...contactForm, email: event.target.value })} /></label>
-            <label>Designation<input value={contactForm.role} onChange={(event) => setContactForm({ ...contactForm, role: event.target.value })} /></label>
-            <button className="gx-lime" type="submit" disabled={saving}>Save contact</button>
           </form>
         </Dialog>
       ) : null}
