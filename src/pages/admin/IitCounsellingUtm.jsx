@@ -73,6 +73,10 @@ const DEFAULT_BECOME_COUNSELLOR_PAGE_URL = (
   import.meta.env.VITE_BECOME_COUNSELLOR_PAGE_URL || 'https://www.guidexpert.co.in/become-counsellor'
 ).trim();
 
+const DEFAULT_MAIN_PAGE_URL = (
+  import.meta.env.VITE_MAIN_PAGE_URL || 'https://guidexpert.co.in'
+).trim();
+
 function buildIitCounsellingShareUrl(baseUrl, { utm_source, utm_medium, utm_campaign, utm_content }) {
   const base = String(baseUrl || '').trim().replace(/\/+$/, '');
   if (!base) return '';
@@ -232,6 +236,8 @@ function mergeSavedUtmLinksIntoCombo(byCombo, savedLinks, { fromDate, toDate, fr
       visits: 0,
       uniqueVisitors: 0,
       linkedSubmissions: 0,
+      completed: 0,
+      inProgress: 0,
       firstVisitAt: null,
       latestVisitAt: null,
     };
@@ -338,6 +344,17 @@ function getComboCellValue(row, key) {
   const v = row[key];
   if (v == null || v === '') return '';
   return String(v);
+}
+
+function savedLinkMatchesTarget(link, target) {
+  const explicit = link?.linkTarget;
+  if (explicit) return explicit === target;
+  const url = String(link?.utmLink || '');
+  if (target === 'mainPage') return /^https?:\/\/[^/]+\/?(?:\?|#|$)/i.test(url);
+  if (target === 'oneOnOneSession') return /\/one-on-one-session(?:\/|\?|#|$)/i.test(url);
+  if (target === 'guidanceBookingConfirmation') return /\/guidance-booking-confirmation(?:\/|\?|#|$)/i.test(url);
+  if (target === 'becomeCounsellor') return /\/become-counsellor(?:\/|\?|#|$)/i.test(url);
+  return /\/iit-counselling(?:\/|\?|#|$)/i.test(url);
 }
 
 function formatSavedLinkDate(value) {
@@ -538,7 +555,8 @@ export default function IitCounsellingUtm() {
         return;
       }
       const body = result.data;
-      const list = Array.isArray(body?.data) ? body.data : Array.isArray(body) ? body : [];
+      const list = (Array.isArray(body?.data) ? body.data : Array.isArray(body) ? body : [])
+        .filter((link) => savedLinkMatchesTarget(link, genLinkTarget));
       list.sort((a, b) => new Date(b.createdAt || 0).getTime() - new Date(a.createdAt || 0).getTime());
       setSavedIitLinks(list);
     });
@@ -567,13 +585,19 @@ export default function IitCounsellingUtm() {
       getIitCounsellingSavedUtmLinks(t, { linkTarget: 'oneOnOneSession' }),
       getIitCounsellingSavedUtmLinks(t, { linkTarget: 'guidanceBookingConfirmation' }),
       getIitCounsellingSavedUtmLinks(t, { linkTarget: 'becomeCounsellor' }),
-    ]).then(([iitRes, oneOnOneRes, guidanceRes, becomeCounsellorRes]) => {
+      getIitCounsellingSavedUtmLinks(t, { linkTarget: 'mainPage' }),
+    ]).then(([iitRes, oneOnOneRes, guidanceRes, becomeCounsellorRes, mainPageRes]) => {
       const pick = (result) => {
         if (!result.success) return [];
         const body = result.data;
         return Array.isArray(body?.data) ? body.data : Array.isArray(body) ? body : [];
       };
-      const merged = [...pick(iitRes), ...pick(oneOnOneRes), ...pick(guidanceRes), ...pick(becomeCounsellorRes)];
+      const merged = [...pick(iitRes), ...pick(oneOnOneRes), ...pick(guidanceRes), ...pick(becomeCounsellorRes), ...pick(mainPageRes)]
+        .filter((link, index, all) => {
+          const id = link?.id || link?._id;
+          if (!id) return true;
+          return all.findIndex((item) => (item?.id || item?._id) === id) === index;
+        });
       merged.sort((a, b) => new Date(b.createdAt || 0).getTime() - new Date(a.createdAt || 0).getTime());
       setSavedLinksForLookup(merged);
     });
@@ -610,14 +634,19 @@ export default function IitCounsellingUtm() {
       ? 'Guidance booking confirmation UTM analytics'
       : analyticsLinkTarget === 'becomeCounsellor'
         ? 'Become a counsellor UTM analytics'
-        : 'IIT Counselling UTM analytics';
+        : analyticsLinkTarget === 'mainPage'
+          ? 'JEE mock test UTM analytics'
+          : 'IIT Counselling UTM analytics';
+  const isMainPageTarget = analyticsLinkTarget === 'mainPage';
   const analyticsLinkedHelp = analyticsLinkTarget === 'oneOnOneSession'
     ? 'Linked = visit tied to a 1-on-1 form submission.'
     : analyticsLinkTarget === 'guidanceBookingConfirmation'
       ? 'Linked = visit tied to a confirmed guidance slot booking.'
       : analyticsLinkTarget === 'becomeCounsellor'
         ? 'Linked = visit tied to a counsellor registration submission.'
-        : 'Linked = visit tied to section 1 save.';
+        : isMainPageTarget
+          ? 'Linked = visit tied to a JEE mock test registration. Completed and in progress are shown on this tab only.'
+          : 'Linked = visit tied to section 1 save.';
   const isSavedLinksOnlyTarget = isIitUtmSavedLinksOnlyTarget(analyticsLinkTarget);
 
   const savedLinkComboKeys = useMemo(() => {
@@ -666,9 +695,11 @@ export default function IitCounsellingUtm() {
     savedLinkComboKeys,
   ]);
 
-  const linkedMetricLabel = isIitUtmSavedLinksOnlyTarget(analyticsLinkTarget)
-    ? 'Linked leads'
-    : 'Linked submissions';
+  const linkedMetricLabel = isMainPageTarget
+    ? 'Linked registrations'
+    : isIitUtmSavedLinksOnlyTarget(analyticsLinkTarget)
+      ? 'Linked leads'
+      : 'Linked submissions';
 
   const barChartData = useMemo(() => {
     const linkedCount = (row) => Number(row.linkedSubmissions) || 0;
@@ -768,9 +799,12 @@ export default function IitCounsellingUtm() {
     const headers = [
       'utm_source', 'utm_medium', 'utm_campaign', 'utm_content', 'Influencer name',
       'Date created', 'Last visit', 'Visits', 'Unique visitors',
-      analyticsLinkTarget === 'oneOnOneSession' || analyticsLinkTarget === 'guidanceBookingConfirmation'
-        ? 'Linked leads'
-        : 'Linked submissions',
+      isMainPageTarget
+        ? 'Linked registrations'
+        : analyticsLinkTarget === 'oneOnOneSession' || analyticsLinkTarget === 'guidanceBookingConfirmation'
+          ? 'Linked leads'
+          : 'Linked submissions',
+      ...(isMainPageTarget ? ['Completed', 'In progress'] : []),
     ];
     const rows = filteredSortedCombo.map((r) => [
       r.utm_source ?? '',
@@ -783,6 +817,7 @@ export default function IitCounsellingUtm() {
       r.visits ?? 0,
       r.uniqueVisitors ?? 0,
       r.linkedSubmissions ?? 0,
+      ...(isMainPageTarget ? [r.completed ?? 0, r.inProgress ?? 0] : []),
     ]);
     const csv = [headers.join(','), ...rows.map((r) => r.map((c) => `"${String(c).replace(/"/g, '""')}"`).join(','))].join('\n');
     const blob = new Blob([csv], { type: 'text/csv;charset=utf-8' });
@@ -793,7 +828,9 @@ export default function IitCounsellingUtm() {
       ? 'one-on-one-session-utm'
       : analyticsLinkTarget === 'guidanceBookingConfirmation'
         ? 'guidance-booking-confirmation-utm'
-        : 'iit-counselling-utm';
+        : analyticsLinkTarget === 'mainPage'
+          ? 'jee-mock-test-utm'
+          : 'iit-counselling-utm';
     a.download = `${slug}-${new Date().toISOString().slice(0, 10)}.csv`;
     a.click();
     URL.revokeObjectURL(url);
@@ -805,7 +842,9 @@ export default function IitCounsellingUtm() {
       ? DEFAULT_GUIDANCE_BOOKING_CONFIRMATION_PAGE_URL
       : genLinkTarget === 'becomeCounsellor'
         ? DEFAULT_BECOME_COUNSELLOR_PAGE_URL
-        : DEFAULT_IIT_COUNSELLING_PAGE_URL;
+        : genLinkTarget === 'mainPage'
+          ? DEFAULT_MAIN_PAGE_URL
+          : DEFAULT_IIT_COUNSELLING_PAGE_URL;
 
   const generatedIitUtmLink = useMemo(() => {
     const name = genInfluencerName.trim();
@@ -1013,7 +1052,9 @@ export default function IitCounsellingUtm() {
       <div>
         <h2 className="text-xl font-semibold text-gray-800">IIT Counselling UTM</h2>
         <p className="text-sm text-gray-500 mt-1">
-          Create trackable links for{' '}
+          Create trackable links for the JEE mock test{' '}
+          <span className="font-mono text-xs bg-gray-100 px-1 rounded">/</span>
+          {', '}
           <span className="font-mono text-xs bg-gray-100 px-1 rounded">/iit-counselling</span>
           {', '}
           <span className="font-mono text-xs bg-gray-100 px-1 rounded">/one-on-one-session</span>
@@ -1077,6 +1118,24 @@ export default function IitCounsellingUtm() {
             {loading ? '—' : (fromDate || toDate ? (analyticsSummary.totalVisits ?? 0) : 'All time')}
           </p>
         </div>
+        {isMainPageTarget ? (
+          <>
+            <div className={cardClass + ' p-4'}>
+              <div className="text-gray-500 text-sm">Completed</div>
+              <p className="text-2xl font-semibold text-gray-900 mt-1">
+                {loading ? '—' : (analyticsSummary.registrationStatus?.completed ?? 0)}
+              </p>
+              <p className="text-xs text-gray-400 mt-1">JEE mock test, this tab only</p>
+            </div>
+            <div className={cardClass + ' p-4'}>
+              <div className="text-gray-500 text-sm">In progress</div>
+              <p className="text-2xl font-semibold text-gray-900 mt-1">
+                {loading ? '—' : (analyticsSummary.registrationStatus?.inProgress ?? 0)}
+              </p>
+              <p className="text-xs text-gray-400 mt-1">Step 1 saved, form not finished</p>
+            </div>
+          </>
+        ) : null}
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
@@ -1175,7 +1234,11 @@ export default function IitCounsellingUtm() {
                 ? 'Links point to /one-on-one-session and appear in the 1-on-1 saved list below.'
                 : genLinkTarget === 'guidanceBookingConfirmation'
                   ? 'Links point to /guidance-booking-confirmation and appear in the guidance booking saved list below.'
-                  : 'Links point to /iit-counselling and appear in the IIT counselling saved list below.'}
+                  : genLinkTarget === 'becomeCounsellor'
+                    ? 'Links point to /become-counsellor and appear in the become counsellor saved list below.'
+                    : genLinkTarget === 'mainPage'
+                      ? 'Links point to / for the JEE mock test and appear in the JEE mock test saved list below. Completed and in progress are counted on this tab only.'
+                      : 'Links point to /iit-counselling and appear in the IIT counselling saved list below.'}
             </p>
           </div>
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
@@ -1324,8 +1387,7 @@ export default function IitCounsellingUtm() {
           ) : (
             <div className="mt-4 p-4 rounded-lg border border-dashed border-gray-200 bg-gray-50/50">
               <p className="text-sm text-gray-600 leading-relaxed">
-                Enter an influencer name to preview the{' '}
-                {getIitUtmTabLabel(genLinkTarget).toLowerCase()} page URL (utm_content).
+                Enter an influencer name to preview the trackable link (utm_content).
               </p>
             </div>
           )}
@@ -1516,8 +1578,14 @@ export default function IitCounsellingUtm() {
                   <th className="px-6 py-3 text-right text-xs font-semibold text-gray-600 uppercase tracking-wider">Visits</th>
                   <th className="px-6 py-3 text-right text-xs font-semibold text-gray-600 uppercase tracking-wider">Unique</th>
                   <th className="px-6 py-3 text-right text-xs font-semibold text-gray-600 uppercase tracking-wider">
-                    {isIitUtmSavedLinksOnlyTarget(analyticsLinkTarget) ? 'Linked leads' : 'Linked'}
+                    {isMainPageTarget ? 'Linked registrations' : isIitUtmSavedLinksOnlyTarget(analyticsLinkTarget) ? 'Linked leads' : 'Linked'}
                   </th>
+                  {isMainPageTarget ? (
+                    <>
+                      <th className="px-6 py-3 text-right text-xs font-semibold text-gray-600 uppercase tracking-wider">Completed</th>
+                      <th className="px-6 py-3 text-right text-xs font-semibold text-gray-600 uppercase tracking-wider whitespace-nowrap">In progress</th>
+                    </>
+                  ) : null}
                 </tr>
               </thead>
               <tbody className="divide-y divide-gray-100">
@@ -1542,6 +1610,12 @@ export default function IitCounsellingUtm() {
                     <td className="px-6 py-4 text-sm text-right font-medium text-gray-900 tabular-nums">{row.visits}</td>
                     <td className="px-6 py-4 text-sm text-right text-gray-600 tabular-nums">{row.uniqueVisitors}</td>
                     <td className="px-6 py-4 text-sm text-right text-gray-600 tabular-nums">{row.linkedSubmissions}</td>
+                    {isMainPageTarget ? (
+                      <>
+                        <td className="px-6 py-4 text-sm text-right text-gray-900 tabular-nums">{row.completed ?? 0}</td>
+                        <td className="px-6 py-4 text-sm text-right text-gray-600 tabular-nums">{row.inProgress ?? 0}</td>
+                      </>
+                    ) : null}
                   </tr>
                 ))}
               </tbody>
@@ -1551,7 +1625,14 @@ export default function IitCounsellingUtm() {
       </section>
 
       <CopyToSheetsModal
-        fields={COMBO_COPY_FIELDS}
+        fields={isMainPageTarget
+          ? [
+              ...COMBO_COPY_FIELDS.filter((field) => field.key !== 'linkedSubmissions'),
+              { key: 'linkedSubmissions', label: 'Linked registrations' },
+              { key: 'completed', label: 'Completed' },
+              { key: 'inProgress', label: 'In progress' },
+            ]
+          : COMBO_COPY_FIELDS}
         records={filteredSortedCombo}
         getCellValue={getComboCellValue}
         open={copyComboModalOpen}

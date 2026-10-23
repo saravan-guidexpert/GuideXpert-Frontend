@@ -67,9 +67,19 @@ export const IIT_COUNSELLING_UTM_LINK_TARGETS = [
     label: 'Become a counsellor (/become-counsellor)',
     tabLabel: 'Become counsellor',
   },
+  {
+    value: 'mainPage',
+    label: 'JEE mock test (/)',
+    tabLabel: 'JEE mock test',
+  },
 ];
 
-export const IIT_UTM_SAVED_LINKS_ONLY_TARGETS = new Set(['oneOnOneSession', 'guidanceBookingConfirmation', 'becomeCounsellor']);
+export const IIT_UTM_SAVED_LINKS_ONLY_TARGETS = new Set([
+  'oneOnOneSession',
+  'guidanceBookingConfirmation',
+  'becomeCounsellor',
+  'mainPage',
+]);
 
 export function isIitUtmSavedLinksOnlyTarget(linkTarget) {
   return IIT_UTM_SAVED_LINKS_ONLY_TARGETS.has(linkTarget);
@@ -79,6 +89,7 @@ export function getIitUtmPagePath(linkTarget) {
   if (linkTarget === 'oneOnOneSession') return '/one-on-one-session';
   if (linkTarget === 'guidanceBookingConfirmation') return '/guidance-booking-confirmation';
   if (linkTarget === 'becomeCounsellor') return '/become-counsellor';
+  if (linkTarget === 'mainPage') return '/';
   return '/iit-counselling';
 }
 
@@ -95,6 +106,10 @@ export function normalizeIitUtmLinkTargetFromQuery(raw) {
   if (s === 'guidancebookingconfirmation' || s === 'guidance_booking_confirmation') {
     return 'guidanceBookingConfirmation';
   }
+  if (
+    s === 'mainpage' || s === 'main_page' || s === 'home'
+    || s === 'jeemocktest' || s === 'jee_mock_test'
+  ) return 'mainPage';
   return 'iitCounselling';
 }
 

@@ -1,5 +1,4 @@
-import { useCallback, useId, useRef, useState } from 'react';
-import { LuLaptop } from 'react-icons/lu';
+import { useCallback, useEffect, useId, useMemo, useRef, useState } from 'react';
 import MobileOtpField from '../forms/MobileOtpField';
 import { FormInput, FormSelect, FormTextarea, NeoField } from '../oneOnOneSession/FormControls';
 import {
@@ -7,6 +6,8 @@ import {
   INITIAL_JEE_MAIN_MOCK_TEST_FORM,
 } from '../../constants/jeeMainMockTestForm';
 import { saveJeeMainMockTestSection1, saveJeeMainMockTestSection2 } from '../../utils/api';
+import { getApiBaseUrl } from '../../utils/apiBaseUrl';
+import { resolveUtmAttribution, trackMainPageVisit } from '../../utils/oneOnOneSessionTracking';
 import {
   hasJeeMainMockTestErrors,
   validateJeeMainMockTestStep,
@@ -26,51 +27,54 @@ const STEP_HINTS = {
 
 function LaptopPrizeCard({ registered = false }) {
   const titleId = useId();
+  const screenGradientId = useId().replace(/:/g, '');
 
   return (
     <aside
       aria-labelledby={titleId}
-      className={`relative overflow-hidden rounded-2xl border border-[#f0d3bd] bg-[linear-gradient(145deg,#fff4eb_0%,#fffaf6_42%,#ffffff_100%)] shadow-[0_14px_32px_-22px_rgba(242,121,33,0.7),0_1px_2px_rgba(4,30,48,0.04)] motion-safe:animate-[sw-fade-up_0.5s_cubic-bezier(0.22,1,0.36,1)_both] ${
+      className={`relative overflow-hidden rounded-2xl border border-[#f6c49a] bg-[linear-gradient(128deg,#fff1e6_0%,#ffe4cc_34%,#fffaf6_68%,#ffffff_100%)] shadow-[0_16px_32px_-22px_rgba(242,121,33,0.55)] motion-safe:animate-[sw-fade-up_0.5s_cubic-bezier(0.22,1,0.36,1)_both] ${
         registered ? 'mx-auto mt-5 max-w-lg text-left' : 'mb-5'
       }`}
     >
-      <div className="pointer-events-none absolute inset-y-0 left-0 w-1 bg-[#f27921]" aria-hidden />
-      <div className="flex items-start gap-3 py-3 pr-3 pl-3.5 sm:items-center sm:gap-4 sm:py-3.5 sm:pr-4 sm:pl-4">
-        <div className="relative mt-0.5 grid h-12 w-12 shrink-0 place-items-center sm:mt-0 sm:h-14 sm:w-14" aria-hidden>
-          <span className="absolute inset-0 rounded-full bg-[radial-gradient(circle,rgba(242,121,33,0.34)_0%,rgba(242,121,33,0.1)_48%,transparent_72%)]" />
-          <span className="relative grid h-10 w-10 place-items-center rounded-xl bg-white text-[#f27921] shadow-[0_10px_20px_-12px_rgba(242,121,33,0.9)] ring-1 ring-[#f6d7c2] sm:h-11 sm:w-11">
-            <LuLaptop className="h-5 w-5 sm:h-[22px] sm:w-[22px]" strokeWidth={1.75} />
-          </span>
+      <div className="flex items-center gap-3 px-3.5 py-3 sm:gap-3.5 sm:px-4 sm:py-3.5">
+        <div
+          className="grid h-12 w-12 shrink-0 place-items-center rounded-xl bg-white shadow-[0_8px_16px_-12px_rgba(242,121,33,0.65)] ring-1 ring-[#f6d7c2] sm:h-[3.25rem] sm:w-[3.25rem]"
+          aria-hidden
+        >
+          <svg viewBox="0 0 44 36" className="h-7 w-8 sm:h-8 sm:w-9">
+            <defs>
+              <linearGradient id={screenGradientId} x1="0" y1="0" x2="0" y2="1">
+                <stop offset="0%" stopColor="#ffb067" />
+                <stop offset="100%" stopColor="#f27921" />
+              </linearGradient>
+            </defs>
+            <rect x="7" y="2" width="30" height="20" rx="2.5" fill="#041e30" />
+            <rect x="9" y="4" width="26" height="16" rx="1.25" fill={`url(#${screenGradientId})`} />
+            <rect x="12" y="7.5" width="11" height="1.7" rx="0.85" fill="#fff" />
+            <rect x="12" y="11" width="15" height="1.5" rx="0.75" fill="#fff" opacity="0.9" />
+            <rect x="12" y="14.2" width="9" height="1.5" rx="0.75" fill="#fff" opacity="0.75" />
+            <path d="M3.5 24.2h37l-2.6 4.2c-.4.7-1.2 1.1-2 1.1H8.1c-.8 0-1.6-.4-2-1.1l-2.6-4.2z" fill="#f27921" />
+          </svg>
         </div>
 
         <div className="min-w-0 flex-1">
-          <p className="text-[10px] font-semibold uppercase leading-4 tracking-[0.11em] text-[#8a3d10] sm:text-[11px] sm:tracking-[0.12em]">
-            <span className="sr-only">JEE Main mock test, special reward</span>
-            <span aria-hidden className="inline-flex flex-wrap items-center gap-x-1.5 gap-y-1">
-              <span>JEE Main mock test</span>
-              <span className="inline-flex items-center gap-1.5">
-                <span className="hidden text-[#e0b08a] min-[480px]:inline">·</span>
-                <span className="rounded-full bg-white px-1.5 py-px tracking-[0.1em] text-[#c2410c] ring-1 ring-[#f3d3bc]">
-                  Special reward
-                </span>
-              </span>
-            </span>
+          <p className="text-[10px] font-semibold uppercase leading-none tracking-[0.08em] text-[#c2410c] sm:text-[11px] sm:tracking-[0.11em]">
+            Free mock test · Laptop reward
           </p>
           <h3
             id={titleId}
-            className="mt-1 text-[0.875rem] font-bold leading-[1.3] tracking-tight text-[#041e30] min-[400px]:text-[0.9375rem] sm:text-base"
+            className="mt-1.5 text-[0.88rem] font-bold leading-snug tracking-tight text-[#041e30] sm:text-[0.95rem]"
           >
-            <span className="block">Take the Mock Test.</span>
-            <span className="block">Get a Chance to Win a Laptop.</span>
-          </h3>
-          <p className="mt-1 text-[12px] leading-snug text-[#3e4c59] sm:text-[13px]">
-            Register for the JEE Main Mock Test and participate for a chance to win a laptop.
-          </p>
-          <p className="mt-1.5 flex items-start gap-1.5 text-[11px] font-semibold leading-snug text-[#041e30] sm:text-xs">
-            <span className="mt-[5px] h-1.5 w-1.5 shrink-0 rounded-full bg-[#f27921]" aria-hidden />
-            <span className="min-w-0 text-balance">
-              {registered ? 'Registration complete' : 'Complete your registration to participate'}
+            <span className="block">Write the Mock Test.</span>
+            <span className="block">
+              Get a Chance to Win a{' '}
+              <span className="inline-block translate-y-[-1px] rounded-md bg-[#f27921] px-1.5 py-0.5 align-middle text-[0.78em] font-bold leading-none text-white">
+                FREE Laptop!
+              </span>
             </span>
+          </h3>
+          <p className="mt-1.5 text-[12px] leading-snug text-[#5c6770] sm:text-[13px]">
+            Register for the JEE Main Mock Test, take the test, and get a chance to win a free laptop.
           </p>
         </div>
       </div>
@@ -111,6 +115,22 @@ export default function JeeMainMockTestForm({ scrollContainerRef = null }) {
   const [submitted, setSubmitted] = useState(false);
   const [otpVerified, setOtpVerified] = useState(false);
   const localScrollRef = useRef(null);
+  const visitorFingerprintRef = useRef('');
+  const apiBase = useMemo(() => getApiBaseUrl(), []);
+
+  useEffect(() => {
+    if (typeof window === 'undefined') return undefined;
+    const path = window.location.pathname || '/';
+    if (path !== '/') return undefined;
+    let cancelled = false;
+    const utmPayload = resolveUtmAttribution();
+    trackMainPageVisit(apiBase, utmPayload).then((fingerprint) => {
+      if (!cancelled && fingerprint) visitorFingerprintRef.current = fingerprint;
+    });
+    return () => {
+      cancelled = true;
+    };
+  }, [apiBase]);
 
   const handleOtpVerifiedChange = useCallback((verified) => {
     setOtpVerified(verified);
@@ -141,9 +161,12 @@ export default function JeeMainMockTestForm({ scrollContainerRef = null }) {
   };
 
   const handleStep1Next = async () => {
+    const attribution = resolveUtmAttribution();
     const result = await saveJeeMainMockTestSection1({
       studentName: form.studentName.trim(),
       mobileNumber: form.mobileNumber.replace(/\D/g, ''),
+      visitorFingerprint: visitorFingerprintRef.current,
+      ...attribution,
     });
     if (!result.success) {
       setSubmitError(result.message || 'Could not save this step. Please try again.');
