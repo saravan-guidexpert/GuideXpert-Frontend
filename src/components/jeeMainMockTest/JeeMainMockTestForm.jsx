@@ -66,11 +66,11 @@ function LaptopPrizeCard({ registered = false }) {
       <img
         src={laptopPrize}
         alt=""
-        className="gx-laptop-float pointer-events-none absolute bottom-[-18%] right-[-7%] z-[1] h-auto w-[48%] max-w-none object-contain drop-shadow-[0_18px_24px_rgba(0,0,0,0.55)] sm:bottom-[-22%] sm:right-[-3%] sm:w-[42%]"
+        className="gx-laptop-float pointer-events-none absolute bottom-1 right-1.5 z-[1] h-auto max-h-[calc(100%-0.85rem)] w-auto max-w-[34%] object-contain object-right-bottom drop-shadow-[0_18px_24px_rgba(0,0,0,0.55)] sm:right-2 sm:max-w-[28%]"
         aria-hidden
       />
 
-      <div className="relative z-10 flex min-h-[11.25rem] flex-col justify-center py-4 pl-4 pr-[46%] sm:min-h-[10.25rem] sm:py-5 sm:pl-6 sm:pr-[40%]">
+      <div className="relative z-10 flex min-h-[11.25rem] flex-col justify-center py-4 pl-4 pr-[42%] sm:min-h-[10.25rem] sm:py-5 sm:pl-6 sm:pr-[36%]">
         <h3
           id={titleId}
           className="text-[1.85rem] font-bold leading-[0.88] tracking-[-0.045em] text-white sm:text-[2.15rem]"
@@ -90,7 +90,7 @@ function LaptopPrizeCard({ registered = false }) {
           A free laptop could be yours.
         </p>
         <p className="mt-1 text-[12.5px] font-medium leading-snug text-white/75 sm:text-[13px]" style={PRIZE_BODY}>
-          Take the mock test for your chance to win.
+          Take the Mock Test for a Chance to Win!
           <svg
             viewBox="0 0 16 16"
             className="ml-1 inline-block h-3.5 w-3.5 align-[-2px] text-[#ff8d5c] transition-transform duration-300 group-hover:translate-y-0.5 motion-reduce:transform-none"
