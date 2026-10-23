@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useId, useMemo, useRef, useState } from 'react';
+import laptopPrize from '../../assets/jee-mock-laptop.webp';
 import MobileOtpField from '../forms/MobileOtpField';
 import { FormInput, FormSelect, FormTextarea, NeoField } from '../oneOnOneSession/FormControls';
 import {
@@ -25,58 +26,86 @@ const STEP_HINTS = {
   2: 'Share your college and how we can reach you.',
 };
 
+const PRIZE_DISPLAY = { fontFamily: 'Sora, Satoshi, sans-serif' };
+const PRIZE_BODY = { fontFamily: 'Satoshi, "Plus Jakarta Sans", sans-serif' };
+const PRIZE_GRAIN =
+  "url(\"data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.85' numOctaves='2' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E\")";
+
 function LaptopPrizeCard({ registered = false }) {
   const titleId = useId();
-  const screenGradientId = useId().replace(/:/g, '');
 
   return (
     <aside
       aria-labelledby={titleId}
-      className={`relative overflow-hidden rounded-2xl border border-[#f6c49a] bg-[linear-gradient(128deg,#fff1e6_0%,#ffe4cc_34%,#fffaf6_68%,#ffffff_100%)] shadow-[0_16px_32px_-22px_rgba(242,121,33,0.55)] motion-safe:animate-[sw-fade-up_0.5s_cubic-bezier(0.22,1,0.36,1)_both] ${
-        registered ? 'mx-auto mt-5 max-w-lg text-left' : 'mb-5'
+      className={`group relative isolate overflow-hidden rounded-2xl bg-[#120706] shadow-[0_20px_40px_-24px_rgba(18,7,6,0.85)] ${
+        registered ? 'mx-auto mt-6 max-w-lg' : 'mb-5'
       }`}
     >
-      <div className="flex items-center gap-3 px-3.5 py-3 sm:gap-3.5 sm:px-4 sm:py-3.5">
-        <div
-          className="grid h-12 w-12 shrink-0 place-items-center rounded-xl bg-white shadow-[0_8px_16px_-12px_rgba(242,121,33,0.65)] ring-1 ring-[#f6d7c2] sm:h-[3.25rem] sm:w-[3.25rem]"
-          aria-hidden
-        >
-          <svg viewBox="0 0 44 36" className="h-7 w-8 sm:h-8 sm:w-9">
-            <defs>
-              <linearGradient id={screenGradientId} x1="0" y1="0" x2="0" y2="1">
-                <stop offset="0%" stopColor="#ffb067" />
-                <stop offset="100%" stopColor="#f27921" />
-              </linearGradient>
-            </defs>
-            <rect x="7" y="2" width="30" height="20" rx="2.5" fill="#041e30" />
-            <rect x="9" y="4" width="26" height="16" rx="1.25" fill={`url(#${screenGradientId})`} />
-            <rect x="12" y="7.5" width="11" height="1.7" rx="0.85" fill="#fff" />
-            <rect x="12" y="11" width="15" height="1.5" rx="0.75" fill="#fff" opacity="0.9" />
-            <rect x="12" y="14.2" width="9" height="1.5" rx="0.75" fill="#fff" opacity="0.75" />
-            <path d="M3.5 24.2h37l-2.6 4.2c-.4.7-1.2 1.1-2 1.1H8.1c-.8 0-1.6-.4-2-1.1l-2.6-4.2z" fill="#f27921" />
-          </svg>
-        </div>
+      <div
+        className="gx-prize-glow pointer-events-none absolute right-[-6%] top-1/2 h-[150%] w-[62%] -translate-y-1/2"
+        style={{
+          background:
+            'radial-gradient(circle, rgba(255,126,72,0.5) 0%, rgba(176,42,24,0.22) 38%, transparent 68%)',
+        }}
+        aria-hidden
+      />
+      <div
+        className="pointer-events-none absolute inset-0 opacity-[0.16] mix-blend-overlay"
+        style={{ backgroundImage: PRIZE_GRAIN }}
+        aria-hidden
+      />
+      <span
+        className="pointer-events-none absolute -left-2 bottom-[-18%] z-0 select-none text-[5.75rem] font-medium leading-none tracking-[-0.08em] text-white/[0.055] sm:text-[7.5rem]"
+        style={PRIZE_DISPLAY}
+        aria-hidden
+      >
+        01
+      </span>
+      <div className="pointer-events-none absolute inset-0 rounded-2xl ring-1 ring-inset ring-white/10" aria-hidden />
 
-        <div className="min-w-0 flex-1">
-          <p className="text-[10px] font-semibold uppercase leading-none tracking-[0.08em] text-[#c2410c] sm:text-[11px] sm:tracking-[0.11em]">
-            Free mock test · Laptop reward
-          </p>
-          <h3
-            id={titleId}
-            className="mt-1.5 text-[0.88rem] font-bold leading-snug tracking-tight text-[#041e30] sm:text-[0.95rem]"
+      <img
+        src={laptopPrize}
+        alt=""
+        className="gx-laptop-float pointer-events-none absolute bottom-[-18%] right-[-7%] z-[1] h-auto w-[48%] max-w-none object-contain drop-shadow-[0_18px_24px_rgba(0,0,0,0.55)] sm:bottom-[-22%] sm:right-[-3%] sm:w-[42%]"
+        aria-hidden
+      />
+
+      <div className="relative z-10 flex min-h-[11.25rem] flex-col justify-center py-4 pl-4 pr-[46%] sm:min-h-[10.25rem] sm:py-5 sm:pl-6 sm:pr-[40%]">
+        <h3
+          id={titleId}
+          className="text-[1.85rem] font-bold leading-[0.88] tracking-[-0.045em] text-white sm:text-[2.15rem]"
+          style={PRIZE_DISPLAY}
+        >
+          <span className="block">WRITE.</span>
+          <span className="block" style={{ WebkitTextStroke: '1.35px #ff8d5c', color: 'transparent' }}>
+            WIN.
+          </span>
+          <span className="block">REPEAT.</span>
+        </h3>
+
+        <p
+          className="mt-3 text-[13px] font-semibold leading-snug tracking-[-0.01em] text-[#ffd2b8] sm:text-sm"
+          style={PRIZE_DISPLAY}
+        >
+          A free laptop could be yours.
+        </p>
+        <p className="mt-1 text-[12.5px] font-medium leading-snug text-white/75 sm:text-[13px]" style={PRIZE_BODY}>
+          Take the mock test for your chance to win.
+          <svg
+            viewBox="0 0 16 16"
+            className="ml-1 inline-block h-3.5 w-3.5 align-[-2px] text-[#ff8d5c] transition-transform duration-300 group-hover:translate-y-0.5 motion-reduce:transform-none"
+            aria-hidden
           >
-            <span className="block">Write the Mock Test.</span>
-            <span className="block">
-              Get a Chance to Win a{' '}
-              <span className="inline-block translate-y-[-1px] rounded-md bg-[#f27921] px-1.5 py-0.5 align-middle text-[0.78em] font-bold leading-none text-white">
-                FREE Laptop!
-              </span>
-            </span>
-          </h3>
-          <p className="mt-1.5 text-[12px] leading-snug text-[#5c6770] sm:text-[13px]">
-            Register for the JEE Main Mock Test, take the test, and get a chance to win a free laptop.
-          </p>
-        </div>
+            <path
+              d="M8 2.5v9.2M4.2 8.2 8 12.2l3.8-4"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="1.4"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+            />
+          </svg>
+        </p>
       </div>
     </aside>
   );
