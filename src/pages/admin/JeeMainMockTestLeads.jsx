@@ -58,10 +58,30 @@ function monthLabel(monthKey) {
   });
 }
 
+const PLATFORM_LABELS = {
+  instagram: 'Instagram',
+  youtube: 'YouTube',
+  twitter: 'Twitter',
+  x: 'X',
+  whatsapp: 'WhatsApp',
+  telegram: 'Telegram',
+  facebook: 'Facebook',
+  linkedin: 'LinkedIn',
+};
+
+function platformLabel(source) {
+  const value = String(source || '').trim();
+  if (!value) return '';
+  return PLATFORM_LABELS[value.toLowerCase()] || value;
+}
+
 const COPY_FIELDS = [
   { key: 'createdAt', label: 'Started' },
   { key: 'submittedAt', label: 'Submitted' },
   { key: 'status', label: 'Status' },
+  { key: 'influencerName', label: 'Influencer' },
+  { key: 'utm_source', label: 'Platform' },
+  { key: 'utm_campaign', label: 'Campaign' },
   { key: 'studentName', label: 'Student name' },
   { key: 'mobileNumber', label: 'Mobile number' },
   { key: 'whatsappNumber', label: 'WhatsApp number' },
@@ -74,6 +94,7 @@ const COPY_FIELDS = [
 function getCellValue(row, key) {
   if (key === 'createdAt' || key === 'submittedAt') return row[key] ? formatDate(row[key]) : '';
   if (key === 'status') return row.formCompleted ? 'Completed' : 'Step 1 only';
+  if (key === 'utm_source') return platformLabel(row.utm_source);
   const value = row[key];
   if (value == null || value === '') return '';
   return String(value);
@@ -115,6 +136,20 @@ function StatusBadge({ completed }) {
       <span className="h-1.5 w-1.5 rounded-full bg-amber-500" aria-hidden />
       Step 1 only
     </span>
+  );
+}
+
+function InfluencerCell({ row }) {
+  const name = String(row.influencerName || '').trim();
+  const platform = platformLabel(row.utm_source);
+  const campaign = String(row.utm_campaign || '').trim();
+  if (!name && !platform) return '—';
+  const detail = [name ? platform : '', campaign].filter(Boolean).join(' · ');
+  return (
+    <div className="min-w-[8rem]" title={[name || platform, detail].filter(Boolean).join(' — ')}>
+      <div className="font-medium text-gray-950">{name || platform}</div>
+      {detail ? <div className="text-xs text-gray-500">{detail}</div> : null}
+    </div>
   );
 }
 
@@ -410,7 +445,7 @@ export default function JeeMainMockTestLeads() {
                   type="search"
                   value={filters.q}
                   onChange={(e) => handleFilterChange('q', e.target.value)}
-                  placeholder="Name, phone, college, city"
+                  placeholder="Name, phone, college, city, influencer"
                   className={`${fieldClass} pl-9`}
                   aria-label="Search JEE mock test registrations"
                 />
@@ -555,7 +590,7 @@ export default function JeeMainMockTestLeads() {
             <table className="min-w-full text-sm">
               <thead>
                 <tr className="border-b border-gray-100 text-left">
-                  {['Started', 'Status', 'Student', 'Mobile', 'WhatsApp', 'Studying', 'College', 'Location', 'Remarks'].map((heading) => (
+                  {['Started', 'Status', 'Influencer', 'Student', 'Mobile', 'WhatsApp', 'Studying', 'College', 'Location', 'Remarks'].map((heading) => (
                     <th key={heading} className="whitespace-nowrap px-4 py-2.5 text-[11px] font-medium uppercase tracking-[0.08em] text-gray-400">
                       {heading}
                     </th>
@@ -568,6 +603,9 @@ export default function JeeMainMockTestLeads() {
                     <td className="whitespace-nowrap px-4 py-3 text-gray-500">{formatDate(row.createdAt)}</td>
                     <td className="px-4 py-3">
                       <StatusBadge completed={row.formCompleted} />
+                    </td>
+                    <td className="px-4 py-3 text-gray-700">
+                      <InfluencerCell row={row} />
                     </td>
                     <td className="px-4 py-3 font-medium text-gray-950">{row.studentName || '—'}</td>
                     <td className="whitespace-nowrap px-4 py-3 tabular-nums text-gray-700">{row.mobileNumber || '—'}</td>
