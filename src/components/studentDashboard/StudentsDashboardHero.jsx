@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { AnimatePresence, motion } from 'framer-motion';
 import { FiSearch, FiX } from 'react-icons/fi';
@@ -14,7 +14,7 @@ import { LAYOUT } from './careers360/careers360Theme';
 import { useCountUp } from './landing/useCountUp';
 import { fadeUp, staggerContainer, defaultViewport, smoothTransition } from './landing/motion';
 import HeroLiveActivityToasts from './HeroLiveActivityToasts';
-import OneOnOneSessionBookingForm from '../oneOnOneSession/OneOnOneSessionBookingForm';
+import JeeMainMockTestForm from '../jeeMainMockTest/JeeMainMockTestForm';
 
 function HeroRotatingWord({ words, interval = 2100 }) {
   const [index, setIndex] = useState(0);
@@ -90,6 +90,7 @@ function HeroTrustStats() {
 }
 
 function HeroCounsellingForm() {
+  const bodyRef = useRef(null);
   return (
     <motion.div
       className="overflow-hidden rounded-2xl border border-[#e5e7eb] bg-white shadow-[0_16px_40px_-24px_rgba(15,23,42,0.35)]"
@@ -99,14 +100,14 @@ function HeroCounsellingForm() {
     >
       <div className="border-b border-[#e8eaed] bg-[#fbfcfe] px-4 py-3.5 sm:px-5">
         <p className="text-[11px] font-semibold uppercase tracking-[0.14em] text-[#f27921]">
-          Free session
+          JEE Main mock test
         </p>
         <h2 className="mt-1 text-base font-bold text-[#0F172A] sm:text-lg">
-          Book free IITian 1-on-1 counselling
+          Register for the JEE Main mock test
         </h2>
       </div>
-      <div className="max-h-[min(28rem,62vh)] overflow-y-auto px-3 py-4 sm:px-5 sm:py-5">
-        <OneOnOneSessionBookingForm showIntro={false} />
+      <div ref={bodyRef} className="max-h-[min(40rem,78vh)] overflow-y-auto px-3 py-4 sm:px-5 sm:py-5">
+        <JeeMainMockTestForm scrollContainerRef={bodyRef} />
       </div>
     </motion.div>
   );

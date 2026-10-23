@@ -149,7 +149,7 @@ export default function DeadlineManagerPage() {
               onClick={() => openOneOnOneBooking?.()}
               className="inline-flex rounded-xl bg-[#0f172a] px-4 py-2.5 text-sm font-semibold text-white transition hover:bg-[#1e293b]"
             >
-              Book free session
+              Register for mock test
             </button>
           </div>
         )}

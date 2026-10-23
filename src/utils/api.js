@@ -820,6 +820,22 @@ export const saveMockTestSection2 = async (payload) => {
   });
 };
 
+/** Save JEE Main mock test step 1 (name + OTP-verified mobile). */
+export const saveJeeMainMockTestSection1 = async (payload) => {
+  return apiRequest('/jee-main-mock-test/section1', {
+    method: 'POST',
+    body: JSON.stringify(payload),
+  });
+};
+
+/** Save JEE Main mock test step 2 and complete the registration. */
+export const saveJeeMainMockTestSection2 = async (payload) => {
+  return apiRequest('/jee-main-mock-test/section2', {
+    method: 'POST',
+    body: JSON.stringify(payload),
+  });
+};
+
 /**
  * Check if this mobile already submitted the public training form (live or legacy DB row).
  * @param {string} phone - Phone string (digits normalized to 10)
