@@ -124,11 +124,6 @@
   color: var(--ink);
 }
 .gx-ra-showing { color: var(--muted); font-size: 12.5px; font-weight: 600; line-height: 36px; }
-.gx-ra-range {
-  margin: -6px 0 0;
-  color: var(--ink-soft);
-  font-size: 13px;
-}
 
 .gx-ra-list {
   display: grid;
@@ -364,7 +359,8 @@
   font-weight: 650;
 }
 .gx-ra-empty p { margin: 0; color: var(--muted); font-size: 13px; line-height: 1.45; }
-.gx-ra-empty .gx-btn { margin-top: 12px; }
+.gx-ra-empty .gx-btn,
+.gx-ra-empty .gx-lime { margin: 12px 4px 0; }
 
 .gx-ra-dialog { width: min(560px, 100%); }
 .gx-ra-dialog textarea {

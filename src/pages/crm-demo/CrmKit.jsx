@@ -1,4 +1,4 @@
-import { useEffect, useRef } from 'react';
+import { useEffect, useId, useRef } from 'react';
 import { FiSearch } from 'react-icons/fi';
 import { monthLabel } from './crmFormat';
 import { useCrmDemo } from './useCrmDemo';
@@ -44,19 +44,33 @@ export function Notice({ notice }) {
   return <div className={`gx-notice ${notice.tone || ''}`} role={alert ? 'alert' : 'status'}>{notice.message}</div>;
 }
 
-export function Dialog({ title, children, onClose }) {
+export function Dialog({ title, description, children, onClose, className = '', hideDismiss = false, focusSelector = '' }) {
   const cardRef = useRef(null);
+  const titleId = useId();
+  const descriptionId = useId();
   useEffect(() => {
-    cardRef.current?.focus();
-  }, []);
+    const node = focusSelector ? cardRef.current?.querySelector(focusSelector) : null;
+    (node || cardRef.current)?.focus();
+  }, [focusSelector]);
   return (
     <div className="gx-modal" onKeyDown={(event) => { if (event.key === 'Escape') onClose(); }}>
-      <div ref={cardRef} role="dialog" aria-modal="true" aria-label={title} tabIndex={-1} className="gx-modal-card">
-        <h3>{title}</h3>
+      <div
+        ref={cardRef}
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby={titleId}
+        aria-describedby={description ? descriptionId : undefined}
+        tabIndex={-1}
+        className={`gx-modal-card${className ? ` ${className}` : ''}`}
+      >
+        <h3 id={titleId}>{title}</h3>
+        {description ? <p id={descriptionId} className="gx-help">{description}</p> : null}
         {children}
-        <div className="gx-form-actions">
-          <button type="button" className="gx-text" onClick={onClose}>Close</button>
-        </div>
+        {hideDismiss ? null : (
+          <div className="gx-form-actions">
+            <button type="button" className="gx-text" onClick={onClose}>Close</button>
+          </div>
+        )}
       </div>
     </div>
   );

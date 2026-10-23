@@ -85,7 +85,7 @@
 }
 .gx-ct-card:hover { background: var(--hover); }
 .gx-ct-card.is-primary {
-  border-color: color-mix(in srgb, var(--lime) 72%, var(--line));
+  border-color: color-mix(in srgb, var(--lime) 48%, var(--line));
   box-shadow: inset 3px 0 0 var(--lime);
 }
 .gx-ct-card.is-inactive { background: color-mix(in srgb, var(--paper) 72%, var(--white)); }
@@ -393,8 +393,15 @@
 }
 
 @media (max-width: 900px) {
-  .gx-ct-card { grid-template-columns: minmax(0, 1fr) auto; }
-  .gx-ct-channels { grid-column: 1 / -1; }
+  .gx-ct-card {
+    grid-template-columns: minmax(0, 1fr) max-content;
+    grid-template-areas:
+      "id aside"
+      "channels channels";
+  }
+  .gx-ct-id { grid-area: id; }
+  .gx-ct-channels { grid-area: channels; }
+  .gx-ct-aside { grid-area: aside; align-self: center; }
 }
 @media (max-width: 720px) {
   .gx-ct-head { align-items: stretch; flex-direction: column; gap: 12px; }
@@ -406,6 +413,10 @@
   .gx-contacts.gx-card { padding: 16px; }
   .gx-ct-card {
     grid-template-columns: minmax(0, 1fr);
+    grid-template-areas:
+      "id"
+      "channels"
+      "aside";
     padding: 14px;
   }
   .gx-ct-channels { grid-column: auto; }

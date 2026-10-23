@@ -1,12 +1,12 @@
-import { useEffect, useId, useRef, useState } from 'react';
+import { useCallback, useEffect, useId, useRef, useState } from 'react';
 import {
   FiActivity, FiCheckCircle, FiEdit2, FiInfo, FiLink, FiMessageSquare, FiMoreHorizontal,
   FiPhone, FiPlus, FiRefreshCw, FiUser, FiUserPlus, FiUsers, FiXCircle,
 } from 'react-icons/fi';
 import { DEMO_ACTOR } from '../../../utils/crmDemoStore';
 import { Dialog, SearchField } from '../CrmKit';
-import { avatarColor, exactDateTime, initials, relativeTime } from './overviewModel.js';
-import { avatarColor as toneColor, initials as nameInitials } from '../crmFormat';
+import { avatarColor, initials } from '../crmFormat';
+import { exactDateTime, relativeTime } from './overviewModel';
 import { buildActivityFeed, previousRemarkVersions, REMARK_LIMIT } from './remarksModel';
 import './remarksActivity.css';
 
@@ -95,7 +95,7 @@ export function RemarkDialog({ mode, text, onChange, saving, error, onClose, onS
   );
 }
 
-function RemarkCard({ remark, now, menuOpen, historyOpen, onEdit, onToggleMenu, onToggleHistory }) {
+function RemarkCard({ remark, now, menuOpen, historyOpen, onEdit, onToggleMenu, onCloseMenu, onToggleHistory }) {
   const menuRef = useRef(null);
   const versions = previousRemarkVersions(remark);
   const canEdit = remark.authorId === DEMO_ACTOR.id;
@@ -106,10 +106,10 @@ function RemarkCard({ remark, now, menuOpen, historyOpen, onEdit, onToggleMenu, 
   useEffect(() => {
     if (!menuOpen) return undefined;
     function onPointer(event) {
-      if (!menuRef.current?.contains(event.target)) onToggleMenu(remark.id);
+      if (!menuRef.current?.contains(event.target)) onCloseMenu();
     }
     function onKey(event) {
-      if (event.key === 'Escape') onToggleMenu(remark.id);
+      if (event.key === 'Escape') onCloseMenu();
     }
     document.addEventListener('mousedown', onPointer);
     document.addEventListener('keydown', onKey);
@@ -117,12 +117,12 @@ function RemarkCard({ remark, now, menuOpen, historyOpen, onEdit, onToggleMenu, 
       document.removeEventListener('mousedown', onPointer);
       document.removeEventListener('keydown', onKey);
     };
-  }, [menuOpen, onToggleMenu, remark.id]);
+  }, [menuOpen, onCloseMenu]);
 
   return (
     <article className="gx-ra-card">
       <header className="gx-ra-card-head">
-        <span className="gx-ra-avatar" style={{ background: toneColor(author) }} aria-hidden="true">{nameInitials(author)}</span>
+        <span className="gx-ra-avatar" style={{ background: avatarColor(author) }} aria-hidden="true">{initials(author)}</span>
         <div className="gx-ra-who">
           <div className="gx-ra-name-row">
             <strong>{author}</strong>
@@ -219,6 +219,14 @@ export default function RemarksActivity({
   const [to, setTo] = useState('');
   const [menuId, setMenuId] = useState(null);
   const [historyId, setHistoryId] = useState(null);
+  const toggleMenu = useCallback((id) => {
+    setMenuId((current) => (current === id ? null : id));
+  }, []);
+  const closeMenu = useCallback(() => setMenuId(null), []);
+  const toggleHistory = useCallback((id) => {
+    setHistoryId((current) => (current === id ? null : id));
+    setMenuId(null);
+  }, []);
   const feed = buildActivityFeed({ remarks, audits, mode, query, from, to });
   const narrowed = Boolean(query.trim()) || Boolean(from) || Boolean(to);
   const filtersActive = narrowed || mode !== 'all';
@@ -286,6 +294,7 @@ export default function RemarksActivity({
               role="radio"
               data-mode={value}
               aria-checked={mode === value}
+              tabIndex={mode === value ? 0 : -1}
               className={mode === value ? 'is-on' : ''}
               onClick={() => setMode(value)}
             >
@@ -306,16 +315,15 @@ export default function RemarksActivity({
         {filtersActive ? <span className="gx-ra-showing">Showing {feed.entries.length}</span> : null}
         {filtersActive ? <button type="button" className="gx-ra-clear" onClick={clearFilters}>Clear filters</button> : null}
       </div>
-      {feed.rangeError ? <p className="gx-ra-range" role="alert">{feed.rangeError}</p> : null}
       {remarksError ? <div className="gx-notice error" role="alert"><p>{remarksError}</p><button type="button" className="gx-btn" onClick={onRetry}>Retry</button></div> : null}
       {auditsError ? <div className="gx-notice error" role="alert"><p>{auditsError}</p><button type="button" className="gx-btn" onClick={onRetry}>Retry</button></div> : null}
 
       {feed.entries.length === 0 ? (
-        <div className="gx-ra-empty">
+        <div className="gx-ra-empty" role={feed.rangeError ? 'alert' : undefined}>
           <strong>{feed.rangeError ? 'That date range is not valid.' : emptyTitle}</strong>
           <p>{feed.rangeError ? feed.rangeError : emptyCopy}</p>
           {filtersActive ? <button type="button" className="gx-btn" onClick={clearFilters}>Clear filters</button> : null}
-          {!filtersActive && mode !== 'events' && remarkCount === 0 && !remarksError ? (
+          {!remarksError && !feed.rangeError && !narrowed && mode !== 'events' && remarkCount === 0 ? (
             <button type="button" className="gx-lime" onClick={onAdd}>Add remark</button>
           ) : null}
         </div>
@@ -336,11 +344,9 @@ export default function RemarksActivity({
                     menuOpen={menuId === entry.remark.id}
                     historyOpen={historyId === entry.remark.id}
                     onEdit={onEdit}
-                    onToggleMenu={(id) => setMenuId((current) => (current === id ? null : id))}
-                    onToggleHistory={(id) => {
-                      setHistoryId((current) => (current === id ? null : id));
-                      setMenuId(null);
-                    }}
+                    onToggleMenu={toggleMenu}
+                    onCloseMenu={closeMenu}
+                    onToggleHistory={toggleHistory}
                   />
                 ) : <EventRow entry={entry} now={now} />}
               </li>
@@ -351,5 +357,3 @@ export default function RemarksActivity({
     </section>
   );
 }
-
-export { REMARK_LIMIT };

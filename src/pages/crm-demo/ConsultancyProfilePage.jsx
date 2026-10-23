@@ -19,9 +19,11 @@ import {
 import { localDayKey } from '../../utils/crmAnalytics';
 import { ADMISSION_STATUSES, CALLING_STATUSES, CONSULTANCY_STATUSES, DEMO_ACTOR, DEMO_SEED_ACTOR, isFollowUpOverdue } from '../../utils/crmDemoStore';
 import { DataTable, Dialog, Notice, SearchField } from './CrmKit';
-import { activityTitle, shortDate } from './crmFormat';
+import { shortDate } from './crmFormat';
 import { loadAll } from './dashboard/dashboardModel';
 import { useCrmDemo } from './useCrmDemo';
+import RemarksActivity, { RemarkDialog } from './consultancy/RemarksActivity';
+import { REMARK_LIMIT } from './consultancy/remarksModel';
 import ConsultancyContacts from './consultancy/ConsultancyContacts';
 import ConsultancyHeader from './consultancy/ConsultancyHeader';
 import ConsultancyOverview from './consultancy/ConsultancyOverview';
@@ -88,13 +90,13 @@ export default function ConsultancyProfilePage() {
   const [when, setWhen] = useState('');
   const [remarking, setRemarking] = useState(false);
   const [remarkText, setRemarkText] = useState('');
+  const [remarkError, setRemarkError] = useState('');
   const [editingRemark, setEditingRemark] = useState(null);
   const [statusOpen, setStatusOpen] = useState(false);
   const [statusForm, setStatusForm] = useState(EMPTY_STATUS);
   const [ownerId, setOwnerId] = useState('');
   const [studentQuery, setStudentQuery] = useState('');
   const [studentStatus, setStudentStatus] = useState('all');
-  const [remarkQuery, setRemarkQuery] = useState('');
   const [calendarFocus, setCalendarFocus] = useState('');
   const stacked = useMatchMedia('(max-width: 960px)');
 
@@ -150,9 +152,6 @@ export default function ConsultancyProfilePage() {
     const phone = String(student?.phone || '');
     return `${row.studentName} ${phone}`.toLowerCase().includes(needle) || phone.includes(needle.replace(/\D/g, ''));
   });
-  const remarkNeedle = remarkQuery.trim().toLowerCase();
-  const visibleRemarks = remarkLoad.items.filter((row) => !remarkNeedle || row.text.toLowerCase().includes(remarkNeedle));
-
   async function run(action, after) {
     setSaving(true);
     try {
@@ -194,6 +193,39 @@ export default function ConsultancyProfilePage() {
     setEditing(true);
   }
 
+  function openRemark() {
+    setRemarkError('');
+    setEditingRemark(null);
+    setRemarkText('');
+    setRemarking(true);
+  }
+
+  function openRemarkEdit(row) {
+    setRemarkError('');
+    setRemarking(false);
+    setRemarkText(row.text || '');
+    setEditingRemark(row);
+  }
+
+  async function submitRemark(event) {
+    event.preventDefault();
+    const text = remarkText.trim();
+    if (!text || text.length > REMARK_LIMIT) {
+      setRemarkError(`A remark needs 1–${REMARK_LIMIT} characters.`);
+      return;
+    }
+    setRemarkError('');
+    const editing = editingRemark;
+    const view = await run(
+      () => (editing ? client.editRemark(id, editing.id, { text }) : client.addRemark(id, { text })),
+      () => {
+        setRemarking(false);
+        setEditingRemark(null);
+      },
+    );
+    if (view?.state !== 'ok') setRemarkError(view?.message || 'The remark could not be saved.');
+  }
+
   function completeFollowUp(row) {
     run(() => client.setFollowUp(id, {
       followUpStatus: 'Meeting Completed',
@@ -227,7 +259,7 @@ export default function ConsultancyProfilePage() {
         saving={saving}
         onSchedule={() => { setWhen(''); setScheduling(true); }}
         onOpenFollowUp={() => openCalendar(nextAction?.bucket || '')}
-        onRemark={() => { setRemarkText(''); setRemarking(true); }}
+        onRemark={openRemark}
         onStatus={openStatus}
         onEdit={openEdit}
         onStudents={() => openStudents('all')}
@@ -402,30 +434,16 @@ export default function ConsultancyProfilePage() {
       ) : null}
 
       {tab === 'remarks' ? (
-        <section className="gx-card">
-          <SearchField value={remarkQuery} onChange={setRemarkQuery} label="Search remarks" />
-          {visibleRemarks.length === 0 ? <p className="gx-note">No remarks match.</p> : (
-            <ul className="gx-list">
-              {visibleRemarks.map((row) => (
-                <li key={row.id}>
-                  <p>{row.text}</p>
-                  <span className="gx-sub">{row.authorName} · {shortDate(row.createdAt)}{row.updatedAt !== row.createdAt ? ` · edited ${shortDate(row.updatedAt)}` : ''}</span>
-                  {row.previousText ? <span className="gx-sub">Previous text kept</span> : null}
-                  {row.authorId === DEMO_ACTOR.id ? <button type="button" className="gx-text" onClick={() => { setRemarkText(row.text); setEditingRemark(row); }}>Edit</button> : null}
-                </li>
-              ))}
-            </ul>
-          )}
-          <h3>Activity</h3>
-          <p className="gx-note">This history is stored in the browser. It is not tamper-proof and it is not a server audit log.</p>
-          {auditsLoad.items.filter((row) => related.has(row.entityId)).length === 0 ? <p className="gx-note">No activity for this consultancy.</p> : (
-            <ul className="gx-list">
-              {auditsLoad.items.filter((row) => related.has(row.entityId)).map((row) => (
-                <li key={row.id}>{activityTitle(row.action)} <span className="gx-sub">{row.actorLabel || 'Demo'} · {shortDate(row.createdAt)}</span></li>
-              ))}
-            </ul>
-          )}
-        </section>
+        <RemarksActivity
+          remarks={remarkLoad.items}
+          audits={relatedActivity}
+          remarksError={remarkLoad.ok ? '' : remarkLoad.message}
+          auditsError={auditsLoad.ok ? '' : auditsLoad.message}
+          now={now}
+          onAdd={openRemark}
+          onEdit={openRemarkEdit}
+          onRetry={refresh}
+        />
       ) : null}
 
       {tab === 'settings' ? (
@@ -583,22 +601,21 @@ export default function ConsultancyProfilePage() {
           </form>
         </Dialog>
       ) : null}
-      {remarking ? (
-        <Dialog title="Add remark" onClose={() => setRemarking(false)}>
-          <form className="gx-form" onSubmit={(event) => { event.preventDefault(); run(() => client.addRemark(id, { text: remarkText }), () => setRemarking(false)); }}>
-            <label>Remark<textarea required maxLength={500} value={remarkText} onChange={(event) => setRemarkText(event.target.value)} /></label>
-            <button className="gx-lime" type="submit" disabled={saving || !remarkText.trim()}>Save remark</button>
-          </form>
-        </Dialog>
-      ) : null}
-      {editingRemark ? (
-        <Dialog title="Edit remark" onClose={() => setEditingRemark(null)}>
-          <form className="gx-form" onSubmit={(event) => { event.preventDefault(); run(() => client.editRemark(id, editingRemark.id, { text: remarkText }), () => setEditingRemark(null)); }}>
-            <label>Remark<textarea required maxLength={500} value={remarkText} onChange={(event) => setRemarkText(event.target.value)} /></label>
-            <p className="gx-help">The previous wording stays on the remark.</p>
-            <button className="gx-lime" type="submit" disabled={saving}>Update remark</button>
-          </form>
-        </Dialog>
+      {remarking || editingRemark ? (
+        <RemarkDialog
+          mode={editingRemark ? 'edit' : 'add'}
+          text={remarkText}
+          onChange={(value) => { setRemarkText(value); setRemarkError(''); }}
+          saving={saving}
+          error={remarkError}
+          onClose={() => {
+            if (saving) return;
+            setRemarking(false);
+            setEditingRemark(null);
+            setRemarkError('');
+          }}
+          onSubmit={submitRemark}
+        />
       ) : null}
     </div>
   );

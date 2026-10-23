@@ -135,8 +135,13 @@ export default function FollowUpCalendar({
   const [owner, setOwner] = useState('all');
   const [type, setType] = useState('all');
   const [activeId, setActiveId] = useState('');
-  const [completedOpen, setCompletedOpen] = useState(false);
+  const [completedOpen, setCompletedOpen] = useState(focusBucket === 'completed');
+  const [seenFocus, setSeenFocus] = useState(focusBucket);
   const [menuFor, setMenuFor] = useState('');
+  if (focusBucket !== seenFocus) {
+    setSeenFocus(focusBucket);
+    if (focusBucket === 'completed') setCompletedOpen(true);
+  }
   const gridRef = useRef(null);
   const keyboardNav = useRef(false);
 
@@ -153,10 +158,6 @@ export default function FollowUpCalendar({
   const heading = view === 'month' ? monthTitle(cursor.year, cursor.monthIndex) : view === 'week' ? weekTitle(weekCells) : dayTitle(selectedKey);
   const chipLimit = view === 'week' ? WEEK_CHIP_LIMIT : MONTH_CHIP_LIMIT;
   const stageKey = view === 'month' ? `month-${cursor.year}-${cursor.monthIndex}` : view === 'week' ? `week-${weekCells[0]?.key || ''}` : `day-${selectedKey}`;
-
-  useEffect(() => {
-    if (focusBucket === 'completed') setCompletedOpen(true);
-  }, [focusBucket]);
 
   useEffect(() => {
     if (!menuFor) return undefined;
@@ -262,18 +263,10 @@ export default function FollowUpCalendar({
               <FiChevronRight size={16} aria-hidden="true" />
             </button>
           </div>
-          <div className="gx-fu-quick">
-            <div className="gx-fu-view" role="radiogroup" aria-label="Calendar view">
-              {VIEWS.map(([value, label]) => (
-                <button key={value} type="button" role="radio" aria-checked={view === value} className={view === value ? 'is-on' : ''} onClick={() => chooseView(value)}>{label}</button>
-              ))}
-            </div>
-            <label className="gx-fu-jump">
-              <span className="gx-sr">Jump to date</span>
-              <input className="gx-fu-date" type="date" value={selectedKey} onChange={(event) => { if (event.target.value) selectDate(event.target.value); }} />
-            </label>
-            <button type="button" className="gx-fu-quiet" disabled={saving} onClick={() => onScheduleCall(selectedKey)}>Schedule call</button>
-            <button type="button" className="gx-fu-lime" disabled={saving} onClick={() => onCreateFollowUp(selectedKey)}>Add follow-up</button>
+          <div className="gx-fu-view" role="radiogroup" aria-label="Calendar view">
+            {VIEWS.map(([value, label]) => (
+              <button key={value} type="button" role="radio" aria-checked={view === value} className={view === value ? 'is-on' : ''} onClick={() => chooseView(value)}>{label}</button>
+            ))}
           </div>
         </div>
         <div className="gx-fu-filters">
@@ -295,6 +288,14 @@ export default function FollowUpCalendar({
               {options.types.map((item) => <option key={item} value={item}>{typeLabel(item)}</option>)}
             </select>
           </label>
+          <div className="gx-fu-quick">
+            <label className="gx-fu-jump">
+              <span className="gx-sr">Jump to date</span>
+              <input className="gx-fu-date" type="date" value={selectedKey} onChange={(event) => { if (event.target.value) selectDate(event.target.value); }} />
+            </label>
+            <button type="button" className="gx-fu-quiet" disabled={saving} onClick={() => onScheduleCall(selectedKey)}>Schedule call</button>
+            <button type="button" className="gx-fu-lime" disabled={saving} onClick={() => onCreateFollowUp(selectedKey)}>Add follow-up</button>
+          </div>
         </div>
         {loading ? <p className="gx-fu-empty">Loading follow-ups…</p> : null}
         <div key={stageKey} className="gx-fu-stage">
@@ -312,7 +313,7 @@ export default function FollowUpCalendar({
             </div>
           ) : (
             <div ref={gridRef} className={`gx-fu-grid${view === 'week' ? ' is-week' : ''}`} role="grid" aria-label={heading}>
-              {WEEKDAYS.map((label) => <div key={label} className="gx-fu-dow" role="columnheader">{label}</div>)}
+              {WEEKDAYS.map((label) => <div key={label} className="gx-fu-dow" role="columnheader">{compact ? label.slice(0, 1) : label}</div>)}
               {cells.map((cell) => {
                 const events = byDay.get(cell.key) || [];
                 const { shown, hidden } = splitEvents(events, chipLimit);
