@@ -5,7 +5,12 @@ import ShinyText from '../UI/ShinyText';
 import SuccessPopup from '../UI/SuccessPopup';
 import Loader from '../UI/Loader';
 import { sendOtp, verifyOtp, getDemoSlots, submitApplication, saveStep1, saveStep2, saveStep3 } from '../../utils/api';
-import { captureUtmFirstTouch, getStoredUtm } from '../../utils/utm';
+import {
+  OTP_ENTRY_INSTRUCTION,
+  OTP_REQUEST_FAILED_MESSAGE,
+  OTP_REQUEST_SUBMITTED_MESSAGE,
+} from '../../utils/otpUserMessages';
+import { captureUtmFirstTouch, captureUtmSession, getStoredUtm } from '../../utils/utm';
 import './ApplySection.css';
 
 const WHATSAPP_NUMBER = '919009000914';
@@ -131,6 +136,7 @@ const ApplySection = () => {
   // First-touch UTM capture on registration page load
   useEffect(() => {
     captureUtmFirstTouch();
+    captureUtmSession();
   }, []);
 
   useEffect(() => {
@@ -246,7 +252,7 @@ const ApplySection = () => {
       console.log('[Send OTP] Response:', result);
 
       if (result.success) {
-        setSuccessMessage('OTP sent successfully to your mobile number');
+        setSuccessMessage(result.message || OTP_REQUEST_SUBMITTED_MESSAGE);
         
         // Save Step 1 data to MongoDB
         try {
@@ -283,7 +289,7 @@ const ApplySection = () => {
         if (result.status === 429) {
           setError(result.message || 'Too many OTP requests. Please try again after some time.');
         } else {
-          const errorMessage = result.message || result.data?.message || 'Failed to send OTP. Please try again.';
+          const errorMessage = result.message || result.data?.message || OTP_REQUEST_FAILED_MESSAGE;
           setError(errorMessage);
         }
       }
@@ -394,13 +400,13 @@ const ApplySection = () => {
       );
 
       if (result.success) {
-        setSuccessMessage('OTP resent successfully');
+        setSuccessMessage(result.message || OTP_REQUEST_SUBMITTED_MESSAGE);
         otpInputRefs.current[0]?.focus();
       } else {
         if (result.status === 429) {
           setError(result.message || 'Too many OTP requests. Please try again after some time.');
         } else {
-          setError(result.message || 'Failed to resend OTP. Please try again.');
+          setError(result.message || OTP_REQUEST_FAILED_MESSAGE);
         }
       }
     } catch (err) {
@@ -689,7 +695,7 @@ const ApplySection = () => {
 
                 <div className="apply-field">
                   <label htmlFor="whatsappNumber">
-                    WhatsApp Mobile Number <span>*</span>
+                    Mobile Number (for SMS OTP) <span>*</span>
                   </label>
                   <input
                     type="tel"
@@ -731,7 +737,7 @@ const ApplySection = () => {
               <form className="apply-form" onSubmit={handleVerifyOtp}>
                 <div className="apply-otp-wrapper">
                   <p className="apply-otp-instruction">
-                    Enter the 6-digit OTP sent to your WhatsApp number
+                    {OTP_ENTRY_INSTRUCTION}
                   </p>
                   <div className="apply-otp-container">
                     {formData.otp.map((digit, index) => (

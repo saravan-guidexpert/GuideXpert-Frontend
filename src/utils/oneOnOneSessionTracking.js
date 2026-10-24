@@ -51,3 +51,11 @@ export async function trackOneOnOneSessionVisit(apiBase, utmOverrides = {}) {
 export async function trackGuidanceBookingConfirmationVisit(apiBase, utmOverrides = {}) {
   return trackLandingPageVisit(apiBase, 'guidanceBookingConfirmation', utmOverrides);
 }
+
+/**
+ * Record a main page (/) visit so JEE mock test registrations can be tied to a UTM link.
+ * @returns {Promise<string>} visitorFingerprint or empty string
+ */
+export async function trackMainPageVisit(apiBase, utmOverrides = {}) {
+  return trackLandingPageVisit(apiBase, 'mainPage', utmOverrides);
+}

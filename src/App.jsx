@@ -96,6 +96,7 @@ import CollegeDostFormSubmissions from './pages/admin/CollegeDostFormSubmissions
 import OneOnOneCounselingLeads from './pages/admin/OneOnOneCounselingLeads';
 import JeeSessionLeads from './pages/admin/JeeSessionLeads';
 import MockTestLeads from './pages/admin/MockTestLeads';
+import JeeMainMockTestLeads from './pages/admin/JeeMainMockTestLeads';
 import LeadIntelligenceDashboard from './pages/admin/lead-intelligence/LeadIntelligenceDashboard';
 import GuidanceSlotBookings from './pages/admin/GuidanceSlotBookings';
 import OneOnOneCounselorsAdmin from './pages/admin/OneOnOneCounselorsAdmin';
@@ -639,6 +640,7 @@ function App() {
             <Route path="one-on-one-counseling" element={<OneOnOneCounselingLeads />} />
             <Route path="jee-sessions" element={<JeeSessionLeads />} />
             <Route path="mock-test" element={<MockTestLeads />} />
+            <Route path="jee-main-mock-test" element={<JeeMainMockTestLeads />} />
             <Route path="lead-intelligence" element={<LeadIntelligenceDashboard />} />
             <Route path="guidance-slot-bookings" element={<GuidanceSlotBookings />} />
             <Route path="one-on-one-counselors" element={<OneOnOneCounselorsAdmin />} />

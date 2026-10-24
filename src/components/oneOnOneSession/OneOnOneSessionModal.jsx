@@ -1,7 +1,7 @@
 import { useEffect, useRef } from 'react';
 import { createPortal } from 'react-dom';
 import { FiX } from 'react-icons/fi';
-import OneOnOneSessionBookingForm from './OneOnOneSessionBookingForm';
+import JeeMainMockTestForm from '../jeeMainMockTest/JeeMainMockTestForm';
 
 export default function OneOnOneSessionModal({ open, onClose }) {
   const bodyRef = useRef(null);
@@ -27,17 +27,17 @@ export default function OneOnOneSessionModal({ open, onClose }) {
       <button
         type="button"
         className="absolute inset-0 bg-[#041e30]/45 backdrop-blur-[3px]"
-        aria-label="Close booking form"
+        aria-label="Close registration form"
         onClick={onClose}
       />
       <div className="relative z-[1] flex max-h-[92vh] w-full max-w-3xl flex-col overflow-hidden rounded-t-2xl border border-[#e5e7eb] bg-[#F8FAFC] shadow-2xl sm:rounded-2xl">
         <div className="flex shrink-0 items-start justify-between gap-4 border-b border-[#e8eaed] bg-white px-5 py-4 sm:px-6">
           <div>
             <p className="text-[11px] font-semibold uppercase tracking-[0.14em] text-[#f27921]">
-              Free session
+              JEE Main mock test
             </p>
             <h2 id="one-on-one-booking-title" className="mt-1 text-lg font-bold text-[#0F172A] sm:text-xl">
-              Book free IITian 1-on-1 counselling
+              Register for the JEE Main mock test
             </h2>
           </div>
           <button
@@ -50,11 +50,7 @@ export default function OneOnOneSessionModal({ open, onClose }) {
           </button>
         </div>
         <div ref={bodyRef} className="min-h-0 flex-1 overflow-y-auto px-4 py-5 sm:px-6 sm:py-6">
-          <OneOnOneSessionBookingForm
-            key={open ? 'open' : 'closed'}
-            scrollContainerRef={bodyRef}
-            showIntro={false}
-          />
+          <JeeMainMockTestForm key={open ? 'open' : 'closed'} scrollContainerRef={bodyRef} />
         </div>
       </div>
     </div>,

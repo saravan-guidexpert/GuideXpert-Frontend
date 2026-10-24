@@ -54,6 +54,7 @@ import {
   OPS_PRODUCT_IIT,
   OPS_PRODUCT_ONE_ON_ONE,
   OPS_PRODUCT_GUIDANCE_BOOKING,
+  OPS_PRODUCT_JEE_MOCK_TEST,
   buildOpsProductQueryParams,
   parseOpsProductFromSearch,
   parsePreferredLanguageFromSearch,
@@ -399,7 +400,7 @@ function RecoveryCommandBar({
   jobActive, onRefresh, loading, lastSyncAt,
   messageKind, cohortLoading, cohortBookedSlots, cohortSubtitle, cohortHint,
   from, to, group, search,
-  opsProduct, isIitProduct, isOneOnOneProduct, isGuidanceBookingProduct, preferredLanguage, visibleTemplateChips, selectedChipKey,
+  opsProduct, isIitProduct, isOneOnOneProduct, isGuidanceBookingProduct, isJeeMockTestProduct, preferredLanguage, visibleTemplateChips, selectedChipKey,
   onFromChange, onToChange, onTemplateChange, onGroupChange, onSearchChange,
   onOpsProductChange, onTemplateChipSelect,
   embedded = false
@@ -522,9 +523,20 @@ function RecoveryCommandBar({
           >
             Guidance Booking
           </button>
+          <button
+            type="button"
+            onClick={() => onOpsProductChange(OPS_PRODUCT_JEE_MOCK_TEST)}
+            className={`rounded-lg border px-3 py-1.5 text-sm font-semibold transition ${
+              opsProduct === OPS_PRODUCT_JEE_MOCK_TEST
+                ? 'border-primary-navy bg-primary-navy text-white'
+                : 'border-slate-200 bg-white text-slate-700 hover:bg-slate-50'
+            }`}
+          >
+            JEE Mock Test
+          </button>
         </div>
 
-        {(isIitProduct || isOneOnOneProduct || isGuidanceBookingProduct) && (
+        {(isIitProduct || isOneOnOneProduct || isGuidanceBookingProduct || isJeeMockTestProduct) && (
           <div className="mt-3 flex flex-wrap gap-2">
             <button
               type="button"
@@ -580,7 +592,7 @@ function RecoveryCommandBar({
               </select>
             </label>
           )}
-          <label className={`text-sm font-medium text-slate-700 ${isIitProduct || isOneOnOneProduct || isGuidanceBookingProduct ? 'lg:col-span-8' : 'lg:col-span-5'}`}>
+          <label className={`text-sm font-medium text-slate-700 ${isIitProduct || isOneOnOneProduct || isGuidanceBookingProduct || isJeeMockTestProduct ? 'lg:col-span-8' : 'lg:col-span-5'}`}>
             Search
             <input
               value={search}
@@ -1554,6 +1566,7 @@ function RecoveryTab() {
   const isIitProduct = opsProduct === OPS_PRODUCT_IIT;
   const isOneOnOneProduct = opsProduct === OPS_PRODUCT_ONE_ON_ONE;
   const isGuidanceBookingProduct = opsProduct === OPS_PRODUCT_GUIDANCE_BOOKING;
+  const isJeeMockTestProduct = opsProduct === OPS_PRODUCT_JEE_MOCK_TEST;
 
   const [{ from, to }, setRange] = useState(defaultRangeIsoDates);
   const [messageKind, setMessageKind] = useState('');
@@ -1625,13 +1638,14 @@ function RecoveryTab() {
     if (isIitProduct) next.set('opsProduct', OPS_PRODUCT_IIT);
     else if (isOneOnOneProduct) next.set('opsProduct', OPS_PRODUCT_ONE_ON_ONE);
     else if (isGuidanceBookingProduct) next.set('opsProduct', OPS_PRODUCT_GUIDANCE_BOOKING);
+    else if (isJeeMockTestProduct) next.set('opsProduct', OPS_PRODUCT_JEE_MOCK_TEST);
     if (preferredLanguage && IIT_GENERIC_REMINDER_IDS.has(messageKind)) {
       next.set('preferredLanguage', preferredLanguage);
     }
     if (group && group !== 'all') next.set('group', group);
     if (debouncedSearch) next.set('q', debouncedSearch);
     setSearchParams(next, { replace: true });
-  }, [from, to, messageKind, group, debouncedSearch, isIitProduct, isOneOnOneProduct, isGuidanceBookingProduct, preferredLanguage, setSearchParams]);
+  }, [from, to, messageKind, group, debouncedSearch, isIitProduct, isOneOnOneProduct, isGuidanceBookingProduct, isJeeMockTestProduct, preferredLanguage, setSearchParams]);
 
   const visibleTemplateChips = useMemo(
     () => visibleTemplateKindsForProduct([], opsProduct),
@@ -1995,6 +2009,7 @@ function RecoveryTab() {
         isIitProduct={isIitProduct}
         isOneOnOneProduct={isOneOnOneProduct}
         isGuidanceBookingProduct={isGuidanceBookingProduct}
+        isJeeMockTestProduct={isJeeMockTestProduct}
         preferredLanguage={preferredLanguage}
         visibleTemplateChips={visibleTemplateChips}
         selectedChipKey={selectedChipKey}
@@ -2011,6 +2026,9 @@ function RecoveryTab() {
             sp.delete('preferredLanguage');
           } else if (next === OPS_PRODUCT_ONE_ON_ONE) {
             sp.set('opsProduct', OPS_PRODUCT_ONE_ON_ONE);
+            sp.delete('preferredLanguage');
+          } else if (next === OPS_PRODUCT_JEE_MOCK_TEST) {
+            sp.set('opsProduct', OPS_PRODUCT_JEE_MOCK_TEST);
             sp.delete('preferredLanguage');
           } else {
             sp.set('opsProduct', OPS_PRODUCT_GUIDANCE_BOOKING);

@@ -275,9 +275,43 @@
   }
 }
 
+@keyframes gx-laptop-float {
+  0%,
+  100% {
+    transform: translate3d(0, 0, 0);
+  }
+  50% {
+    transform: translate3d(0, -5px, 0);
+  }
+}
+
+@keyframes gx-prize-glow {
+  0%,
+  100% {
+    opacity: 0.72;
+    transform: translate3d(0, -50%, 0) scale(1);
+  }
+  50% {
+    opacity: 1;
+    transform: translate3d(3%, -54%, 0) scale(1.06);
+  }
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  .gx-laptop-float {
+    animation: gx-laptop-float 5.6s ease-in-out infinite;
+  }
+
+  .gx-prize-glow {
+    animation: gx-prize-glow 8s ease-in-out infinite;
+  }
+}
+
 @media (prefers-reduced-motion: reduce) {
   .sw-fade-up,
-  .sw-preview-panel {
+  .sw-preview-panel,
+  .gx-laptop-float,
+  .gx-prize-glow {
     animation: none;
   }
 }

@@ -206,7 +206,7 @@ export default function MeetingRegistration({
       const result = await sendOtp(name.trim(), cleanPhone, otpOccupation);
 
       if (result.success) {
-        setSuccessMessage('OTP sent successfully to your mobile number');
+        setSuccessMessage('OTP request submitted. Please check your SMS messages.');
         setStep(2);
         setTimeout(() => otpInputRefs.current[0]?.focus(), 100);
       } else {

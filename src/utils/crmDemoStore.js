@@ -4,11 +4,23 @@
  * Callers in demo mode must use this module instead of crmApi.js.
  */
 
-import { consultancyStage } from './consultancyPipeline.js';
+import { createVolumeState } from './crmVolumeSeed.js';
 
 export const CRM_DEMO_STORAGE_KEY = 'guidexpert_crm_demo_v1';
 
 export const ADMISSION_STATUSES = ['Not started', 'Contacted', 'Counselling', 'Applied', 'Admitted', 'Enrolled', 'Not proceeding'];
+export const CONSULTANCY_STATUSES = ['Fresh Lead', 'Contacted', 'Meeting Scheduled', 'Meeting Completed', 'Interested', 'Onboarding in Progress', 'Not Interested', 'Follow-up Required', 'On Hold', 'Discontinued', 'On - Boarded'];
+export const CALLING_STATUSES = ['Connected', 'Not Answered', 'Busy', 'Switched Off', 'Invalid Number', 'Call Back Requested', 'Follow-up Required', 'Interested', 'Not Interested', 'Meeting Scheduled', 'WhatsApp Message Sent', 'WhatsApp Call Connected'];
+const LEGACY_CONSULTANCY_STATUS = {
+  Pending: 'Fresh Lead',
+  'Not Lifted': 'Contacted',
+  'Call Scheduled': 'Meeting Scheduled',
+  'Call Completed': 'Meeting Completed',
+};
+export const DEMO_ACTOR = { id: 'staff_me', name: 'Demo staff' };
+export const DEMO_SEED_ACTOR = { id: 'staff_seed', name: 'Demo seed' };
+const DEMO_OWNERS = [DEMO_ACTOR, DEMO_SEED_ACTOR];
+const REMARK_MAX = 500;
 
 const REASON_MIN = 10;
 const REASON_MAX = 500;
@@ -67,13 +79,14 @@ function asText(value) {
 export function createSeedState() {
   const at = '2026-04-02T09:30:00.000Z';
   return {
-    version: 1,
+    version: 2,
     seq: 30,
     demoManager: false,
+    demoRole: 'staff',
     consultancies: [
-      { id: 'con_1', name: 'Horizon Study Circle', normalizedName: 'horizon study circle', status: 'active', pipelineStage: 'fresh', notes: 'Fictional Hyderabad counselling desk.', createdAt: at, updatedAt: at },
-      { id: 'con_2', name: 'North Star Guidance', normalizedName: 'north star guidance', status: 'active', pipelineStage: 'contacted', notes: 'Fictional Bengaluru partner.', createdAt: at, updatedAt: at },
-      { id: 'con_3', name: 'South Gate Advisors', normalizedName: 'south gate advisors', status: 'inactive', pipelineStage: 'meeting_done', notes: 'Fictional inactive desk kept for history.', createdAt: at, updatedAt: at },
+      { id: 'con_1', name: 'Horizon Study Circle', normalizedName: 'horizon study circle', status: 'active', notes: 'Fictional Hyderabad counselling desk.', createdById: DEMO_ACTOR.id, createdByName: DEMO_ACTOR.name, ownerId: DEMO_ACTOR.id, ownerName: DEMO_ACTOR.name, followUpStatus: 'Fresh Lead', callingStatus: '', lastContactAt: null, nextFollowUpAt: null, createdAt: at, updatedAt: at },
+      { id: 'con_2', name: 'North Star Guidance', normalizedName: 'north star guidance', status: 'active', notes: 'Fictional Bengaluru partner.', createdById: DEMO_ACTOR.id, createdByName: DEMO_ACTOR.name, ownerId: DEMO_ACTOR.id, ownerName: DEMO_ACTOR.name, followUpStatus: 'Fresh Lead', callingStatus: '', lastContactAt: null, nextFollowUpAt: null, createdAt: at, updatedAt: at },
+      { id: 'con_3', name: 'South Gate Advisors', normalizedName: 'south gate advisors', status: 'inactive', notes: 'Fictional inactive desk kept for history.', createdById: DEMO_ACTOR.id, createdByName: DEMO_ACTOR.name, ownerId: DEMO_ACTOR.id, ownerName: DEMO_ACTOR.name, followUpStatus: 'Fresh Lead', callingStatus: '', lastContactAt: null, nextFollowUpAt: null, createdAt: at, updatedAt: at },
     ],
     contacts: [
       { id: 'ct_1', consultancyId: 'con_1', name: 'Anita Rao', phone: '9000011111', email: '', role: 'Owner', status: 'active', deactivatedAt: null, createdAt: at, updatedAt: at },
@@ -149,6 +162,8 @@ export function createSeedState() {
         sourceCorrectedBy: null,
       },
     ],
+    followUps: [],
+    remarks: [],
     audits: [
       { id: 'audit_1', action: 'student.created', entityType: 'student', entityId: 'st_1', actorLabel: 'Demo seed', reason: '', before: null, after: { fullName: 'Asha Rao', phone: '9876543210' }, createdAt: at },
       { id: 'audit_2', action: 'referral.created', entityType: 'referral', entityId: 'ref_1', actorLabel: 'Demo seed', reason: '', before: null, after: { consultancyId: 'con_1', consultancyName: 'Horizon Study Circle', originalConsultancyId: 'con_1' }, createdAt: at },
@@ -159,7 +174,7 @@ export function createSeedState() {
 
 function isState(value) {
   return Boolean(value)
-    && value.version === 1
+    && (value.version === 1 || value.version === 2)
     && typeof value.demoManager === 'boolean'
     && Number.isInteger(value.seq)
     && Array.isArray(value.consultancies)
@@ -167,6 +182,70 @@ function isState(value) {
     && Array.isArray(value.students)
     && Array.isArray(value.referrals)
     && Array.isArray(value.audits);
+}
+
+function migrateState(state) {
+  let changed = state.version !== 2;
+  state.version = 2;
+  if (state.demoRole !== 'staff' && state.demoRole !== 'super_admin') {
+    state.demoRole = 'staff';
+    changed = true;
+  }
+  if (!Array.isArray(state.followUps)) {
+    state.followUps = [];
+    changed = true;
+  }
+  if (!Array.isArray(state.remarks)) {
+    state.remarks = [];
+    changed = true;
+  }
+  state.consultancies.forEach((row) => {
+    if (!row.createdById) {
+      row.createdById = DEMO_ACTOR.id;
+      row.createdByName = DEMO_ACTOR.name;
+      changed = true;
+    }
+    if (!row.ownerId) {
+      row.ownerId = DEMO_ACTOR.id;
+      row.ownerName = DEMO_ACTOR.name;
+      changed = true;
+    }
+    const consultancyStatus = consultancyStatusOf(row.followUpStatus);
+    if (row.followUpStatus !== consultancyStatus) {
+      row.followUpStatus = consultancyStatus;
+      changed = true;
+    }
+    if (!CALLING_STATUSES.includes(row.callingStatus)) {
+      if (row.callingStatus) {
+        row.callingStatus = '';
+        changed = true;
+      } else if (row.callingStatus == null) {
+        row.callingStatus = '';
+        changed = true;
+      }
+    }
+    if (!Object.prototype.hasOwnProperty.call(row, 'lastContactAt')) {
+      row.lastContactAt = null;
+      changed = true;
+    }
+    if (!Object.prototype.hasOwnProperty.call(row, 'nextFollowUpAt')) {
+      row.nextFollowUpAt = null;
+      changed = true;
+    }
+  });
+  return changed;
+}
+
+function consultancyStatusOf(value) {
+  if (CONSULTANCY_STATUSES.includes(value)) return value;
+  return LEGACY_CONSULTANCY_STATUS[value] || 'Fresh Lead';
+}
+
+export function isFollowUpOverdue(row, now = new Date()) {
+  if (!row || !row.nextFollowUpAt) return false;
+  if (row.followUpStatus !== 'Meeting Scheduled' && row.followUpStatus !== 'Follow-up Required') return false;
+  const when = new Date(row.nextFollowUpAt);
+  return !Number.isNaN(when.getTime()) && when.getTime() < now.getTime();
 }
 
 function browserStorage() {
@@ -203,6 +282,10 @@ function readState(storage) {
     const parsed = JSON.parse(raw);
     if (!isState(parsed)) {
       return { error: fail(500, 'Local demo data is unreadable. Reset it from Demo data.', 'malformed_demo_data') };
+    }
+    if (migrateState(parsed)) {
+      const written = writeState(storage, parsed);
+      if (written.error) return written;
     }
     return { state: parsed, seeded: false };
   } catch {
@@ -273,19 +356,57 @@ function nextId(state, prefix) {
   return `${prefix}_${state.seq}`;
 }
 
-const SEED_PIPELINE = { con_1: 'fresh', con_2: 'contacted', con_3: 'meeting_done' };
+function latestRemark(state, consultancyId) {
+  return state.remarks
+    .filter((row) => row.consultancyId === consultancyId)
+    .sort((a, b) => String(b.createdAt).localeCompare(String(a.createdAt)))[0] || null;
+}
+
+function primaryContact(state, consultancyId) {
+  const rows = state.contacts.filter((item) => item.consultancyId === consultancyId);
+  const contact = rows.find((item) => item.status === 'active') || rows[0] || null;
+  if (!contact) return null;
+  return { id: contact.id, name: contact.name, phone: contact.phone || '', email: contact.email || '' };
+}
 
 function consultancyDto(row, state) {
+  const remark = latestRemark(state, row.id);
   return {
     id: row.id,
     name: row.name,
     status: row.status,
-    pipelineStage: consultancyStage(row.pipelineStage || SEED_PIPELINE[row.id]),
+    primaryContact: primaryContact(state, row.id),
     notes: row.notes || '',
     studentCount: state.referrals.filter((item) => item.consultancyId === row.id).length,
+    originalStudentCount: state.referrals.filter((item) => item.originalConsultancyId === row.id).length,
+    createdById: row.createdById,
+    createdByName: row.createdByName,
+    ownerId: row.ownerId,
+    ownerName: row.ownerName,
+    followUpStatus: consultancyStatusOf(row.followUpStatus),
+    callingStatus: CALLING_STATUSES.includes(row.callingStatus) ? row.callingStatus : '',
+    lastContactAt: row.lastContactAt || null,
+    nextFollowUpAt: row.nextFollowUpAt || null,
+    latestRemark: remark ? {
+      id: remark.id,
+      text: remark.text,
+      authorId: remark.authorId,
+      authorName: remark.authorName,
+      createdAt: remark.createdAt,
+    } : null,
     createdAt: row.createdAt,
     updatedAt: row.updatedAt,
   };
+}
+
+function canSee(state, row) {
+  return state.demoRole === 'super_admin' || row.ownerId === DEMO_ACTOR.id;
+}
+
+function findVisible(state, id) {
+  const row = state.consultancies.find((item) => item.id === id);
+  if (!row || !canSee(state, row)) return null;
+  return row;
 }
 
 function contactDto(row) {
@@ -321,18 +442,6 @@ function referralDto(row) {
   return { ...row };
 }
 
-function readPipelineStage(value, required = false) {
-  if (value == null || value === '') {
-    if (required) return { error: fail(400, 'Choose a pipeline stage.', 'invalid_body') };
-    return { value: 'fresh' };
-  }
-  const stage = consultancyStage(value);
-  if (stage !== value) {
-    return { error: fail(400, 'Pipeline stage must be fresh, contacted, meeting done, or onboarded.', 'invalid_body') };
-  }
-  return { value: stage };
-}
-
 function activeNameOwner(state, normalizedName, exceptId) {
   return state.consultancies.find((row) => row.status === 'active' && row.normalizedName === normalizedName && row.id !== exceptId);
 }
@@ -354,7 +463,7 @@ export function createCrmDemoRepository(storage) {
     inspect() {
       const loaded = readState(store());
       if (loaded.error) return loaded.error;
-      return ok(200, '', { demoManager: loaded.state.demoManager, counts: counts(loaded.state), seeded: loaded.seeded === true });
+      return ok(200, '', { demoManager: loaded.state.demoManager, demoRole: loaded.state.demoRole, counts: counts(loaded.state), seeded: loaded.seeded === true });
     },
     overview() {
       return commit(store(), (state) => ({
@@ -363,6 +472,7 @@ export function createCrmDemoRepository(storage) {
         response: ok(200, '', {
           ...counts(state),
           demoManager: state.demoManager,
+          demoRole: state.demoRole,
           recent: state.audits.slice(0, 6),
         }),
       }));
@@ -370,9 +480,8 @@ export function createCrmDemoRepository(storage) {
     listConsultancies(query = {}) {
       return commit(store(), (state) => {
         const q = String(query.q || '').trim().toLowerCase();
-        let rows = state.consultancies.filter((row) => !q || asText(row.normalizedName).includes(q) || asText(row.name).toLowerCase().includes(q));
+        let rows = state.consultancies.filter((row) => canSee(state, row) && (!q || asText(row.normalizedName).includes(q) || asText(row.name).toLowerCase().includes(q)));
         if (query.status) rows = rows.filter((row) => row.status === query.status);
-        if (query.pipelineStage) rows = rows.filter((row) => consultancyStage(row.pipelineStage) === query.pipelineStage);
         rows = [...rows].sort((a, b) => asText(a.name).localeCompare(asText(b.name)));
         return { write: false, state, response: slicePage(rows.map((row) => consultancyDto(row, state)), query) };
       });
@@ -386,32 +495,45 @@ export function createCrmDemoRepository(storage) {
           return { write: false, state, response: fail(400, error.message, error.code || 'invalid_body') };
         }
         const status = body.status === 'inactive' ? 'inactive' : 'active';
-        const parsedStage = readPipelineStage(body.pipelineStage);
-        if (parsedStage.error) return { write: false, state, response: parsedStage.error };
-        const pipelineStage = parsedStage.value;
         const normalizedName = normalizeConsultancyName(name);
         if (status === 'active' && activeNameOwner(state, normalizedName)) {
           return { write: false, state, response: fail(409, 'An active consultancy with this name already exists.', 'duplicate_consultancy') };
         }
         const now = new Date().toISOString();
-        const row = { id: nextId(state, 'con'), name, normalizedName, status, pipelineStage, notes: String(body.notes || '').trim().slice(0, 2000), createdAt: now, updatedAt: now };
+        const row = {
+          id: nextId(state, 'con'),
+          name,
+          normalizedName,
+          status,
+          notes: String(body.notes || '').trim().slice(0, 2000),
+          createdById: DEMO_ACTOR.id,
+          createdByName: DEMO_ACTOR.name,
+          ownerId: DEMO_ACTOR.id,
+          ownerName: DEMO_ACTOR.name,
+          followUpStatus: CONSULTANCY_STATUSES.includes(body.followUpStatus) ? body.followUpStatus : 'Fresh Lead',
+          callingStatus: CALLING_STATUSES.includes(body.callingStatus) ? body.callingStatus : '',
+          lastContactAt: null,
+          nextFollowUpAt: null,
+          createdAt: now,
+          updatedAt: now,
+        };
         state.consultancies.push(row);
-        addAudit(state, { action: 'consultancy.created', entityType: 'consultancy', entityId: row.id, after: { name, status, pipelineStage } });
+        addAudit(state, { action: 'consultancy.created', entityType: 'consultancy', entityId: row.id, after: { name, status } });
         return { write: true, state, response: ok(201, 'Consultancy created.', { consultancy: consultancyDto(row, state) }) };
       });
     },
     getConsultancy(id) {
       return commit(store(), (state) => {
-        const row = state.consultancies.find((item) => item.id === id);
+        const row = findVisible(state, id);
         if (!row) return { write: false, state, response: fail(404, 'Consultancy not found.', 'not_found') };
         return { write: false, state, response: ok(200, '', { consultancy: consultancyDto(row, state) }) };
       });
     },
     updateConsultancy(id, body = {}) {
       return commit(store(), (state) => {
-        const row = state.consultancies.find((item) => item.id === id);
+        const row = findVisible(state, id);
         if (!row) return { write: false, state, response: fail(404, 'Consultancy not found.', 'not_found') };
-        const before = { name: row.name, status: row.status, pipelineStage: consultancyStage(row.pipelineStage), notes: row.notes };
+        const before = { name: row.name, status: row.status, notes: row.notes, followUpStatus: row.followUpStatus, callingStatus: row.callingStatus || '' };
         if (Object.prototype.hasOwnProperty.call(body, 'name')) {
           try {
             row.name = text(body.name, 'Name', 2, 200);
@@ -422,22 +544,29 @@ export function createCrmDemoRepository(storage) {
         }
         if (Object.prototype.hasOwnProperty.call(body, 'notes')) row.notes = String(body.notes || '').trim().slice(0, 2000);
         if (Object.prototype.hasOwnProperty.call(body, 'status')) row.status = body.status === 'inactive' ? 'inactive' : 'active';
-        if (Object.prototype.hasOwnProperty.call(body, 'pipelineStage')) {
-          const pipelineStage = readPipelineStage(body.pipelineStage, true);
-          if (pipelineStage.error) return { write: false, state, response: pipelineStage.error };
-          row.pipelineStage = pipelineStage.value;
+        if (Object.prototype.hasOwnProperty.call(body, 'followUpStatus') && CONSULTANCY_STATUSES.includes(body.followUpStatus)) {
+          row.followUpStatus = body.followUpStatus;
+        }
+        if (Object.prototype.hasOwnProperty.call(body, 'callingStatus')) {
+          row.callingStatus = CALLING_STATUSES.includes(body.callingStatus) ? body.callingStatus : '';
         }
         if (row.status === 'active' && activeNameOwner(state, row.normalizedName, row.id)) {
           return { write: false, state, response: fail(409, 'An active consultancy with this name already exists.', 'duplicate_consultancy') };
         }
         row.updatedAt = new Date().toISOString();
-        addAudit(state, { action: 'consultancy.updated', entityType: 'consultancy', entityId: row.id, before, after: { name: row.name, status: row.status, pipelineStage: consultancyStage(row.pipelineStage), notes: row.notes } });
+        addAudit(state, {
+          action: 'consultancy.updated',
+          entityType: 'consultancy',
+          entityId: row.id,
+          before,
+          after: { name: row.name, status: row.status, notes: row.notes, followUpStatus: row.followUpStatus, callingStatus: row.callingStatus || '' },
+        });
         return { write: true, state, response: ok(200, 'Consultancy updated.', { consultancy: consultancyDto(row, state) }) };
       });
     },
     listContacts(consultancyId, query = {}) {
       return commit(store(), (state) => {
-        if (!state.consultancies.some((row) => row.id === consultancyId)) {
+        if (!findVisible(state, consultancyId)) {
           return { write: false, state, response: fail(404, 'Consultancy not found.', 'not_found') };
         }
         let rows = state.contacts.filter((row) => row.consultancyId === consultancyId);
@@ -448,7 +577,7 @@ export function createCrmDemoRepository(storage) {
     },
     createContact(consultancyId, body = {}) {
       return commit(store(), (state) => {
-        if (!state.consultancies.some((row) => row.id === consultancyId)) {
+        if (!findVisible(state, consultancyId)) {
           return { write: false, state, response: fail(404, 'Consultancy not found.', 'not_found') };
         }
         let name;
@@ -475,6 +604,7 @@ export function createCrmDemoRepository(storage) {
     },
     updateContact(consultancyId, contactId, body = {}) {
       return commit(store(), (state) => {
+        if (!findVisible(state, consultancyId)) return { write: false, state, response: fail(404, 'Consultancy not found.', 'not_found') };
         const row = state.contacts.find((item) => item.id === contactId && item.consultancyId === consultancyId);
         if (!row) return { write: false, state, response: fail(404, 'Contact not found for this consultancy.', 'not_found') };
         const before = { name: row.name, status: row.status, phone: row.phone };
@@ -557,7 +687,7 @@ export function createCrmDemoRepository(storage) {
         if (!body.consultancyId) {
           return { write: false, state, response: fail(400, 'Choose an active consultancy. A student cannot be saved without a referral.', 'consultancy_required') };
         }
-        const consultancy = state.consultancies.find((row) => row.id === body.consultancyId);
+        const consultancy = findVisible(state, body.consultancyId);
         if (!consultancy) return { write: false, state, response: fail(404, 'Consultancy not found.', 'not_found') };
         if (consultancy.status !== 'active') {
           return { write: false, state, response: fail(409, 'Referrals can only be recorded for an active consultancy.', 'consultancy_not_eligible') };
@@ -674,7 +804,7 @@ export function createCrmDemoRepository(storage) {
       return commit(store(), (state) => {
         const student = state.students.find((row) => row.id === body.crmStudentId);
         if (!student) return { write: false, state, response: fail(404, 'Student not found.', 'not_found') };
-        const consultancy = state.consultancies.find((row) => row.id === body.consultancyId);
+        const consultancy = findVisible(state, body.consultancyId);
         if (!consultancy) return { write: false, state, response: fail(404, 'Consultancy not found.', 'not_found') };
         if (consultancy.status !== 'active') {
           return { write: false, state, response: fail(409, 'Referrals can only be recorded for an active consultancy.', 'consultancy_not_eligible') };
@@ -782,6 +912,243 @@ export function createCrmDemoRepository(storage) {
         return { write: false, state, response: slicePage(rows, query) };
       });
     },
+    listFollowUps(consultancyId, query = {}) {
+      return commit(store(), (state) => {
+        if (!findVisible(state, consultancyId)) return { write: false, state, response: fail(404, 'Consultancy not found.', 'not_found') };
+        const rows = state.followUps.filter((row) => row.consultancyId === consultancyId);
+        return { write: false, state, response: slicePage(rows, query) };
+      });
+    },
+    listRemarks(consultancyId, query = {}) {
+      return commit(store(), (state) => {
+        if (!findVisible(state, consultancyId)) return { write: false, state, response: fail(404, 'Consultancy not found.', 'not_found') };
+        const rows = state.remarks.filter((row) => row.consultancyId === consultancyId);
+        return { write: false, state, response: slicePage(rows, query) };
+      });
+    },
+    setFollowUp(id, body = {}, now = new Date()) {
+      return commit(store(), (state) => {
+        const row = findVisible(state, id);
+        if (!row) return { write: false, state, response: fail(404, 'Consultancy not found.', 'not_found') };
+        const hasStatus = body.consultancyStatus != null || body.followUpStatus != null;
+        const status = hasStatus ? (body.consultancyStatus || body.followUpStatus) : null;
+        const hasCalling = Object.prototype.hasOwnProperty.call(body, 'callingStatus');
+        const calling = hasCalling ? body.callingStatus : null;
+        if (!hasStatus && !hasCalling) {
+          return { write: false, state, response: fail(400, 'Choose a consultancy status or a calling status.', 'invalid_body') };
+        }
+        if (hasStatus && !CONSULTANCY_STATUSES.includes(status)) {
+          return { write: false, state, response: fail(400, 'Choose a consultancy status.', 'invalid_body') };
+        }
+        if (hasCalling && calling && !CALLING_STATUSES.includes(calling)) {
+          return { write: false, state, response: fail(400, 'Choose a calling status.', 'invalid_body') };
+        }
+        const notes = String(body.notes || '').trim().slice(0, REMARK_MAX);
+        const outcome = String(body.outcome || '').trim().slice(0, 160);
+        const nextAction = String(body.nextAction || '').trim().slice(0, 160);
+        const reason = String(body.reason || '').trim().slice(0, REMARK_MAX);
+        let scheduledAt = null;
+        if (status === 'Meeting Scheduled') {
+          const when = new Date(body.scheduledAt);
+          if (!body.scheduledAt || Number.isNaN(when.getTime()) || when.getTime() <= now.getTime()) {
+            return { write: false, state, response: fail(400, 'Meeting Scheduled needs a future date and time.', 'invalid_body') };
+          }
+          scheduledAt = when.toISOString();
+        }
+        if (status === 'Meeting Completed' && (outcome.length < 2 || notes.length < 1)) {
+          return { write: false, state, response: fail(400, 'Meeting Completed needs an outcome and a remark.', 'invalid_body') };
+        }
+        if (status === 'Follow-up Required') {
+          const when = new Date(body.scheduledAt);
+          if (nextAction.length < 2 || !body.scheduledAt || Number.isNaN(when.getTime())) {
+            return { write: false, state, response: fail(400, 'Follow-up Required needs a next action and a date.', 'invalid_body') };
+          }
+          scheduledAt = when.toISOString();
+        }
+        if (status === 'Not Interested' && reason.length < 2 && notes.length < 2) {
+          return { write: false, state, response: fail(400, 'Not Interested needs a reason.', 'invalid_body') };
+        }
+        const before = { followUpStatus: row.followUpStatus, callingStatus: row.callingStatus || '', lastContactAt: row.lastContactAt, nextFollowUpAt: row.nextFollowUpAt };
+        const stamp = now.toISOString();
+        row.updatedAt = stamp;
+        if (hasCalling) row.callingStatus = calling || '';
+        if (calling === 'Connected' || calling === 'WhatsApp Call Connected') row.lastContactAt = stamp;
+        let followUp = null;
+        if (hasStatus) {
+          row.followUpStatus = status;
+          if (status === 'Meeting Scheduled' || status === 'Follow-up Required') {
+            row.nextFollowUpAt = scheduledAt;
+          } else if (status === 'Meeting Completed' || status === 'Contacted') {
+            row.lastContactAt = stamp;
+            if (body.nextFollowUpAt) {
+              const next = new Date(body.nextFollowUpAt);
+              if (!Number.isNaN(next.getTime())) row.nextFollowUpAt = next.toISOString();
+            } else if (status === 'Meeting Completed') {
+              row.nextFollowUpAt = null;
+            }
+          } else if ((status === 'Interested' || status === 'On Hold' || status === 'Onboarding in Progress' || status === 'On - Boarded') && body.scheduledAt) {
+            const next = new Date(body.scheduledAt);
+            if (!Number.isNaN(next.getTime())) row.nextFollowUpAt = next.toISOString();
+          } else if (status === 'Fresh Lead' || status === 'Not Interested' || status === 'Discontinued') {
+            row.nextFollowUpAt = null;
+          }
+          followUp = {
+            id: nextId(state, 'fu'),
+            consultancyId: row.id,
+            contactId: body.contactId || null,
+            type: status === 'Meeting Scheduled' || status === 'Meeting Completed' || status === 'Contacted' ? 'call' : 'follow_up',
+            status,
+            scheduledAt,
+            completedAt: status === 'Meeting Completed' || status === 'Contacted' ? stamp : null,
+            outcome,
+            nextAction,
+            reason,
+            notes,
+            actorId: DEMO_ACTOR.id,
+            actorName: DEMO_ACTOR.name,
+            createdAt: stamp,
+          };
+          state.followUps.unshift(followUp);
+          if (notes) {
+            state.remarks.unshift({
+              id: nextId(state, 'rm'),
+              consultancyId: row.id,
+              text: notes,
+              authorId: DEMO_ACTOR.id,
+              authorName: DEMO_ACTOR.name,
+              createdAt: stamp,
+              updatedAt: stamp,
+              previousText: null,
+              history: [],
+            });
+          }
+        }
+        addAudit(state, {
+          action: hasStatus ? 'consultancy.follow_up' : 'consultancy.calling_status',
+          entityType: 'consultancy',
+          entityId: row.id,
+          before,
+          after: { followUpStatus: row.followUpStatus, callingStatus: row.callingStatus || '', lastContactAt: row.lastContactAt, nextFollowUpAt: row.nextFollowUpAt, followUpId: followUp ? followUp.id : null },
+        });
+        return { write: true, state, response: ok(200, hasStatus ? 'Consultancy status saved in this browser.' : 'Calling status saved in this browser.', { consultancy: consultancyDto(row, state), followUp }) };
+      });
+    },
+    addRemark(id, body = {}) {
+      return commit(store(), (state) => {
+        const row = findVisible(state, id);
+        if (!row) return { write: false, state, response: fail(404, 'Consultancy not found.', 'not_found') };
+        const textValue = String(body.text || '').trim();
+        if (!textValue || textValue.length > REMARK_MAX) {
+          return { write: false, state, response: fail(400, `A remark needs 1–${REMARK_MAX} characters.`, 'invalid_body') };
+        }
+        const stamp = new Date().toISOString();
+        const remark = {
+          id: nextId(state, 'rm'),
+          consultancyId: row.id,
+          text: textValue,
+          authorId: DEMO_ACTOR.id,
+          authorName: DEMO_ACTOR.name,
+          createdAt: stamp,
+          updatedAt: stamp,
+          previousText: null,
+          history: [],
+        };
+        state.remarks.unshift(remark);
+        row.updatedAt = stamp;
+        addAudit(state, { action: 'consultancy.remark_added', entityType: 'consultancy', entityId: row.id, after: { remarkId: remark.id } });
+        return { write: true, state, response: ok(201, 'Remark saved in this browser.', { remark, consultancy: consultancyDto(row, state) }) };
+      });
+    },
+    cancelFollowUp(consultancyId, followUpId) {
+      return commit(store(), (state) => {
+        if (!findVisible(state, consultancyId)) return { write: false, state, response: fail(404, 'Consultancy not found.', 'not_found') };
+        const followUp = state.followUps.find((row) => row.id === followUpId && row.consultancyId === consultancyId);
+        if (!followUp) return { write: false, state, response: fail(404, 'Follow-up not found.', 'not_found') };
+        if (followUp.cancelledAt) {
+          return { write: false, state, response: ok(200, 'This follow-up is already cancelled.', { followUp }) };
+        }
+        const stamp = new Date().toISOString();
+        followUp.cancelledAt = stamp;
+        addAudit(state, {
+          action: 'consultancy.follow_up_cancelled',
+          entityType: 'consultancy',
+          entityId: consultancyId,
+          after: { followUpId: followUp.id, status: followUp.status },
+        });
+        const consultancy = state.consultancies.find((row) => row.id === consultancyId);
+        return { write: true, state, response: ok(200, 'Follow-up cancelled in this browser.', { followUp, consultancy: consultancyDto(consultancy, state) }) };
+      });
+    },
+    editRemark(consultancyId, remarkId, body = {}) {
+      return commit(store(), (state) => {
+        if (!findVisible(state, consultancyId)) return { write: false, state, response: fail(404, 'Consultancy not found.', 'not_found') };
+        const remark = state.remarks.find((row) => row.id === remarkId && row.consultancyId === consultancyId);
+        if (!remark) return { write: false, state, response: fail(404, 'Remark not found.', 'not_found') };
+        if (remark.authorId !== DEMO_ACTOR.id) {
+          return { write: false, state, response: fail(403, 'Only the author can edit this remark in the demo.', 'remark_forbidden') };
+        }
+        const textValue = String(body.text || '').trim();
+        if (!textValue || textValue.length > REMARK_MAX) {
+          return { write: false, state, response: fail(400, `A remark needs 1–${REMARK_MAX} characters.`, 'invalid_body') };
+        }
+        const stamp = new Date().toISOString();
+        remark.history = Array.isArray(remark.history) ? remark.history : [];
+        remark.history.push({ text: remark.text, updatedAt: remark.updatedAt });
+        remark.previousText = remark.text;
+        remark.text = textValue;
+        remark.updatedAt = stamp;
+        addAudit(state, { action: 'consultancy.remark_edited', entityType: 'consultancy', entityId: consultancyId, after: { remarkId: remark.id } });
+        return { write: true, state, response: ok(200, 'Remark updated in this browser.', { remark }) };
+      });
+    },
+    reassignOwner(id, body = {}) {
+      return commit(store(), (state) => {
+        if (state.demoRole !== 'super_admin') {
+          return { write: false, state, response: fail(403, 'Only the Super Admin preview can reassign an owner. This preview is not authentication.', 'role_required') };
+        }
+        const row = state.consultancies.find((item) => item.id === id);
+        if (!row) return { write: false, state, response: fail(404, 'Consultancy not found.', 'not_found') };
+        const owner = DEMO_OWNERS.find((item) => item.id === body.ownerId);
+        if (!owner) return { write: false, state, response: fail(400, 'Choose Demo staff or Demo seed.', 'invalid_body') };
+        if (row.ownerId === owner.id) {
+          return { write: false, state, response: ok(200, 'This consultancy already has that owner.', { consultancy: consultancyDto(row, state) }) };
+        }
+        const before = { ownerId: row.ownerId, ownerName: row.ownerName, createdById: row.createdById };
+        row.ownerId = owner.id;
+        row.ownerName = owner.name;
+        row.updatedAt = new Date().toISOString();
+        addAudit(state, {
+          action: 'consultancy.owner_reassigned',
+          entityType: 'consultancy',
+          entityId: row.id,
+          before,
+          after: { ownerId: row.ownerId, ownerName: row.ownerName, createdById: row.createdById },
+        });
+        return { write: true, state, response: ok(200, 'Owner updated in this browser. The creator is unchanged.', { consultancy: consultancyDto(row, state) }) };
+      });
+    },
+    setDemoRole(role) {
+      return commit(store(), (state) => {
+        if (role !== 'staff' && role !== 'super_admin') {
+          return { write: false, state, response: fail(400, 'Choose Staff or Super Admin.', 'invalid_body') };
+        }
+        if (state.demoRole === role) {
+          return { write: false, state, response: ok(200, 'That preview is already selected.', { demoRole: role }) };
+        }
+        const before = state.demoRole;
+        state.demoRole = role;
+        addAudit(state, {
+          action: 'demo_role.previewed',
+          entityType: 'settings',
+          entityId: 'demo-role',
+          actorLabel: 'Demo settings',
+          before: { demoRole: before },
+          after: { demoRole: role },
+          reason: 'Browser preview only. This does not authenticate anyone.',
+        });
+        return { write: true, state, response: ok(200, role === 'super_admin' ? 'Super Admin preview is on for this browser only.' : 'Staff preview is on for this browser only.', { demoRole: role }) };
+      });
+    },
     setDemoManager(enabled) {
       return commit(store(), (state) => {
         const before = state.demoManager;
@@ -807,6 +1174,12 @@ export function createCrmDemoRepository(storage) {
       const written = writeState(store(), state);
       if (written.error) return written.error;
       return ok(200, 'Demo data was reset to the fictional starter set.', { counts: counts(state) });
+    },
+    loadVolumeData() {
+      const state = createVolumeState();
+      const written = writeState(store(), state);
+      if (written.error) return written.error;
+      return ok(200, 'A large fictional sample is loaded in this browser.', { counts: counts(state) });
     },
   };
 }

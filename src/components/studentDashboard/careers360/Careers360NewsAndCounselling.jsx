@@ -181,17 +181,17 @@ export function Careers360CounsellingSection({ onBookCounselling }) {
       <div className={`${LAYOUT.container} grid items-center gap-8 lg:grid-cols-2 lg:gap-12`}>
         <div className="order-2 text-center lg:order-1 lg:text-left">
           <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-[#f27921]">
-            Career counselling
+            JEE Main mock test
           </p>
           <h2 className="mt-2 text-2xl font-bold tracking-tight text-[#1a1a1a] sm:text-[1.75rem] sm:leading-tight">
-            Still unsure about colleges or branches?
+            Take the JEE Main mock test
           </h2>
           <p className="mx-auto mt-2 max-w-md text-sm leading-snug text-[#555] lg:mx-0">
-            Book a free 1-on-1 with an IITian mentor — personalised and focused on your goals.
+            Register for the JEE Main mock test. Share your details and we will reach you on WhatsApp.
           </p>
 
           <div className="mx-auto mt-5 flex max-w-md flex-wrap justify-center gap-2 lg:mx-0 lg:justify-start">
-            {['College fit', 'Branch choices', 'Counselling plan'].map((tag) => (
+            {['JEE Main', 'Mobile OTP', 'WhatsApp follow-up'].map((tag) => (
               <span
                 key={tag}
                 className="rounded-full border border-[#f0e6da] bg-white px-3 py-1 text-[11px] font-medium text-[#667085]"
@@ -207,9 +207,9 @@ export function Careers360CounsellingSection({ onBookCounselling }) {
               onClick={onBookCounselling}
               className="inline-flex items-center justify-center rounded-lg bg-[#f27921] px-6 py-3 text-sm font-semibold text-white shadow-sm transition hover:bg-[#e06810]"
             >
-              Book free IITian 1-on-1 counselling
+              Register for JEE Main mock test
             </button>
-            <p className="text-xs text-[#888]">100% free · Live session with an IITian mentor</p>
+            <p className="text-xs text-[#888]">Mobile OTP verification · WhatsApp follow-up</p>
           </div>
         </div>
 

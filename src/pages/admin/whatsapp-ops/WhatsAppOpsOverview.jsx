@@ -21,6 +21,7 @@ import {
   OPS_PRODUCT_IIT,
   OPS_PRODUCT_ONE_ON_ONE,
   OPS_PRODUCT_GUIDANCE_BOOKING,
+  OPS_PRODUCT_JEE_MOCK_TEST,
   parseOpsProductFromSearch,
   parsePreferredLanguageFromSearch,
   templateChipKey,
@@ -193,6 +194,7 @@ export default function WhatsAppOpsOverview() {
   const isIitProduct = opsProduct === OPS_PRODUCT_IIT;
   const isOneOnOneProduct = opsProduct === OPS_PRODUCT_ONE_ON_ONE;
   const isGuidanceBookingProduct = opsProduct === OPS_PRODUCT_GUIDANCE_BOOKING;
+  const isJeeMockTestProduct = opsProduct === OPS_PRODUCT_JEE_MOCK_TEST;
 
   const [selectedKind, setSelectedKind] = useState(() => searchParams.get('messageKind') || null);
   const [selectedLanguage, setSelectedLanguage] = useState(() =>
@@ -212,6 +214,10 @@ export default function WhatsAppOpsOverview() {
         sp.delete('preferredLanguage');
       } else if (next === OPS_PRODUCT_ONE_ON_ONE) {
         sp.set('opsProduct', OPS_PRODUCT_ONE_ON_ONE);
+        sp.delete('tenant');
+        sp.delete('preferredLanguage');
+      } else if (next === OPS_PRODUCT_JEE_MOCK_TEST) {
+        sp.set('opsProduct', OPS_PRODUCT_JEE_MOCK_TEST);
         sp.delete('tenant');
         sp.delete('preferredLanguage');
       } else {
@@ -580,9 +586,10 @@ export default function WhatsAppOpsOverview() {
     if (isIitProduct) p.set('opsProduct', OPS_PRODUCT_IIT);
     else if (isOneOnOneProduct) p.set('opsProduct', OPS_PRODUCT_ONE_ON_ONE);
     else if (isGuidanceBookingProduct) p.set('opsProduct', OPS_PRODUCT_GUIDANCE_BOOKING);
+    else if (isJeeMockTestProduct) p.set('opsProduct', OPS_PRODUCT_JEE_MOCK_TEST);
     p.set('status', 'failed,retry_exhausted');
     return `/admin/whatsapp-ops/messages?${p.toString()}`;
-  }, [selectedDate, selectedKind, selectedLanguage, isIitProduct, isOneOnOneProduct, isGuidanceBookingProduct]);
+  }, [selectedDate, selectedKind, selectedLanguage, isIitProduct, isOneOnOneProduct, isGuidanceBookingProduct, isJeeMockTestProduct]);
 
   const byAttempt = legacyDay.byAttempt || {};
   const retry2Exclusions = legacyDay.retry2Exclusions || { totalExcluded: 0, byReason: {} };
@@ -1089,6 +1096,18 @@ export default function WhatsAppOpsOverview() {
             >
               Guidance Booking
             </button>
+            <button
+              type="button"
+              onClick={() => persistOpsProductToUrl(OPS_PRODUCT_JEE_MOCK_TEST)}
+              aria-pressed={opsProduct === OPS_PRODUCT_JEE_MOCK_TEST}
+              className={`rounded-md px-3 py-1.5 text-sm font-semibold transition-colors ${
+                opsProduct === OPS_PRODUCT_JEE_MOCK_TEST
+                  ? 'bg-primary-navy text-white shadow-sm'
+                  : 'text-gray-700 hover:bg-gray-50'
+              }`}
+            >
+              JEE Mock Test
+            </button>
           </div>
           {isIitProduct ? (
             <p className="text-xs text-slate-600 mt-2 max-w-3xl">
@@ -1098,6 +1117,11 @@ export default function WhatsAppOpsOverview() {
           {isOneOnOneProduct ? (
             <p className="text-xs text-slate-600 mt-2 max-w-3xl">
               1-on-1 mode shows WhatsApp sent immediately when a student submits the /one-on-one-session form (template one_on_one_submit, with automatic retry on failure).
+            </p>
+          ) : null}
+          {isJeeMockTestProduct ? (
+            <p className="text-xs text-slate-600 mt-2 max-w-3xl">
+              JEE Mock Test shows WhatsApp sent immediately after a student finishes the mock test form from an influencer link. The template uses the student name and an image. Delivery status (submitted, sent, delivered, read, failed) updates here as Gupshup reports it.
             </p>
           ) : null}
           {isGuidanceBookingProduct ? (
@@ -1303,6 +1327,8 @@ export default function WhatsAppOpsOverview() {
                   {isRecipientDay
                     ? isIitProduct
                       ? 'Primary metrics use IIT Counselling registrations (counsellingSlotInstantUtc in the IST slot-day window). WhatsApp rows are restricted to IIT-tagged sends for this cohort.'
+                      : isJeeMockTestProduct
+                        ? 'Volume uses JEE mock test WhatsApp sent right after registration from an influencer link. Status follows Gupshup: submitted, sent, delivered, read, and failed.'
                       : isGuidanceBookingProduct
                         ? 'Volume uses guidance booking WhatsApp events for the selected IST date. Pipeline for guidance_pre30min and guidance_counsellor_booking_notify lists each slot with booked count and send status.'
                         : 'Primary metrics use registered FormSubmission bookings for the selected IST date and slot-time filter. WhatsApp rows are restricted to those submissions; all-templates view rolls up by unique phone across template kinds. Legacy attempt-row charts below still use message createdAt for that IST day (debugging).'

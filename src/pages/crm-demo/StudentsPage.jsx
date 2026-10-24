@@ -34,8 +34,9 @@ export default function StudentsPage() {
   const tabParam = params.get('tab');
   const tab = tabParam === 'referred' || tabParam === 'open' ? tabParam : 'all';
   const creating = params.get('new') === '1';
+  const presetConsultancy = params.get('consultancy') || '';
   const [notice, setNotice] = useState(null);
-  const [form, setForm] = useState(EMPTY);
+  const [form, setForm] = useState(() => ({ ...EMPTY, consultancyId: presetConsultancy }));
   const [editing, setEditing] = useState(false);
   const [editForm, setEditForm] = useState(EMPTY);
   const [referralForm, setReferralForm] = useState({ consultancyId: '', consultancyContactId: '' });
@@ -230,6 +231,10 @@ export default function StudentsPage() {
                   const item = referralOf(row.id);
                   return item ? <Link to={`/crm/consultancies/${item.consultancyId}`} onClick={(event) => event.stopPropagation()}>{currentConsultancyName(item, consultancies)}</Link> : '—';
                 } },
+                { key: 'original', label: 'Original consultancy', render: (row) => {
+                  const item = referralOf(row.id);
+                  return item ? <Link to={`/crm/consultancies/${item.originalConsultancyId}`} onClick={(event) => event.stopPropagation()}>{item.originalConsultancyName}</Link> : '—';
+                } },
                 { key: 'referred', label: 'Referral date', render: (row) => shortDate(referralOf(row.id)?.createdAt) },
                 { key: 'admission', label: 'Admission status', render: (row) => row.admissionStatus || 'Not started' },
                 { key: 'open', label: 'Actions', render: (row) => <button type="button" className="gx-text" onClick={(event) => { event.stopPropagation(); openStudent(row.id); }}>Open</button> },
@@ -281,7 +286,7 @@ export default function StudentsPage() {
                     <div><dt>Referring consultancy</dt><dd>{referral ? <Link to={`/crm/consultancies/${referral.consultancyId}`}>{currentConsultancyName(referral, consultancies)}</Link> : 'None'}</dd></div>
                   </dl>
                 )}
-                {referral && referral.originalConsultancyId !== referral.consultancyId ? <p className="gx-note">Original source remains {referral.originalConsultancyName}. Editing this profile does not change it.</p> : null}
+                {referral && referral.originalConsultancyId !== referral.consultancyId ? <p className="gx-note">Original source remains <Link to={`/crm/consultancies/${referral.originalConsultancyId}`}>{referral.originalConsultancyName}</Link>. Editing this profile does not change it.</p> : null}
                 </section>
                 {!referral ? <section className="gx-co-card"><form className="gx-form" onSubmit={onRefer}>
                   <label>Consultancy

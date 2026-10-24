@@ -1,4 +1,8 @@
 import { getStoredUtm } from './utm';
+import {
+  OTP_REQUEST_FAILED_MESSAGE,
+  OTP_REQUEST_SUBMITTED_MESSAGE,
+} from './otpUserMessages';
 import { notifyWebinarUnauthorized } from './authSession';
 import { getApiBaseUrl } from './apiBaseUrl';
 import { getCounsellorToken } from './counsellorApi';
@@ -206,9 +210,9 @@ async function apiRequest(endpoint, options = {}) {
 }
 
 /**
- * Send OTP to WhatsApp number
+ * Ask the backend to submit an SMS OTP request.
  * @param {string} fullName - User's full name
- * @param {string} whatsappNumber - WhatsApp phone number
+ * @param {string} whatsappNumber - 10-digit mobile number
  * @param {string} occupation - User's occupation
  * @param {{ scheduleOsviForAbandonment?: boolean }} [options]
  * @returns {Promise<{success: boolean, message?: string, status?: number}>}
@@ -224,10 +228,27 @@ export const sendOtp = async (fullName, whatsappNumber, occupation, options = {}
   if (options.scheduleOsviForAbandonment === true) {
     body.scheduleOsviForAbandonment = true;
   }
-  return apiRequest('/send-otp', {
+  const result = await apiRequest('/send-otp', {
     method: 'POST',
     body: JSON.stringify(body),
   });
+  if (result.success && result.data && result.data.success === false) {
+    return {
+      ...result,
+      success: false,
+      message: result.data.message || OTP_REQUEST_FAILED_MESSAGE,
+    };
+  }
+  if (result.success) {
+    return {
+      ...result,
+      message: (result.data && result.data.message) || OTP_REQUEST_SUBMITTED_MESSAGE,
+    };
+  }
+  return {
+    ...result,
+    message: result.message || OTP_REQUEST_FAILED_MESSAGE,
+  };
 };
 
 /**
@@ -794,6 +815,22 @@ export const saveMockTestSection1 = async (payload) => {
 /** Save mock test form step 2 and complete the registration. */
 export const saveMockTestSection2 = async (payload) => {
   return apiRequest('/mock-test/section2', {
+    method: 'POST',
+    body: JSON.stringify(payload),
+  });
+};
+
+/** Save JEE Main mock test step 1 (name + OTP-verified mobile). */
+export const saveJeeMainMockTestSection1 = async (payload) => {
+  return apiRequest('/jee-main-mock-test/section1', {
+    method: 'POST',
+    body: JSON.stringify(payload),
+  });
+};
+
+/** Save JEE Main mock test step 2 and complete the registration. */
+export const saveJeeMainMockTestSection2 = async (payload) => {
+  return apiRequest('/jee-main-mock-test/section2', {
     method: 'POST',
     body: JSON.stringify(payload),
   });
