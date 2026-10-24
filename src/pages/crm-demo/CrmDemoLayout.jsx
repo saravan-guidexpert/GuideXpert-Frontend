@@ -137,6 +137,10 @@ export default function CrmDemoLayout() {
   const refresh = useCallback(() => setSnapshot(client.inspect()), [client]);
   const demoManager = snapshot.success ? snapshot.data.demoManager : false;
   const [theme, setTheme] = useState(readCrmTheme);
+  useEffect(() => {
+    document.documentElement.setAttribute('data-crm-theme', theme);
+    return () => document.documentElement.removeAttribute('data-crm-theme');
+  }, [theme]);
   const value = useMemo(() => ({ client, demoManager, refresh, theme }), [client, demoManager, refresh, theme]);
   const [menu, setMenu] = useState(false);
   const [menuPath, setMenuPath] = useState(location.pathname);

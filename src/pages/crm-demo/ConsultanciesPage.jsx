@@ -1,13 +1,14 @@
 import { useState } from 'react';
 import { Link, useNavigate, useParams, useSearchParams } from 'react-router-dom';
 import { interpretCrmResult } from '../../utils/crmAccess';
+import { CONSULTANCY_PIPELINE, consultancyStage, matchesPipeline, pipelineCounts, pipelineLabel, pipelineTone } from '../../utils/consultancyPipeline';
 import { Badge, DataTable, Dialog, Notice, PageHeader, SearchField } from './CrmKit';
 import ConsultancyInsight from './ConsultancyInsight';
 import { shortDate } from './crmFormat';
 import { loadAll } from './dashboard/dashboardModel';
 import { useCrmDemo } from './useCrmDemo';
 
-const EMPTY = { name: '', status: 'active', notes: '' };
+const EMPTY = { name: '', status: 'active', pipelineStage: 'fresh', notes: '' };
 const EMPTY_CONTACT = { name: '', phone: '', email: '', role: '' };
 
 function messageOf(result) {
@@ -23,6 +24,8 @@ export default function ConsultanciesPage() {
   const search = params.get('q') || '';
   const statusParam = params.get('status');
   const status = statusParam === 'active' || statusParam === 'inactive' ? statusParam : 'all';
+  const stageParam = params.get('stage');
+  const stage = CONSULTANCY_PIPELINE.some((item) => item.id === stageParam) ? stageParam : 'all';
   const creating = params.get('new') === '1';
   const sort = params.get('sort') === 'name' ? 'name' : 'updated';
   const [notice, setNotice] = useState(null);
@@ -53,13 +56,17 @@ export default function ConsultanciesPage() {
   const referrals = referralsLoad.items;
   const audits = auditsLoad.items;
   const needle = search.trim().toLowerCase();
-  const rows = all.filter((row) => {
+  const scoped = all.filter((row) => {
     if (status !== 'all' && row.status !== status) return false;
     if (!needle) return true;
     const contacts = contactsById.get(row.id) || [];
-    const hay = `${row.name || ''} ${contacts.map((contact) => contact.name || '').join(' ')}`.toLowerCase();
+    const hay = `${row.name || ''} ${contacts.map((contact) => `${contact.name || ''} ${contact.phone || ''} ${contact.email || ''}`).join(' ')}`.toLowerCase();
     return hay.includes(needle);
-  }).sort((a, b) => (sort === 'name' ? String(a.name || '').localeCompare(String(b.name || '')) : String(b.updatedAt).localeCompare(String(a.updatedAt))));
+  });
+  const counts = pipelineCounts(scoped);
+  const rows = scoped.filter((row) => matchesPipeline(row, stage)).sort((a, b) => (
+    sort === 'name' ? String(a.name || '').localeCompare(String(b.name || '')) : String(b.updatedAt).localeCompare(String(a.updatedAt))
+  ));
   const selected = all.find((row) => row.id === id) || null;
   const selectedMissing = Boolean(id) && !directoryError && !selected;
   const contacts = selected ? (contactsById.get(selected.id) || []) : [];
@@ -92,6 +99,22 @@ export default function ConsultanciesPage() {
     replaceParams((copy) => {
       if (next === 'all') copy.delete('status');
       else copy.set('status', next);
+    });
+  }
+
+  function setStage(next) {
+    replaceParams((copy) => {
+      if (!next || next === 'all') copy.delete('stage');
+      else copy.set('stage', next);
+    });
+  }
+
+  function resetFilters() {
+    replaceParams((copy) => {
+      copy.delete('q');
+      copy.delete('status');
+      copy.delete('stage');
+      copy.delete('sort');
     });
   }
 
@@ -172,7 +195,7 @@ export default function ConsultanciesPage() {
 
   return (
     <>
-      <PageHeader title="Consultancies" subtitle="Directory of consultancy profiles, contacts and referred students.">
+      <PageHeader title="Consultancies" subtitle="Follow each consultancy from first contact through onboarding.">
         <button type="button" className="gx-lime" onClick={openCreate}>Add consultancy</button>
       </PageHeader>
       {directoryError ? (
@@ -182,10 +205,34 @@ export default function ConsultanciesPage() {
         </div>
       ) : (
       <>
+      <section className="gx-metrics is-five" aria-label="Consultancy pipeline">
+        <button type="button" className={`gx-metric${stage === 'all' ? ' is-selected' : ''}`} aria-pressed={stage === 'all'} onClick={() => setStage('all')}>
+          <p className="k">Total consultancies</p>
+          <p className="v">{counts.total}</p>
+          <p className="h">Matching the current search</p>
+        </button>
+        {CONSULTANCY_PIPELINE.map((item) => (
+          <button
+            key={item.id}
+            type="button"
+            className={`gx-metric${stage === item.id ? ' is-selected' : ''}`}
+            aria-pressed={stage === item.id}
+            onClick={() => setStage(item.id)}
+          >
+            <p className="k">{item.label}</p>
+            <p className="v">{counts[item.id]}</p>
+            <p className="h">{item.hint}</p>
+          </button>
+        ))}
+      </section>
       <div className="gx-toolbar">
-        <SearchField value={search} onChange={setSearch} label="Search consultancy or contact" />
-        <select className="gx-select" aria-label="Status" value={status} onChange={(event) => setStatus(event.target.value)}>
-          <option value="all">All statuses</option>
+        <SearchField value={search} onChange={setSearch} label="Search name, contact, phone, or email" />
+        <select className="gx-select" aria-label="Pipeline stage" value={stage} onChange={(event) => setStage(event.target.value)}>
+          <option value="all">All pipeline stages</option>
+          {CONSULTANCY_PIPELINE.map((item) => <option key={item.id} value={item.id}>{item.label}</option>)}
+        </select>
+        <select className="gx-select" aria-label="Record status" value={status} onChange={(event) => setStatus(event.target.value)}>
+          <option value="all">Active and inactive</option>
           <option value="active">Active</option>
           <option value="inactive">Inactive</option>
         </select>
@@ -193,7 +240,8 @@ export default function ConsultanciesPage() {
           <option value="updated">Last activity</option>
           <option value="name">Name</option>
         </select>
-        <span className="gx-count">{rows.length} records</span>
+        <span className="gx-count">{rows.length} shown</span>
+        {search || status !== 'all' || stage !== 'all' || sort === 'name' ? <button type="button" className="gx-text" onClick={resetFilters}>Reset</button> : null}
       </div>
       {!creating && !pending ? <Notice notice={notice} /> : null}
       <div className={`gx-split${selected || selectedMissing ? ' is-open' : ''}${id ? ' is-routed' : ''}`}>
@@ -206,7 +254,8 @@ export default function ConsultanciesPage() {
               return contact?.phone || contact?.email || '—';
             } },
             { key: 'refs', label: 'Linked students', render: (row) => row.studentCount ?? 0 },
-            { key: 'status', label: 'Status', render: (row) => <Badge tone={row.status === 'active' ? 'on' : 'off'}>{row.status}</Badge> },
+            { key: 'stage', label: 'Pipeline', render: (row) => <Badge tone={pipelineTone(row.pipelineStage)}>{pipelineLabel(row.pipelineStage)}</Badge> },
+            { key: 'status', label: 'Record', render: (row) => <Badge tone={row.status === 'active' ? 'on' : 'off'}>{row.status}</Badge> },
             { key: 'updated', label: 'Last activity', render: (row) => shortDate(row.updatedAt) },
             { key: 'open', label: 'Actions', render: (row) => <button type="button" className="gx-text" onClick={(event) => { event.stopPropagation(); openConsultancy(row.id); }}>Open</button> },
           ]}
@@ -227,13 +276,18 @@ export default function ConsultanciesPage() {
               </div>
               <div className="gx-co-actions">
                 <Badge tone={selected.status === 'active' ? 'on' : 'off'}>{selected.status}</Badge>
-                {editing ? null : <button type="button" className="gx-lime" onClick={() => { setEditing(true); setEditForm({ name: selected.name, status: selected.status, notes: selected.notes || '' }); }}>Edit consultancy</button>}
+                {editing ? null : <button type="button" className="gx-lime" onClick={() => { setEditing(true); setEditForm({ name: selected.name, status: selected.status, pipelineStage: consultancyStage(selected.pipelineStage), notes: selected.notes || '' }); }}>Edit consultancy</button>}
               </div>
             </div>
             {editing ? (
               <form className="gx-form" onSubmit={onSave}>
                 <label>Name<input value={editForm.name} onChange={(event) => setEditForm({ ...editForm, name: event.target.value })} required minLength={2} /></label>
-                <label>Status
+                <label>Pipeline
+                  <select value={editForm.pipelineStage} onChange={(event) => setEditForm({ ...editForm, pipelineStage: event.target.value })}>
+                    {CONSULTANCY_PIPELINE.map((item) => <option key={item.id} value={item.id}>{item.label}</option>)}
+                  </select>
+                </label>
+                <label>Record status
                   <select value={editForm.status} onChange={(event) => setEditForm({ ...editForm, status: event.target.value })}>
                     <option value="active">Active</option>
                     <option value="inactive">Inactive</option>
@@ -247,6 +301,7 @@ export default function ConsultanciesPage() {
               </form>
             ) : (
               <dl className="gx-facts">
+                <div><dt>Pipeline</dt><dd>{pipelineLabel(selected.pipelineStage)}</dd></div>
                 <div><dt>Primary contact</dt><dd>{primary?.name || 'None'}</dd></div>
                 <div><dt>Reach</dt><dd>{primary?.phone || primary?.email || '—'}</dd></div>
                 <div><dt>Linked students</dt><dd>{selected.studentCount ?? linked.length}</dd></div>
@@ -316,7 +371,12 @@ export default function ConsultanciesPage() {
           <form onSubmit={onCreate}>
             <Notice notice={notice} />
             <label>Name<input value={form.name} onChange={(event) => setForm({ ...form, name: event.target.value })} required minLength={2} /></label>
-            <label>Status
+            <label>Pipeline
+              <select value={form.pipelineStage} onChange={(event) => setForm({ ...form, pipelineStage: event.target.value })}>
+                {CONSULTANCY_PIPELINE.map((item) => <option key={item.id} value={item.id}>{item.label}</option>)}
+              </select>
+            </label>
+            <label>Record status
               <select value={form.status} onChange={(event) => setForm({ ...form, status: event.target.value })}>
                 <option value="active">Active</option>
                 <option value="inactive">Inactive</option>

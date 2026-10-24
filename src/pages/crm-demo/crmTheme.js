@@ -18,6 +18,9 @@ export function writeCrmTheme(theme) {
   } catch {
     /* private mode */
   }
+  if (typeof document !== 'undefined') {
+    document.documentElement.setAttribute('data-crm-theme', theme);
+  }
 }
 
 export function chartPalette(theme) {

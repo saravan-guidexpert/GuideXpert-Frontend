@@ -4,6 +4,8 @@
  * Callers in demo mode must use this module instead of crmApi.js.
  */
 
+import { consultancyStage } from './consultancyPipeline.js';
+
 export const CRM_DEMO_STORAGE_KEY = 'guidexpert_crm_demo_v1';
 
 export const ADMISSION_STATUSES = ['Not started', 'Contacted', 'Counselling', 'Applied', 'Admitted', 'Enrolled', 'Not proceeding'];
@@ -69,9 +71,9 @@ export function createSeedState() {
     seq: 30,
     demoManager: false,
     consultancies: [
-      { id: 'con_1', name: 'Horizon Study Circle', normalizedName: 'horizon study circle', status: 'active', notes: 'Fictional Hyderabad counselling desk.', createdAt: at, updatedAt: at },
-      { id: 'con_2', name: 'North Star Guidance', normalizedName: 'north star guidance', status: 'active', notes: 'Fictional Bengaluru partner.', createdAt: at, updatedAt: at },
-      { id: 'con_3', name: 'South Gate Advisors', normalizedName: 'south gate advisors', status: 'inactive', notes: 'Fictional inactive desk kept for history.', createdAt: at, updatedAt: at },
+      { id: 'con_1', name: 'Horizon Study Circle', normalizedName: 'horizon study circle', status: 'active', pipelineStage: 'fresh', notes: 'Fictional Hyderabad counselling desk.', createdAt: at, updatedAt: at },
+      { id: 'con_2', name: 'North Star Guidance', normalizedName: 'north star guidance', status: 'active', pipelineStage: 'contacted', notes: 'Fictional Bengaluru partner.', createdAt: at, updatedAt: at },
+      { id: 'con_3', name: 'South Gate Advisors', normalizedName: 'south gate advisors', status: 'inactive', pipelineStage: 'meeting_done', notes: 'Fictional inactive desk kept for history.', createdAt: at, updatedAt: at },
     ],
     contacts: [
       { id: 'ct_1', consultancyId: 'con_1', name: 'Anita Rao', phone: '9000011111', email: '', role: 'Owner', status: 'active', deactivatedAt: null, createdAt: at, updatedAt: at },
@@ -271,11 +273,14 @@ function nextId(state, prefix) {
   return `${prefix}_${state.seq}`;
 }
 
+const SEED_PIPELINE = { con_1: 'fresh', con_2: 'contacted', con_3: 'meeting_done' };
+
 function consultancyDto(row, state) {
   return {
     id: row.id,
     name: row.name,
     status: row.status,
+    pipelineStage: consultancyStage(row.pipelineStage || SEED_PIPELINE[row.id]),
     notes: row.notes || '',
     studentCount: state.referrals.filter((item) => item.consultancyId === row.id).length,
     createdAt: row.createdAt,
@@ -314,6 +319,18 @@ function studentDto(row) {
 
 function referralDto(row) {
   return { ...row };
+}
+
+function readPipelineStage(value, required = false) {
+  if (value == null || value === '') {
+    if (required) return { error: fail(400, 'Choose a pipeline stage.', 'invalid_body') };
+    return { value: 'fresh' };
+  }
+  const stage = consultancyStage(value);
+  if (stage !== value) {
+    return { error: fail(400, 'Pipeline stage must be fresh, contacted, meeting done, or onboarded.', 'invalid_body') };
+  }
+  return { value: stage };
 }
 
 function activeNameOwner(state, normalizedName, exceptId) {
@@ -355,6 +372,7 @@ export function createCrmDemoRepository(storage) {
         const q = String(query.q || '').trim().toLowerCase();
         let rows = state.consultancies.filter((row) => !q || asText(row.normalizedName).includes(q) || asText(row.name).toLowerCase().includes(q));
         if (query.status) rows = rows.filter((row) => row.status === query.status);
+        if (query.pipelineStage) rows = rows.filter((row) => consultancyStage(row.pipelineStage) === query.pipelineStage);
         rows = [...rows].sort((a, b) => asText(a.name).localeCompare(asText(b.name)));
         return { write: false, state, response: slicePage(rows.map((row) => consultancyDto(row, state)), query) };
       });
@@ -368,14 +386,17 @@ export function createCrmDemoRepository(storage) {
           return { write: false, state, response: fail(400, error.message, error.code || 'invalid_body') };
         }
         const status = body.status === 'inactive' ? 'inactive' : 'active';
+        const parsedStage = readPipelineStage(body.pipelineStage);
+        if (parsedStage.error) return { write: false, state, response: parsedStage.error };
+        const pipelineStage = parsedStage.value;
         const normalizedName = normalizeConsultancyName(name);
         if (status === 'active' && activeNameOwner(state, normalizedName)) {
           return { write: false, state, response: fail(409, 'An active consultancy with this name already exists.', 'duplicate_consultancy') };
         }
         const now = new Date().toISOString();
-        const row = { id: nextId(state, 'con'), name, normalizedName, status, notes: String(body.notes || '').trim().slice(0, 2000), createdAt: now, updatedAt: now };
+        const row = { id: nextId(state, 'con'), name, normalizedName, status, pipelineStage, notes: String(body.notes || '').trim().slice(0, 2000), createdAt: now, updatedAt: now };
         state.consultancies.push(row);
-        addAudit(state, { action: 'consultancy.created', entityType: 'consultancy', entityId: row.id, after: { name, status } });
+        addAudit(state, { action: 'consultancy.created', entityType: 'consultancy', entityId: row.id, after: { name, status, pipelineStage } });
         return { write: true, state, response: ok(201, 'Consultancy created.', { consultancy: consultancyDto(row, state) }) };
       });
     },
@@ -390,7 +411,7 @@ export function createCrmDemoRepository(storage) {
       return commit(store(), (state) => {
         const row = state.consultancies.find((item) => item.id === id);
         if (!row) return { write: false, state, response: fail(404, 'Consultancy not found.', 'not_found') };
-        const before = { name: row.name, status: row.status, notes: row.notes };
+        const before = { name: row.name, status: row.status, pipelineStage: consultancyStage(row.pipelineStage), notes: row.notes };
         if (Object.prototype.hasOwnProperty.call(body, 'name')) {
           try {
             row.name = text(body.name, 'Name', 2, 200);
@@ -401,11 +422,16 @@ export function createCrmDemoRepository(storage) {
         }
         if (Object.prototype.hasOwnProperty.call(body, 'notes')) row.notes = String(body.notes || '').trim().slice(0, 2000);
         if (Object.prototype.hasOwnProperty.call(body, 'status')) row.status = body.status === 'inactive' ? 'inactive' : 'active';
+        if (Object.prototype.hasOwnProperty.call(body, 'pipelineStage')) {
+          const pipelineStage = readPipelineStage(body.pipelineStage, true);
+          if (pipelineStage.error) return { write: false, state, response: pipelineStage.error };
+          row.pipelineStage = pipelineStage.value;
+        }
         if (row.status === 'active' && activeNameOwner(state, row.normalizedName, row.id)) {
           return { write: false, state, response: fail(409, 'An active consultancy with this name already exists.', 'duplicate_consultancy') };
         }
         row.updatedAt = new Date().toISOString();
-        addAudit(state, { action: 'consultancy.updated', entityType: 'consultancy', entityId: row.id, before, after: { name: row.name, status: row.status, notes: row.notes } });
+        addAudit(state, { action: 'consultancy.updated', entityType: 'consultancy', entityId: row.id, before, after: { name: row.name, status: row.status, pipelineStage: consultancyStage(row.pipelineStage), notes: row.notes } });
         return { write: true, state, response: ok(200, 'Consultancy updated.', { consultancy: consultancyDto(row, state) }) };
       });
     },

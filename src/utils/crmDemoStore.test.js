@@ -420,3 +420,20 @@ test('public directories load every page and keep the audit warning', () => {
   const audit = fs.readFileSync(path.join(root, 'pages/crm-demo/AuditPage.jsx'), 'utf8');
   assert.match(audit, /not tamper-proof and it is not a server audit log/);
 });
+
+test('consultancy pipeline stages filter the directory and reject an unknown stage', () => {
+  const crm = repo();
+  const listed = crm.listConsultancies(page());
+  assert.equal(listed.data.items.find((row) => row.name === 'Horizon Study Circle').pipelineStage, 'fresh');
+  assert.equal(listed.data.items.find((row) => row.name === 'North Star Guidance').pipelineStage, 'contacted');
+  const created = crm.createConsultancy({ name: 'Onboarded Desk', pipelineStage: 'onboarded' });
+  assert.equal(created.status, 201);
+  assert.equal(created.data.consultancy.pipelineStage, 'onboarded');
+  const filtered = crm.listConsultancies(page({ pipelineStage: 'onboarded' }));
+  assert.equal(filtered.data.total, 1);
+  const rejected = crm.createConsultancy({ name: 'Bad Stage Desk', pipelineStage: 'hot' });
+  assert.equal(rejected.status, 400);
+  const moved = crm.updateConsultancy(created.data.consultancy.id, { pipelineStage: 'meeting_done' });
+  assert.equal(moved.status, 200);
+  assert.equal(moved.data.consultancy.pipelineStage, 'meeting_done');
+});

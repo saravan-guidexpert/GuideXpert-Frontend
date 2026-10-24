@@ -23,14 +23,19 @@ export default defineConfig(({ mode }) => {
   const proxyTarget = (env.VITE_PROXY_TARGET || '').trim() || DEFAULT_PROXY_TARGET
   const isHttpsTarget = proxyTarget.startsWith('https://')
 
+  const localApi = 'http://127.0.0.1:5050'
   if (mode === 'development') {
     console.info(`[vite] dev proxy: /api → ${proxyTarget}`)
+    console.info(`[vite] dev proxy: /api/crm-auth and /api/crm → ${localApi}`)
   }
 
   return {
     plugins: [react(), tailwindcss()],
     server: {
       proxy: {
+        // CRM sign-in uses the local API so the dev account is not created on production.
+        '/api/crm-auth': { target: localApi, changeOrigin: true, secure: false },
+        '/api/crm': { target: localApi, changeOrigin: true, secure: false },
         '/api': {
           target: proxyTarget,
           changeOrigin: true,

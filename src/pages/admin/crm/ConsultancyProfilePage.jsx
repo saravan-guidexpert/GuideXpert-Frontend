@@ -10,6 +10,7 @@ import {
   updateContact,
 } from '../../../utils/crmApi';
 import { interpretCrmResult } from '../../../utils/crmAccess';
+import { CONSULTANCY_PIPELINE, consultancyStage } from '../../../utils/consultancyPipeline';
 import { Banner, Field, PrimaryButton, inputClass } from './crmUi';
 
 const EMPTY_CONTACT = { name: '', phone: '', email: '', role: '' };
@@ -53,6 +54,7 @@ export default function ConsultancyProfilePage() {
       setForm({
         name: interpreted.data.consultancy.name,
         status: interpreted.data.consultancy.status,
+        pipelineStage: consultancyStage(interpreted.data.consultancy.pipelineStage),
         notes: interpreted.data.consultancy.notes || '',
       });
       const contactView = interpretCrmResult(contactResult, { expectList: true, emptyMessage: 'No contacts yet.' });
@@ -147,7 +149,12 @@ export default function ConsultancyProfilePage() {
             <Field label="Name">
               <input className={inputClass} value={form.name} onChange={(event) => setForm({ ...form, name: event.target.value })} required minLength={2} />
             </Field>
-            <Field label="Status">
+            <Field label="Pipeline">
+              <select className={inputClass} value={form.pipelineStage} onChange={(event) => setForm({ ...form, pipelineStage: event.target.value })}>
+                {CONSULTANCY_PIPELINE.map((item) => <option key={item.id} value={item.id}>{item.label}</option>)}
+              </select>
+            </Field>
+            <Field label="Record status">
               <select className={inputClass} value={form.status} onChange={(event) => setForm({ ...form, status: event.target.value })}>
                 <option value="active">Active</option>
                 <option value="inactive">Inactive</option>

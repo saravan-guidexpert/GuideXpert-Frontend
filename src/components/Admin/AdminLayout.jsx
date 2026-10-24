@@ -2,7 +2,7 @@ import { createElement, useState, useMemo, useEffect, useCallback, useRef } from
 import { useSidebarScrollbarActivity } from '../../hooks/useSidebarScrollbarActivity';
 import { Link, NavLink, Outlet, useLocation, useNavigate } from 'react-router-dom';
 import { HiMenu, HiX } from 'react-icons/hi';
-import { FiLayout, FiUsers, FiBarChart2, FiDownload, FiSettings, FiCalendar, FiClock, FiVideo, FiFileText, FiBell, FiLink, FiClipboard, FiMessageSquare, FiBookOpen, FiImage, FiPhone, FiLayers, FiTarget, FiUserPlus, FiSend, FiDatabase, FiChevronLeft, FiChevronRight, FiLogOut, FiGlobe, FiColumns, FiEdit3, FiBriefcase } from 'react-icons/fi';
+import { FiLayout, FiUsers, FiBarChart2, FiDownload, FiSettings, FiCalendar, FiClock, FiVideo, FiFileText, FiBell, FiLink, FiClipboard, FiMessageSquare, FiBookOpen, FiImage, FiPhone, FiLayers, FiTarget, FiUserPlus, FiSend, FiDatabase, FiChevronLeft, FiChevronRight, FiLogOut, FiGlobe, FiColumns, FiEdit3, FiBriefcase, FiShield } from 'react-icons/fi';
 import { useAuth } from '../../hooks/useAuth';
 import { AdminDashboardProvider } from '../../contexts/AdminDashboardContext';
 import { useAdminDateRange } from '../../hooks/useAdminDateRange';
@@ -69,6 +69,7 @@ const navItems = [
   { to: '/admin/iit-ai-calls-summary', label: 'IITian AI Calls Summary', icon: FiPhone, sectionKey: 'iit-ai-calls-summary', sidebarPlacement: 'students' },
   { to: '/admin/whatsapp-ops', label: 'WhatsApp ops', icon: FiSend, sectionKey: 'whatsapp-ops', sidebarPlacement: 'students' },
   { to: '/admin/lead-intelligence', label: 'Chatbot Lead Intelligence', icon: FiMessageSquare, sectionKey: 'lead-intelligence', sidebarPlacement: 'students' },
+  { to: '/admin/crm-access', label: 'CRM Access Management', icon: FiShield, sectionKey: 'crm-access-management', sidebarPlacement: 'both' },
   { to: '/admin/crm/consultancies', label: 'Consultancies', icon: FiBriefcase, sectionKey: 'consultancy-crm', sidebarPlacement: 'students' },
   { to: '/admin/crm/students', label: 'CRM Students', icon: FiUsers, sectionKey: 'consultancy-crm', sidebarPlacement: 'students' },
   { to: '/admin/crm/analytics', label: 'CRM analytics', icon: FiBarChart2, sectionKey: 'consultancy-crm', sidebarPlacement: 'students' },

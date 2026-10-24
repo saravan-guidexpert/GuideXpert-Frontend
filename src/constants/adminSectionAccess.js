@@ -40,6 +40,7 @@ export const ADMIN_SECTION_OPTIONS = [
   { sectionKey: 'resources', label: 'Resources' },
   { sectionKey: 'consultancy-crm', label: 'Consultancy CRM' },
   { sectionKey: 'consultancy-crm-manager', label: 'CRM manager — referral source correction' },
+  { sectionKey: 'crm-access-management', label: 'CRM Access Management' },
   // Legacy keys — still valid for existing admin grants; prefer student-workspace for new access
   { sectionKey: 'student-workspace-updates', label: 'Student panel (updates, legacy)' },
   { sectionKey: 'student-testimonials', label: 'Student panel (testimonials, legacy)' },
@@ -104,7 +105,7 @@ export const ADMIN_SECTION_GROUPS = [
   {
     id: 'admin',
     label: 'Admin',
-    sectionKeys: ['settings', 'consultancy-crm-manager'],
+    sectionKeys: ['settings', 'consultancy-crm-manager', 'crm-access-management'],
   },
 ];
 
