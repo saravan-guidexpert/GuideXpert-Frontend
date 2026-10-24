@@ -30,8 +30,10 @@ import {
   OPS_PRODUCT_IIT,
   OPS_PRODUCT_ONE_ON_ONE,
   OPS_PRODUCT_GUIDANCE_BOOKING,
+  OPS_PRODUCT_JEE_MOCK_TEST,
   ONE_ON_ONE_TEMPLATE_OPTIONS,
   GUIDANCE_BOOKING_TEMPLATE_OPTIONS,
+  JEE_MOCK_TEST_TEMPLATE_OPTIONS,
   buildOpsProductQueryParams,
   parseOpsProductFromSearch,
   parsePreferredLanguageFromSearch,
@@ -50,6 +52,7 @@ const TEMPLATE_LABELS = {
   iit_pre15min: 'IIT 15m',
   one_on_one_submit: '1-on-1 submit',
   guidance_booking_submit: 'Guidance booking',
+  jee_mock_test_submit: 'Mock test registration',
 };
 
 /** Compact eligibility audit for campaign templates (messages drill-down). */
@@ -437,6 +440,7 @@ function WhatsAppOpsMessagesInner({ syncProductFromUrl }) {
   const isIitProduct = opsProduct === OPS_PRODUCT_IIT;
   const isOneOnOneProduct = opsProduct === OPS_PRODUCT_ONE_ON_ONE;
   const isGuidanceBookingProduct = opsProduct === OPS_PRODUCT_GUIDANCE_BOOKING;
+  const isJeeMockTestProduct = opsProduct === OPS_PRODUCT_JEE_MOCK_TEST;
 
   const apiScopeParams = useMemo(
     () => buildOpsProductQueryParams(opsProduct, messageKind || null, preferredLanguage),
@@ -654,8 +658,19 @@ function WhatsAppOpsMessagesInner({ syncProductFromUrl }) {
           >
             Guidance Booking
           </button>
+          <button
+            type="button"
+            onClick={() => handleProductChange(OPS_PRODUCT_JEE_MOCK_TEST)}
+            className={`rounded-lg border px-3 py-1.5 text-sm font-semibold transition ${
+              opsProduct === OPS_PRODUCT_JEE_MOCK_TEST
+                ? 'border-primary-navy bg-primary-navy text-white'
+                : 'border-slate-200 bg-white text-slate-700 hover:bg-slate-50'
+            }`}
+          >
+            JEE Mock Test
+          </button>
         </div>
-        {(isIitProduct || isOneOnOneProduct || isGuidanceBookingProduct) ? (
+        {(isIitProduct || isOneOnOneProduct || isGuidanceBookingProduct || isJeeMockTestProduct) ? (
           <div className="mt-3 flex flex-wrap gap-2">
             <button
               type="button"
@@ -726,6 +741,8 @@ function WhatsAppOpsMessagesInner({ syncProductFromUrl }) {
                   ? ONE_ON_ONE_TEMPLATE_OPTIONS.filter((o) => o.value)
                   : isGuidanceBookingProduct
                     ? GUIDANCE_BOOKING_TEMPLATE_OPTIONS.filter((o) => o.value)
+                    : isJeeMockTestProduct
+                      ? JEE_MOCK_TEST_TEMPLATE_OPTIONS.filter((o) => o.value)
                     : GX_TEMPLATE_OPTIONS.filter((o) => o.value)
               ).map((opt) => (
                 <option key={opt.value} value={opt.value}>
@@ -989,6 +1006,7 @@ export default function WhatsAppOpsMessages() {
       if (product === OPS_PRODUCT_IIT) next.set('opsProduct', OPS_PRODUCT_IIT);
       else if (product === OPS_PRODUCT_ONE_ON_ONE) next.set('opsProduct', OPS_PRODUCT_ONE_ON_ONE);
       else if (product === OPS_PRODUCT_GUIDANCE_BOOKING) next.set('opsProduct', OPS_PRODUCT_GUIDANCE_BOOKING);
+      else if (product === OPS_PRODUCT_JEE_MOCK_TEST) next.set('opsProduct', OPS_PRODUCT_JEE_MOCK_TEST);
       else next.delete('opsProduct');
       if (kind) next.set('messageKind', kind);
       else next.delete('messageKind');

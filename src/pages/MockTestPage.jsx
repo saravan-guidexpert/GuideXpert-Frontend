@@ -1,9 +1,12 @@
 import { useEffect } from 'react';
 import MockTestForm from '../components/mockTest/MockTestForm';
+import { captureUtmFirstTouch, captureUtmSession } from '../utils/utm';
 
 export default function MockTestPage() {
   useEffect(() => {
     document.title = 'Mock Test Registration | GuideXpert';
+    captureUtmFirstTouch();
+    captureUtmSession();
   }, []);
 
   return (

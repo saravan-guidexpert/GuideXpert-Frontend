@@ -49,6 +49,10 @@ const COPY_FIELDS = [
   { key: 'collegeName', label: 'College name' },
   { key: 'address', label: 'Address (City / Town)' },
   { key: 'remarks', label: 'Remarks' },
+  { key: 'utm_source', label: 'utm_source' },
+  { key: 'utm_medium', label: 'utm_medium' },
+  { key: 'utm_campaign', label: 'utm_campaign' },
+  { key: 'utm_content', label: 'utm_content' },
 ];
 
 function getCellValue(row, key) {
@@ -324,6 +328,7 @@ export default function MockTestLeads() {
                   <th className="px-3 py-3 text-left font-semibold text-gray-700">College</th>
                   <th className="px-3 py-3 text-left font-semibold text-gray-700">Address</th>
                   <th className="min-w-[160px] px-3 py-3 text-left font-semibold text-gray-700">Remarks</th>
+                  <th className="px-3 py-3 text-left font-semibold text-gray-700">UTM content</th>
                 </tr>
               </thead>
               <tbody>
@@ -341,6 +346,7 @@ export default function MockTestLeads() {
                     <td className="max-w-[220px] truncate px-3 py-3 text-gray-600" title={row.remarks || ''}>
                       {row.remarks || '—'}
                     </td>
+                    <td className="whitespace-nowrap px-3 py-3 text-gray-700">{row.utm_content || '—'}</td>
                   </tr>
                 ))}
               </tbody>

@@ -4,6 +4,7 @@ export const OPS_PRODUCT_GUIDEXPERT = 'guidexpert';
 export const OPS_PRODUCT_IIT = 'iit_counselling';
 export const OPS_PRODUCT_ONE_ON_ONE = 'one_on_one_counseling';
 export const OPS_PRODUCT_GUIDANCE_BOOKING = 'guidance_booking';
+export const OPS_PRODUCT_JEE_MOCK_TEST = 'jee_mock_test';
 
 export const FALLBACK_TEMPLATE_KINDS = [
   { id: 'slot_booked', label: 'Slot booked', description: 'Immediate confirmation after slot booking', opsProducts: ['guidexpert', 'iit_counselling'] },
@@ -11,6 +12,7 @@ export const FALLBACK_TEMPLATE_KINDS = [
   { id: 'guidance_booking_submit', label: 'Booking confirmation', description: 'Immediate confirmation after guidance booking book-slot', opsProducts: ['guidance_booking'] },
   { id: 'guidance_pre30min', label: '30 min before session', description: 'Guidance session reminder 30 minutes before slot start', opsProducts: ['guidance_booking'] },
   { id: 'guidance_counsellor_booking_notify', label: 'Counsellor booking notify', description: 'Immediate WhatsApp to assigned counsellor when student books a guidance slot', opsProducts: ['guidance_booking'] },
+  { id: 'jee_mock_test_submit', label: 'Mock test registration', description: 'Immediate WhatsApp after JEE mock test registration from influencer links (name + image)', opsProducts: ['jee_mock_test'] },
   { id: 'pre4hr', label: '4hr reminder', description: 'Reminder sent around 4 hours before slot', opsProducts: ['guidexpert'] },
   { id: 'meet', label: 'Meet link (~1hr)', description: 'Meeting link reminder sent around 1 hour before slot', opsProducts: ['guidexpert'] },
   { id: '30min', label: '30 min reminder', description: 'Final reminder sent around 30 minutes before slot', opsProducts: ['guidexpert'] },
@@ -44,6 +46,12 @@ export const GX_TEMPLATE_OPTIONS = [
 export const ONE_ON_ONE_TEMPLATE_OPTIONS = [
   { value: '', label: 'All templates' },
   { value: 'one_on_one_submit', label: 'one_on_one_submit · form confirmation' },
+];
+
+/** JEE mock test recovery/audit template dropdown options. */
+export const JEE_MOCK_TEST_TEMPLATE_OPTIONS = [
+  { value: '', label: 'All templates' },
+  { value: 'jee_mock_test_submit', label: 'jee_mock_test_submit · mock test registration' },
 ];
 
 /** Guidance Booking recovery/audit template dropdown options. */
@@ -92,6 +100,9 @@ export function parseOpsProductFromSearch(searchParams) {
   ) {
     return OPS_PRODUCT_GUIDANCE_BOOKING;
   }
+  if (raw === 'jee_mock_test' || raw === 'jeemocktest' || raw === 'mock_test' || raw === 'mocktest') {
+    return OPS_PRODUCT_JEE_MOCK_TEST;
+  }
   return OPS_PRODUCT_GUIDEXPERT;
 }
 
@@ -118,9 +129,13 @@ export function visibleTemplateKindsForProduct(templateKinds, opsProduct) {
   const isIit = opsProduct === OPS_PRODUCT_IIT;
   const isOneOnOne = opsProduct === OPS_PRODUCT_ONE_ON_ONE;
   const isGuidanceBooking = opsProduct === OPS_PRODUCT_GUIDANCE_BOOKING;
+  const isJeeMockTest = opsProduct === OPS_PRODUCT_JEE_MOCK_TEST;
   const fromMeta = list.filter((k) => templateKindAppliesToProduct(k, opsProduct));
   if (isOneOnOne) {
     return fromMeta.filter((k) => k.id === 'one_on_one_submit' && !k.preferredLanguage);
+  }
+  if (isJeeMockTest) {
+    return fromMeta.filter((k) => k.id === 'jee_mock_test_submit' && !k.preferredLanguage);
   }
   if (isGuidanceBooking) {
     return fromMeta.filter(
@@ -145,6 +160,7 @@ export function buildOpsProductQueryParams(opsProduct, messageKind, preferredLan
   if (opsProduct === OPS_PRODUCT_IIT) params.opsProduct = OPS_PRODUCT_IIT;
   if (opsProduct === OPS_PRODUCT_ONE_ON_ONE) params.opsProduct = OPS_PRODUCT_ONE_ON_ONE;
   if (opsProduct === OPS_PRODUCT_GUIDANCE_BOOKING) params.opsProduct = OPS_PRODUCT_GUIDANCE_BOOKING;
+  if (opsProduct === OPS_PRODUCT_JEE_MOCK_TEST) params.opsProduct = OPS_PRODUCT_JEE_MOCK_TEST;
   if (messageKind) params.messageKind = messageKind;
   if (preferredLanguage && IIT_GENERIC_REMINDER_IDS.has(messageKind)) {
     params.preferredLanguage = preferredLanguage;

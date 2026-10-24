@@ -4,6 +4,7 @@
  */
 
 const UTM_STORAGE_KEY = 'guidexpert_utm_first_touch';
+const UTM_SESSION_KEY = 'guidexpert_utm_session';
 
 const UTM_PARAMS = ['utm_source', 'utm_medium', 'utm_campaign', 'utm_content'];
 
@@ -44,6 +45,50 @@ export function getStoredUtm() {
   } catch {
     return null;
   }
+}
+
+function readStoredUtm(storage, key) {
+  try {
+    const raw = storage.getItem(key);
+    if (!raw) return null;
+    const parsed = JSON.parse(raw);
+    if (typeof parsed !== 'object' || parsed === null) return null;
+    const result = {};
+    for (const field of UTM_PARAMS) {
+      if (parsed[field] != null && typeof parsed[field] === 'string' && parsed[field].trim()) {
+        result[field] = parsed[field].trim();
+      }
+    }
+    return Object.keys(result).length > 0 ? result : null;
+  } catch {
+    return null;
+  }
+}
+
+/**
+ * Remember the UTM on this browser tab whenever the URL has one.
+ * Later pages in the same visit (for example /mock-test) can read it
+ * even when an older first-touch UTM is already stored.
+ */
+export function captureUtmSession() {
+  if (typeof window === 'undefined') return;
+  const fromUrl = parseUtmFromUrl();
+  if (Object.keys(fromUrl).length === 0) return;
+  try {
+    sessionStorage.setItem(UTM_SESSION_KEY, JSON.stringify(fromUrl));
+  } catch (e) {
+    console.warn('[UTM] Failed to store session UTM', e);
+  }
+}
+
+export function getSessionUtm() {
+  if (typeof window === 'undefined') return null;
+  return readStoredUtm(sessionStorage, UTM_SESSION_KEY);
+}
+
+/** UTM for this visit, then the stored first-touch UTM. */
+export function getAttributionUtm() {
+  return getSessionUtm() || getStoredUtm();
 }
 
 /**

@@ -10,7 +10,7 @@ import {
   OTP_REQUEST_FAILED_MESSAGE,
   OTP_REQUEST_SUBMITTED_MESSAGE,
 } from '../../utils/otpUserMessages';
-import { captureUtmFirstTouch, getStoredUtm } from '../../utils/utm';
+import { captureUtmFirstTouch, captureUtmSession, getStoredUtm } from '../../utils/utm';
 import './ApplySection.css';
 
 const WHATSAPP_NUMBER = '919009000914';
@@ -136,6 +136,7 @@ const ApplySection = () => {
   // First-touch UTM capture on registration page load
   useEffect(() => {
     captureUtmFirstTouch();
+    captureUtmSession();
   }, []);
 
   useEffect(() => {
