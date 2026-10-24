@@ -9,16 +9,14 @@ import {
 import { saveJeeMainMockTestSection1, saveJeeMainMockTestSection2 } from '../../utils/api';
 import { getApiBaseUrl } from '../../utils/apiBaseUrl';
 import { resolveUtmAttribution, trackMainPageVisit } from '../../utils/oneOnOneSessionTracking';
-import { captureUtmSession, getAttributionUtm } from '../../utils/utm';
+import { getVisitUtm } from '../../utils/utm';
 import {
   hasJeeMainMockTestErrors,
   validateJeeMainMockTestStep,
 } from '../../utils/jeeMainMockTestValidation';
 
 function registrationUtm() {
-  captureUtmSession();
-  const session = getAttributionUtm() || {};
-  return { ...session, ...resolveUtmAttribution() };
+  return getVisitUtm() || {};
 }
 
 const TOTAL_STEPS = 2;

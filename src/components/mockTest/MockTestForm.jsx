@@ -2,7 +2,7 @@ import { useCallback, useRef, useState } from 'react';
 import MobileOtpField from '../forms/MobileOtpField';
 import { FormInput, FormTextarea, NeoField } from '../oneOnOneSession/FormControls';
 import { saveMockTestSection1, saveMockTestSection2 } from '../../utils/api';
-import { getAttributionUtm } from '../../utils/utm';
+import { getVisitUtm } from '../../utils/utm';
 import { hasMockTestValidationErrors, validateMockTestStep } from '../../utils/mockTestValidation';
 
 const TOTAL_STEPS = 2;
@@ -101,7 +101,7 @@ export default function MockTestForm() {
     const result = await saveMockTestSection1({
       name: form.name.trim(),
       contactNumber: form.contactNumber.replace(/\D/g, ''),
-      ...(getAttributionUtm() || {}),
+      ...(getVisitUtm() || {}),
     });
     if (!result.success) {
       setSubmitError(result.message || 'Could not save this step. Please try again.');
@@ -123,7 +123,7 @@ export default function MockTestForm() {
       collegeName: form.collegeName.trim(),
       address: form.address.trim(),
       remarks: form.remarks.trim(),
-      ...(getAttributionUtm() || {}),
+      ...(getVisitUtm() || {}),
     });
     if (!result.success) {
       setSubmitError(result.message || 'Unable to submit. Please try again.');
