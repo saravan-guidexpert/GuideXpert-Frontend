@@ -92,6 +92,18 @@ export function getAttributionUtm() {
 }
 
 /**
+ * UTM from the current URL, or from this visit if the URL no longer has it.
+ * A direct open with no campaign link returns null so it is not mistaken
+ * for an older first-touch link.
+ */
+export function getVisitUtm() {
+  captureUtmSession();
+  const fromUrl = parseUtmFromUrl();
+  if (Object.keys(fromUrl).length > 0) return fromUrl;
+  return getSessionUtm();
+}
+
+/**
  * Capture UTM from current URL and save to localStorage only if not already set (first-touch).
  * Call once on registration page load.
  */

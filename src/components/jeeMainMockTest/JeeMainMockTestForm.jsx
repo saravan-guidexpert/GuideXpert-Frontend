@@ -9,10 +9,15 @@ import {
 import { saveJeeMainMockTestSection1, saveJeeMainMockTestSection2 } from '../../utils/api';
 import { getApiBaseUrl } from '../../utils/apiBaseUrl';
 import { resolveUtmAttribution, trackMainPageVisit } from '../../utils/oneOnOneSessionTracking';
+import { getVisitUtm } from '../../utils/utm';
 import {
   hasJeeMainMockTestErrors,
   validateJeeMainMockTestStep,
 } from '../../utils/jeeMainMockTestValidation';
+
+function registrationUtm() {
+  return getVisitUtm() || {};
+}
 
 const TOTAL_STEPS = 2;
 
@@ -190,7 +195,7 @@ export default function JeeMainMockTestForm({ scrollContainerRef = null }) {
   };
 
   const handleStep1Next = async () => {
-    const attribution = resolveUtmAttribution();
+    const attribution = registrationUtm();
     const result = await saveJeeMainMockTestSection1({
       studentName: form.studentName.trim(),
       mobileNumber: form.mobileNumber.replace(/\D/g, ''),
@@ -218,6 +223,7 @@ export default function JeeMainMockTestForm({ scrollContainerRef = null }) {
       collegeName: form.collegeName.trim(),
       location: form.location.trim(),
       remarks: form.remarks.trim(),
+      ...registrationUtm(),
     });
     if (!result.success) {
       setSubmitError(result.message || 'Unable to register. Please try again.');
