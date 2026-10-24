@@ -103,12 +103,12 @@ export default function CrmDemoOverviewPage() {
           if (period === '90' && point?.start && point?.end) {
             const from = localDayStamp(point.start);
             const to = localDayStamp(point.end);
-            navigate(`/crm/calendar?view=agenda&from=${from}&to=${to}&month=${from.slice(0, 7)}`);
+            navigate(`/crm/demo/calendar?view=agenda&from=${from}&to=${to}&month=${from.slice(0, 7)}`);
             return;
           }
           const query = calendarQueryForBucket(key);
-          if (query?.day) navigate(`/crm/calendar?day=${query.day}`);
-          else if (query?.month) navigate(`/crm/calendar?month=${query.month}`);
+          if (query?.day) navigate(`/crm/demo/calendar?day=${query.day}`);
+          else if (query?.month) navigate(`/crm/demo/calendar?month=${query.month}`);
           else setPicked((current) => (current === key ? '' : key));
         }}
         error={recordError}

@@ -89,10 +89,10 @@ test('attention counts come from referral links and consultancy status', () => {
   const referrals = [{ id: 'ref_1', crmStudentId: 'st_1', consultancyId: 'con_3', studentName: 'Asha' }];
   const items = attentionItems({ students, consultancies, referrals });
   assert.deepEqual(items.map((item) => [item.id, item.count, item.href]), [
-    ['unreferred', 1, '/crm/students?tab=open'],
-    ['untouched', 1, '/crm/students?tab=referred&admission=Not%20started'],
-    ['inactive', 1, '/crm/consultancies?status=inactive'],
-    ['inactive-source', 1, '/crm/consultancies?status=inactive'],
+    ['unreferred', 1, '/crm/demo/students?tab=open'],
+    ['untouched', 1, '/crm/demo/students?tab=referred&admission=Not%20started'],
+    ['inactive', 1, '/crm/demo/consultancies?status=inactive'],
+    ['inactive-source', 1, '/crm/demo/consultancies?status=inactive'],
   ]);
 });
 

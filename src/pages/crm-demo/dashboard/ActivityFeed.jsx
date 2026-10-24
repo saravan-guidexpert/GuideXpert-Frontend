@@ -17,7 +17,7 @@ export default function ActivityFeed({ entries, error, onRetry }) {
     <section className="gx-panel gx-feed" aria-labelledby="gx-activity-title">
       <div className="gx-panel-head">
         <h3 id="gx-activity-title">Recent activity</h3>
-        <Link className="gx-link" to="/crm/audit">View all</Link>
+        <Link className="gx-link" to="/crm/demo/audit">View all</Link>
       </div>
       {error ? (
         <div className="gx-inline-error" role="alert">
@@ -29,7 +29,7 @@ export default function ActivityFeed({ entries, error, onRetry }) {
           {entries.map((entry) => {
             const sample = entry.actorLabel === 'Demo seed';
             return (
-              <Link key={entry.id} className="gx-activity" to={`/crm/audit?id=${entry.id}`}>
+              <Link key={entry.id} className="gx-activity" to={`/crm/demo/audit?id=${entry.id}`}>
                 <span className="gx-act-copy">
                   <strong>{activityTitle(entry.action)}</strong>
                   <small>{entry.related}{sample ? ' · demo record' : ''}</small>

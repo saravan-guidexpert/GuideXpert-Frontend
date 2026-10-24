@@ -1,14 +1,35 @@
 import { useState } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
+import { FiCalendar, FiCheck, FiGrid, FiPhone, FiUserPlus } from 'react-icons/fi';
 import { interpretCrmResult } from '../../utils/crmAccess';
+import { CONSULTANCY_PIPELINE, FOLLOW_UP_STAGE_GROUPS, boardCounts, matchesBoardStage } from '../../utils/consultancyPipeline';
 import { CALLING_STATUSES, CONSULTANCY_STATUSES, isFollowUpOverdue } from '../../utils/crmDemoStore';
-import { Badge, DataTable, Dialog, Notice, PageHeader, SearchField } from './CrmKit';
+import { Badge, DataTable, Dialog, Notice, SearchField } from './CrmKit';
 import { shortDate } from './crmFormat';
 import { loadAll } from './dashboard/dashboardModel';
 import { useCrmDemo } from './useCrmDemo';
 
 const EMPTY = { name: '', status: 'active', notes: '', followUpStatus: 'Fresh Lead', callingStatus: '' };
 const QUIET_DAYS = 30;
+const STAGE_CARDS = [
+  { id: 'total', label: 'Total consultancies', hint: 'In this view', tone: 'total', icon: FiGrid },
+  { id: 'fresh', label: 'Fresh leads', hint: 'Not contacted yet', tone: 'fresh', icon: FiUserPlus },
+  { id: 'contacted', label: 'Contacted', hint: 'Conversation started', tone: 'contacted', icon: FiPhone },
+  { id: 'meeting_done', label: 'Meetings completed', hint: 'Meeting is complete', tone: 'meeting', icon: FiCalendar },
+  { id: 'onboarded', label: 'Onboarded', hint: 'Onboarding or onboarded', tone: 'onboarded', icon: FiCheck },
+];
+
+function initials(name) {
+  const parts = String(name || '').trim().split(/\s+/).filter(Boolean);
+  if (parts.length === 0) return '?';
+  return parts.slice(0, 2).map((part) => part[0]).join('').toUpperCase();
+}
+
+function previewRemark(text) {
+  const clean = String(text || '').replace(/\s+/g, ' ').trim();
+  if (clean.length <= 84) return clean;
+  return `${clean.slice(0, 84).trimEnd()}…`;
+}
 
 function messageOf(result) {
   const view = interpretCrmResult(result);
@@ -30,14 +51,6 @@ function followTone(status) {
   return 'pending';
 }
 
-function callTone(status) {
-  if (status === 'Connected' || status === 'WhatsApp Call Connected' || status === 'Interested') return 'on';
-  if (status === 'Not Interested' || status === 'Invalid Number' || status === 'Switched Off') return 'off';
-  if (status === 'Call Back Requested' || status === 'Meeting Scheduled' || status === 'Follow-up Required' || status === 'Busy') return 'warn';
-  if (status === 'Not Answered') return 'hold';
-  return 'pending';
-}
-
 export default function ConsultanciesPage() {
   const navigate = useNavigate();
   const [params, setParams] = useSearchParams();
@@ -46,6 +59,7 @@ export default function ConsultanciesPage() {
   const search = params.get('q') || '';
   const relationship = params.get('status') === 'active' || params.get('status') === 'inactive' ? params.get('status') : 'all';
   const follow = CONSULTANCY_STATUSES.includes(params.get('follow') || '') ? params.get('follow') : 'all';
+  const stage = CONSULTANCY_PIPELINE.some((item) => item.id === params.get('stage')) ? params.get('stage') : '';
   const calling = CALLING_STATUSES.includes(params.get('calling') || '') ? params.get('calling') : 'all';
   const owner = params.get('owner') || 'all';
   const creator = params.get('creator') || 'all';
@@ -62,6 +76,7 @@ export default function ConsultanciesPage() {
   const [remarkText, setRemarkText] = useState('');
   const [statusFor, setStatusFor] = useState(null);
   const [statusForm, setStatusForm] = useState({ followUpStatus: 'Fresh Lead', callingStatus: '', scheduledAt: '', outcome: '', notes: '', nextAction: '', reason: '' });
+  const [filtersOpen, setFiltersOpen] = useState(false);
 
   const consultanciesLoad = loadAll((page) => client.listConsultancies({ page, limit: 100 }));
   const directoryError = consultanciesLoad.ok ? '' : consultanciesLoad.message;
@@ -85,9 +100,8 @@ export default function ConsultanciesPage() {
 
   const needle = search.trim().toLowerCase();
   const digits = needle.replace(/\D/g, '');
-  const rows = visible.filter((row) => {
+  const scoped = visible.filter((row) => {
     if (relationship !== 'all' && row.status !== relationship) return false;
-    if (follow !== 'all' && row.followUpStatus !== follow) return false;
     if (calling !== 'all' && (row.callingStatus || '') !== calling) return false;
     if (superAdmin && owner !== 'all' && row.ownerId !== owner) return false;
     if (superAdmin && creator !== 'all' && row.createdById !== creator) return false;
@@ -104,7 +118,9 @@ export default function ConsultanciesPage() {
     const hay = `${row.name || ''} ${contact.name || ''} ${contact.email || ''}`.toLowerCase();
     if (hay.includes(needle)) return true;
     return Boolean(digits) && String(contact.phone || '').includes(digits);
-  }).sort((a, b) => {
+  });
+  const counts = boardCounts(scoped);
+  const rows = scoped.filter((row) => matchesBoardStage(row, stage) && (follow === 'all' || row.followUpStatus === follow)).sort((a, b) => {
     if (sort === 'created') return String(b.createdAt).localeCompare(String(a.createdAt));
     if (sort === 'last') return String(b.lastContactAt || '').localeCompare(String(a.lastContactAt || ''));
     if (sort === 'next') return String(a.nextFollowUpAt || '9999').localeCompare(String(b.nextFollowUpAt || '9999'));
@@ -112,38 +128,42 @@ export default function ConsultanciesPage() {
     return String(a.name || '').localeCompare(String(b.name || ''));
   });
 
-  const metrics = [
-    { label: 'Visible consultancies', value: rows.length, hint: superAdmin ? 'Matching the current filters' : 'Owned by Demo staff, matching the current filters' },
-    { label: 'Active', value: rows.filter((row) => row.status === 'active').length, hint: 'Relationship is active' },
-    { label: 'Due today', value: rows.filter((row) => dayKey(row.nextFollowUpAt) === today).length, hint: 'Next follow-up is today' },
-    { label: 'Overdue', value: rows.filter((row) => isFollowUpOverdue(row, now)).length, hint: 'Scheduled or required, and past' },
-    { label: 'Students referred', value: rows.reduce((sum, row) => sum + (row.originalStudentCount || 0), 0), hint: 'Original referral source' },
-  ];
+  const metrics = STAGE_CARDS.map((card) => {
+    const value = card.id === 'total' ? counts.total : counts[card.id];
+    const share = card.id !== 'total' && counts.total > 0 ? ` · ${Math.round((value / counts.total) * 100)}%` : '';
+    return { ...card, value, hint: `${card.hint}${share}` };
+  });
 
+  const filtersActive = Boolean(
+    search || stage || follow !== 'all' || calling !== 'all' || relationship !== 'all' || dueToday || overdueOnly || quietOnly || referralFilter !== 'all' || sort !== 'name' || (superAdmin && (owner !== 'all' || creator !== 'all')),
+  );
   const owners = [...new Map(visible.map((row) => [row.ownerId, row.ownerName])).entries()];
   const creators = [...new Map(visible.map((row) => [row.createdById, row.createdByName])).entries()];
-  const chips = [
-    relationship !== 'all' ? ['status', relationship === 'active' ? 'Active' : 'Inactive'] : null,
-    follow !== 'all' ? ['follow', follow] : null,
-    calling !== 'all' ? ['calling', calling] : null,
-    superAdmin && owner !== 'all' ? ['owner', `Owner ${owners.find(([id]) => id === owner)?.[1] || owner}`] : null,
-    superAdmin && creator !== 'all' ? ['creator', `Creator ${creators.find(([id]) => id === creator)?.[1] || creator}`] : null,
-    dueToday ? ['due', 'Due today'] : null,
-    overdueOnly ? ['overdue', 'Overdue'] : null,
-    quietOnly ? ['quiet', 'No recent contact'] : null,
-    referralFilter !== 'all' ? ['referrals', referralFilter === 'has' ? 'Has referrals' : 'No referrals'] : null,
-    search ? ['q', `Search “${search}”`] : null,
-  ].filter(Boolean);
 
-  function clearChip(key) {
+  function applyStage(value) {
     replaceParams((copy) => {
-      if (key === 'status' || key === 'follow' || key === 'calling' || key === 'owner' || key === 'creator' || key === 'due' || key === 'overdue' || key === 'quiet' || key === 'referrals' || key === 'q') copy.delete(key);
+      if (!value || value === 'all' || value === 'total') copy.delete('stage');
+      else copy.set('stage', value);
+      const currentFollow = copy.get('follow');
+      const group = FOLLOW_UP_STAGE_GROUPS.find((item) => item.statuses.includes(currentFollow));
+      if (currentFollow && (!value || value === 'all' || value === 'total' || (group && group.id !== value))) copy.delete('follow');
+    });
+  }
+
+  function applyFollow(value) {
+    replaceParams((copy) => {
+      if (value === 'all') copy.delete('follow');
+      else {
+        copy.set('follow', value);
+        const group = FOLLOW_UP_STAGE_GROUPS.find((item) => item.statuses.includes(value));
+        if (group) copy.set('stage', group.id);
+      }
     });
   }
 
   function resetFilters() {
     replaceParams((copy) => {
-      ['q', 'status', 'follow', 'calling', 'owner', 'creator', 'due', 'overdue', 'quiet', 'referrals', 'sort'].forEach((key) => copy.delete(key));
+      ['q', 'status', 'stage', 'follow', 'calling', 'owner', 'creator', 'due', 'overdue', 'quiet', 'referrals', 'sort'].forEach((key) => copy.delete(key));
     });
   }
 
@@ -158,7 +178,7 @@ export default function ConsultanciesPage() {
       setForm(EMPTY);
       replaceParams((copy) => copy.delete('new'));
       refresh();
-      navigate({ pathname: `/crm/consultancies/${result.data.consultancy.id}`, search: directoryQuery() });
+      navigate({ pathname: `/crm/demo/consultancies/${result.data.consultancy.id}`, search: directoryQuery() });
     }
   }
 
@@ -202,64 +222,91 @@ export default function ConsultanciesPage() {
     {
       key: 'name',
       label: 'Consultancy',
+      width: '18%',
       render: (row) => (
-        <span>
-          <span className="gx-strong">{row.name}</span>
+        <span className="gx-firm">
+          <button type="button" className="gx-firm-name" onClick={(event) => { event.stopPropagation(); navigate({ pathname: `/crm/demo/consultancies/${row.id}`, search: directoryQuery() }); }}>{row.name}</button>
           <span className="gx-sub">{row.primaryContact?.name || 'No primary contact'}</span>
         </span>
       ),
     },
     {
       key: 'owner',
-      label: superAdmin ? 'Creator / owner' : 'Owner',
-      render: (row) => (superAdmin ? `${row.createdByName} / ${row.ownerName}` : row.ownerName),
+      label: 'Owner',
+      width: '12%',
+      render: (row) => (
+        <span className="gx-owner">
+          <span className="gx-avatar" aria-hidden="true">{initials(row.ownerName)}</span>
+          <span className="gx-owner-copy">
+            <span className="gx-owner-name">{row.ownerName}</span>
+            {superAdmin ? <span className="gx-sub">{row.createdByName}</span> : null}
+          </span>
+        </span>
+      ),
     },
     {
       key: 'follow',
-      label: 'Consultancy status',
+      label: 'Stage / status',
+      width: '14%',
       render: (row) => (
         <span className="gx-status-stack">
           <Badge tone={followTone(row.followUpStatus)}>{row.followUpStatus}</Badge>
-          {isFollowUpOverdue(row, now) ? <Badge tone="off">Overdue</Badge> : null}
+          {isFollowUpOverdue(row, now) ? <Badge tone="late">Overdue</Badge> : null}
         </span>
       ),
     },
     {
       key: 'calling',
       label: 'Calling status',
-      render: (row) => (row.callingStatus ? <Badge tone={callTone(row.callingStatus)}>{row.callingStatus}</Badge> : '—'),
+      width: '10%',
+      render: (row) => (row.callingStatus ? <span className="gx-call">{row.callingStatus}</span> : <span className="gx-dash">—</span>),
     },
-    { key: 'last', label: 'Last contact', render: (row) => shortDate(row.lastContactAt) },
-    { key: 'next', label: 'Next follow-up', render: (row) => shortDate(row.nextFollowUpAt) },
-    { key: 'students', label: 'Referred', render: (row) => row.originalStudentCount || 0 },
+    { key: 'last', label: 'Last contact', width: '10%', render: (row) => (row.lastContactAt ? <span className="gx-date">{shortDate(row.lastContactAt)}</span> : <span className="gx-dash">—</span>) },
+    {
+      key: 'next',
+      label: 'Next follow-up',
+      width: '11%',
+      render: (row) => (row.nextFollowUpAt ? <span className={`gx-date${isFollowUpOverdue(row, now) ? ' is-overdue' : ''}`}>{shortDate(row.nextFollowUpAt)}</span> : <span className="gx-dash">—</span>),
+    },
+    { key: 'students', label: 'Referrals', width: '6%', render: (row) => <span className="gx-count-pill">{row.originalStudentCount || 0}</span> },
     {
       key: 'remark',
-      label: 'Remark',
+      label: 'Latest remark',
+      width: '14%',
       render: (row) => (row.latestRemark ? (
-        <span title={row.latestRemark.text}>
-          <span className="gx-remark-preview">{row.latestRemark.text}</span>
+        <span className="gx-remark" title={row.latestRemark.text}>
+          <span className="gx-remark-preview">{previewRemark(row.latestRemark.text)}</span>
           <span className="gx-sub">{row.latestRemark.authorName} · {shortDate(row.latestRemark.createdAt)}</span>
         </span>
-      ) : '—'),
+      ) : <span className="gx-dash">—</span>),
     },
     {
       key: 'open',
       label: 'Actions',
+      width: '15%',
       render: (row) => (
         <span className="gx-row-actions">
-          <button type="button" className="gx-text" onClick={(event) => { event.stopPropagation(); navigate({ pathname: `/crm/consultancies/${row.id}`, search: directoryQuery() }); }}>Open</button>
-          <button type="button" className="gx-text" onClick={(event) => { event.stopPropagation(); setStatusFor(row); setStatusForm({ followUpStatus: row.followUpStatus || 'Fresh Lead', callingStatus: row.callingStatus || '', scheduledAt: '', outcome: '', notes: '', nextAction: '', reason: '' }); }}>Status</button>
-          <button type="button" className="gx-text" onClick={(event) => { event.stopPropagation(); setRemarkFor(row); setRemarkText(''); }}>Remark</button>
+          <button type="button" className="gx-row-btn" onClick={(event) => { event.stopPropagation(); navigate({ pathname: `/crm/demo/consultancies/${row.id}`, search: directoryQuery() }); }}>Open</button>
+          <button type="button" className="gx-row-btn" onClick={(event) => { event.stopPropagation(); setStatusFor(row); setStatusForm({ followUpStatus: row.followUpStatus || 'Fresh Lead', callingStatus: row.callingStatus || '', scheduledAt: '', outcome: '', notes: '', nextAction: '', reason: '' }); }}>Status</button>
+          <button type="button" className="gx-row-btn" onClick={(event) => { event.stopPropagation(); setRemarkFor(row); setRemarkText(''); }}>Remark</button>
         </span>
       ),
     },
   ];
 
   return (
-    <>
-      <PageHeader title="Consultancies" subtitle={superAdmin ? 'Super Admin preview. Browser storage is not access control.' : 'Staff preview shows consultancies owned by Demo staff. Browser storage is not access control.'}>
-        <button type="button" className="gx-lime" onClick={() => replaceParams((copy) => copy.set('new', '1'))}>Add consultancy</button>
-      </PageHeader>
+    <div className={`gx-dir${filtersOpen ? ' is-filters' : ''}`}>
+      <header className="gx-dir-head">
+        <div>
+          <p className="gx-dir-crumb">CRM / Consultancies</p>
+          <h2 className="gx-title gx-dir-title">Consultancies</h2>
+          <p className="gx-dir-lede">Manage relationships, track admissions partners, and stay on top of follow-ups.</p>
+        </div>
+        <div className="gx-dir-head-side">
+          <span className="gx-env-pill">{superAdmin ? 'Browser demo · all owners' : 'Browser demo'}</span>
+          <button type="button" className="gx-lime" onClick={() => replaceParams((copy) => copy.set('new', '1'))}>+ Add consultancy</button>
+        </div>
+      </header>
       {directoryError ? (
         <div className="gx-notice error" role="alert">
           <p>{directoryError}</p>
@@ -267,68 +314,101 @@ export default function ConsultanciesPage() {
         </div>
       ) : (
         <>
-          <section className="gx-metrics is-five" aria-label="Consultancy totals">
-            {metrics.map((card) => (
-              <article key={card.label} className="gx-metric">
-                <p className="k">{card.label}</p>
-                <p className="v">{card.value}</p>
-                <p className="h">{card.hint}</p>
-              </article>
-            ))}
+          <section className="gx-stage-board" aria-label="Consultancy stages">
+            {metrics.map((card) => {
+              const selected = stage === card.id;
+              const Icon = card.icon;
+              return (
+                <button
+                  key={card.id}
+                  type="button"
+                  className={`gx-stage-kpi is-${card.tone}${selected ? ' is-on' : ''}`}
+                  aria-pressed={selected}
+                  onClick={() => applyStage(selected || card.id === 'total' ? 'all' : card.id)}
+                >
+                  <span className="gx-stage-ico" aria-hidden="true"><Icon size={14} strokeWidth={1.75} /></span>
+                  <span className="gx-stage-k">{card.label}</span>
+                  <span className="gx-stage-v">{card.value}</span>
+                  <span className="gx-stage-h">{card.hint}</span>
+                </button>
+              );
+            })}
           </section>
-          <div className="gx-toolbar">
-            <SearchField value={search} onChange={(value) => replaceParams((copy) => { if (value) copy.set('q', value); else copy.delete('q'); })} label="Search name, contact, phone, or email" />
-            <select className="gx-select" aria-label="Consultancy status" value={follow} onChange={(event) => replaceParams((copy) => { if (event.target.value === 'all') copy.delete('follow'); else copy.set('follow', event.target.value); })}>
-              <option value="all">All consultancy statuses</option>
-              {CONSULTANCY_STATUSES.map((item) => <option key={item} value={item}>{item}</option>)}
-            </select>
-            <select className="gx-select" aria-label="Calling status" value={calling} onChange={(event) => replaceParams((copy) => { if (event.target.value === 'all') copy.delete('calling'); else copy.set('calling', event.target.value); })}>
-              <option value="all">All calling statuses</option>
-              {CALLING_STATUSES.map((item) => <option key={item} value={item}>{item}</option>)}
-            </select>
-            <select className="gx-select" aria-label="Relationship" value={relationship} onChange={(event) => replaceParams((copy) => { if (event.target.value === 'all') copy.delete('status'); else copy.set('status', event.target.value); })}>
-              <option value="all">Active and inactive</option>
-              <option value="active">Active</option>
-              <option value="inactive">Inactive</option>
-            </select>
-            {superAdmin ? (
-              <select className="gx-select" aria-label="Owner" value={owner} onChange={(event) => replaceParams((copy) => { if (event.target.value === 'all') copy.delete('owner'); else copy.set('owner', event.target.value); })}>
-                <option value="all">All owners</option>
-                {owners.map(([id, name]) => <option key={id} value={id}>{name}</option>)}
-              </select>
-            ) : null}
-            {superAdmin ? (
-              <select className="gx-select" aria-label="Creator" value={creator} onChange={(event) => replaceParams((copy) => { if (event.target.value === 'all') copy.delete('creator'); else copy.set('creator', event.target.value); })}>
-                <option value="all">All creators</option>
-                {creators.map(([id, name]) => <option key={id} value={id}>{name}</option>)}
-              </select>
-            ) : null}
-            <select className="gx-select" aria-label="Sort" value={sort} onChange={(event) => replaceParams((copy) => { if (event.target.value === 'name') copy.delete('sort'); else copy.set('sort', event.target.value); })}>
-              <option value="name">Name</option>
-              <option value="created">Created</option>
-              <option value="last">Last contact</option>
-              <option value="next">Next follow-up</option>
-              <option value="students">Students referred</option>
-            </select>
-            <span className="gx-count">{rows.length} of {visible.length}</span>
-            <button type="button" className="gx-text" onClick={resetFilters}>Reset</button>
-          </div>
-          <div className="gx-toolbar">
-            <button type="button" className={`gx-chip${dueToday ? ' is-on' : ''}`} onClick={() => replaceParams((copy) => { if (dueToday) copy.delete('due'); else copy.set('due', 'today'); })}>Due today</button>
-            <button type="button" className={`gx-chip${overdueOnly ? ' is-on' : ''}`} onClick={() => replaceParams((copy) => { if (overdueOnly) copy.delete('overdue'); else copy.set('overdue', '1'); })}>Overdue</button>
-            <button type="button" className={`gx-chip${quietOnly ? ' is-on' : ''}`} onClick={() => replaceParams((copy) => { if (quietOnly) copy.delete('quiet'); else copy.set('quiet', '1'); })}>No recent contact</button>
-            <button type="button" className={`gx-chip${referralFilter === 'has' ? ' is-on' : ''}`} onClick={() => replaceParams((copy) => { if (referralFilter === 'has') copy.delete('referrals'); else copy.set('referrals', 'has'); })}>Has referrals</button>
-            <button type="button" className={`gx-chip${referralFilter === 'none' ? ' is-on' : ''}`} onClick={() => replaceParams((copy) => { if (referralFilter === 'none') copy.delete('referrals'); else copy.set('referrals', 'none'); })}>No referrals</button>
-          </div>
-          {chips.length ? (
-            <div className="gx-chips" aria-label="Active filters">
-              {chips.map(([key, label]) => (
-                <button key={key} type="button" className="gx-chip is-on" onClick={() => clearChip(key)}>{label} ×</button>
-              ))}
+          <section className="gx-dir-panel">
+          <div className="gx-dir-filters">
+            <div className="gx-dir-toolbar">
+              <SearchField value={search} onChange={(value) => replaceParams((copy) => { if (value) copy.set('q', value); else copy.delete('q'); })} label="Search consultancy, contact or phone..." />
+              <button type="button" className="gx-btn gx-dir-filter-toggle" aria-expanded={filtersOpen} onClick={() => setFiltersOpen((open) => !open)}>
+                {filtersOpen ? 'Hide filters' : 'Filters'}
+              </button>
+              <span className="gx-dir-count">{rows.length} {rows.length === 1 ? 'consultancy' : 'consultancies'}</span>
             </div>
-          ) : null}
+            <div className="gx-dir-toolbar gx-dir-toolbar-filters">
+              <select className="gx-select" aria-label="Pipeline stage" value={stage || 'all'} onChange={(event) => applyStage(event.target.value)}>
+                <option value="all">All stages</option>
+                {CONSULTANCY_PIPELINE.map((item) => <option key={item.id} value={item.id}>{item.label}</option>)}
+              </select>
+              <select className="gx-select" aria-label="Consultancy status" value={follow} onChange={(event) => applyFollow(event.target.value)}>
+                <option value="all">All statuses in stage</option>
+                {FOLLOW_UP_STAGE_GROUPS.map((group) => (
+                  <optgroup key={group.id} label={STAGE_CARDS.find((card) => card.id === group.id)?.label || group.id}>
+                    {group.statuses.map((item) => <option key={item} value={item}>{item}</option>)}
+                  </optgroup>
+                ))}
+              </select>
+              <select className="gx-select" aria-label="Calling status" value={calling} onChange={(event) => replaceParams((copy) => { if (event.target.value === 'all') copy.delete('calling'); else copy.set('calling', event.target.value); })}>
+                <option value="all">All calling statuses</option>
+                {CALLING_STATUSES.map((item) => <option key={item} value={item}>{item}</option>)}
+              </select>
+              <select className="gx-select" aria-label="Relationship" value={relationship} onChange={(event) => replaceParams((copy) => { if (event.target.value === 'all') copy.delete('status'); else copy.set('status', event.target.value); })}>
+                <option value="all">Active and inactive</option>
+                <option value="active">Active</option>
+                <option value="inactive">Inactive</option>
+              </select>
+              {superAdmin ? (
+                <select className="gx-select" aria-label="Owner" value={owner} onChange={(event) => replaceParams((copy) => { if (event.target.value === 'all') copy.delete('owner'); else copy.set('owner', event.target.value); })}>
+                  <option value="all">All owners</option>
+                  {owners.map(([id, name]) => <option key={id} value={id}>{name}</option>)}
+                </select>
+              ) : null}
+              {superAdmin ? (
+                <select className="gx-select" aria-label="Creator" value={creator} onChange={(event) => replaceParams((copy) => { if (event.target.value === 'all') copy.delete('creator'); else copy.set('creator', event.target.value); })}>
+                  <option value="all">All creators</option>
+                  {creators.map(([id, name]) => <option key={id} value={id}>{name}</option>)}
+                </select>
+              ) : null}
+              <select className="gx-select" aria-label="Sort" value={sort} onChange={(event) => replaceParams((copy) => { if (event.target.value === 'name') copy.delete('sort'); else copy.set('sort', event.target.value); })}>
+                <option value="name">Name</option>
+                <option value="created">Created</option>
+                <option value="last">Last contact</option>
+                <option value="next">Next follow-up</option>
+                <option value="students">Students referred</option>
+              </select>
+            </div>
+            <div className="gx-filter-pills" aria-label="Quick filters">
+              <button type="button" className={`gx-chip${dueToday ? ' is-on' : ''}`} aria-pressed={dueToday} onClick={() => replaceParams((copy) => { if (dueToday) copy.delete('due'); else copy.set('due', 'today'); })}>Due today</button>
+              <button type="button" className={`gx-chip${overdueOnly ? ' is-on' : ''}`} aria-pressed={overdueOnly} onClick={() => replaceParams((copy) => { if (overdueOnly) copy.delete('overdue'); else copy.set('overdue', '1'); })}>Overdue</button>
+              <button type="button" className={`gx-chip${quietOnly ? ' is-on' : ''}`} aria-pressed={quietOnly} onClick={() => replaceParams((copy) => { if (quietOnly) copy.delete('quiet'); else copy.set('quiet', '1'); })}>No recent contact</button>
+              <button type="button" className={`gx-chip${referralFilter === 'has' ? ' is-on' : ''}`} aria-pressed={referralFilter === 'has'} onClick={() => replaceParams((copy) => { if (referralFilter === 'has') copy.delete('referrals'); else copy.set('referrals', 'has'); })}>Has referrals</button>
+              <button type="button" className={`gx-chip${referralFilter === 'none' ? ' is-on' : ''}`} aria-pressed={referralFilter === 'none'} onClick={() => replaceParams((copy) => { if (referralFilter === 'none') copy.delete('referrals'); else copy.set('referrals', 'none'); })}>No referrals</button>
+              {filtersActive ? <button type="button" className="gx-dir-clear" onClick={resetFilters}>Clear filters</button> : null}
+            </div>
+          </div>
           <Notice notice={notice} />
-          <DataTable columns={columns} rows={rows} onSelect={(id) => navigate({ pathname: `/crm/consultancies/${id}`, search: directoryQuery() })} empty="No consultancies match these filters." />
+          {visible.length === 0 ? (
+            <div className="gx-dir-empty">
+              <p>No consultancies yet.</p>
+              <button type="button" className="gx-lime" onClick={() => replaceParams((copy) => copy.set('new', '1'))}>+ Add consultancy</button>
+            </div>
+          ) : rows.length === 0 ? (
+            <div className="gx-dir-empty">
+              <p>No consultancies match these filters.</p>
+              <button type="button" className="gx-btn" onClick={resetFilters}>Clear filters</button>
+            </div>
+          ) : (
+            <DataTable wrapClass="gx-dir-table" columns={columns} rows={rows} onSelect={(id) => navigate({ pathname: `/crm/demo/consultancies/${id}`, search: directoryQuery() })} empty="No consultancies match these filters." />
+          )}
+          </section>
         </>
       )}
       {creating ? (
@@ -415,6 +495,6 @@ export default function ConsultanciesPage() {
           </form>
         </Dialog>
       ) : null}
-    </>
+    </div>
   );
 }

@@ -3,10 +3,11 @@ import { crmCan } from '../../constants/crmUserAccess';
 import { crmPortalGet, crmPortalSend } from '../../utils/crmSessionApi';
 import { useCrmSession } from './useCrmSession';
 
-const EMPTY = { fullName: '', phone: '', city: '' };
+const EMPTY = { fullName: '', phone: '', city: '', consultancyId: '' };
 
 export default function CrmPortalStudentsPage() {
   const { user } = useCrmSession();
+  const canRead = crmCan(user, 'crm.students.read');
   const canCreate = crmCan(user, 'crm.students.create');
   const canUpdate = crmCan(user, 'crm.students.update');
   const [query, setQuery] = useState('');
@@ -17,6 +18,7 @@ export default function CrmPortalStudentsPage() {
   const [form, setForm] = useState(EMPTY);
   const [editing, setEditing] = useState(null);
   const [saving, setSaving] = useState(false);
+  const [consultancies, setConsultancies] = useState([]);
 
   function load(search) {
     setLoading(true);
@@ -33,6 +35,7 @@ export default function CrmPortalStudentsPage() {
   }
 
   useEffect(() => {
+    if (!canRead) return undefined;
     let cancelled = false;
     crmPortalGet('/students', { page: 1, limit: 50, q: applied }).then((result) => {
       if (cancelled) return;
@@ -48,11 +51,23 @@ export default function CrmPortalStudentsPage() {
     return () => {
       cancelled = true;
     };
-  }, [applied]);
+  }, [applied, canRead]);
+
+  useEffect(() => {
+    if (!canCreate) return undefined;
+    let cancelled = false;
+    crmPortalGet('/consultancies', { page: 1, limit: 100 }).then((result) => {
+      if (cancelled || !result.success) return;
+      setConsultancies(result.data?.items || []);
+    });
+    return () => {
+      cancelled = true;
+    };
+  }, [canCreate]);
 
   async function onCreate(event) {
     event.preventDefault();
-    if (saving) return;
+    if (saving || !form.consultancyId) return;
     setSaving(true);
     const result = await crmPortalSend('/students', 'POST', form);
     setSaving(false);
@@ -78,6 +93,15 @@ export default function CrmPortalStudentsPage() {
     setEditing(null);
     setNotice({ tone: 'success', text: 'Student updated.' });
     load(applied);
+  }
+
+  if (!canRead) {
+    return (
+      <section>
+        <header className="gx-page-head"><div><h2 className="gx-title">Students</h2></div></header>
+        <p>This section is outside your CRM permissions.</p>
+      </section>
+    );
   }
 
   return (
@@ -121,10 +145,17 @@ export default function CrmPortalStudentsPage() {
       {canCreate ? (
         <form className="gx-form gx-portal-form" onSubmit={onCreate}>
           <h3>Add student</h3>
+          <label>
+            <span>Consultancy</span>
+            <select aria-label="Student consultancy" value={form.consultancyId} onChange={(event) => setForm({ ...form, consultancyId: event.target.value })}>
+              <option value="">Select a consultancy</option>
+              {consultancies.map((row) => <option key={row.id} value={row.id}>{row.name}</option>)}
+            </select>
+          </label>
           <label><span>Name</span><input aria-label="Student name" value={form.fullName} onChange={(event) => setForm({ ...form, fullName: event.target.value })} /></label>
           <label><span>Phone</span><input aria-label="Student phone" value={form.phone} onChange={(event) => setForm({ ...form, phone: event.target.value })} /></label>
           <label><span>City</span><input aria-label="Student city" value={form.city} onChange={(event) => setForm({ ...form, city: event.target.value })} /></label>
-          <button className="gx-lime" type="submit" disabled={saving}>{saving ? 'Saving…' : 'Create student'}</button>
+          <button className="gx-lime" type="submit" disabled={saving || !form.consultancyId}>{saving ? 'Saving…' : 'Create student'}</button>
         </form>
       ) : null}
       {editing ? (

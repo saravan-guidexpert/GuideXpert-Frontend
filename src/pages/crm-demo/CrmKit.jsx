@@ -104,10 +104,15 @@ export function Badge({ children, tone }) {
   return <span className={`gx-badge${tone ? ` is-${tone}` : ''}`}>{children}</span>;
 }
 
-export function DataTable({ columns, rows, selectedId, onSelect, empty }) {
+export function DataTable({ columns, rows, selectedId, onSelect, empty, wrapClass = '' }) {
   return (
-    <div className="gx-table-wrap">
+    <div className={`gx-table-wrap${wrapClass ? ` ${wrapClass}` : ''}`}>
       <table className="gx-table">
+        {columns.some((column) => column.width) ? (
+          <colgroup>
+            {columns.map((column) => <col key={column.key} style={column.width ? { width: column.width } : undefined} />)}
+          </colgroup>
+        ) : null}
         <thead>
           <tr>{columns.map((column) => <th key={column.key}>{column.label}</th>)}</tr>
         </thead>

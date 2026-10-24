@@ -8,7 +8,7 @@ export default function StatusBars({ rows, empty }) {
     <ul className="gx-status-list">
       {rows.map((row) => (
         <li key={row.status}>
-          <Link to={`/crm/students?admission=${encodeURIComponent(row.status)}`}>
+          <Link to={`/crm/demo/students?admission=${encodeURIComponent(row.status)}`}>
             <span>{row.status}</span>
             <b>{row.count}</b>
           </Link>

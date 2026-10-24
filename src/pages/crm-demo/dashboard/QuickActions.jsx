@@ -2,9 +2,9 @@ import { Link } from 'react-router-dom';
 import { FiLink, FiPlus, FiUserPlus } from 'react-icons/fi';
 
 const ACTIONS = [
-  { to: '/crm/students?new=1', label: 'Add student', icon: FiUserPlus },
-  { to: '/crm/consultancies?new=1', label: 'Add consultancy', icon: FiPlus },
-  { to: '/crm/referrals', label: 'View referrals', icon: FiLink },
+  { to: '/crm/demo/students?new=1', label: 'Add student', icon: FiUserPlus },
+  { to: '/crm/demo/consultancies?new=1', label: 'Add consultancy', icon: FiPlus },
+  { to: '/crm/demo/referrals', label: 'View referrals', icon: FiLink },
 ];
 
 export default function QuickActions() {

@@ -25,12 +25,13 @@ test('admin calendar queries send one date mode', () => {
   assert.equal(range.query, undefined);
 });
 
-test('public /crm stays on the demo client and admin analytics is a separate route', () => {
+test('public demo stays on the demo client and admin analytics is a separate route', () => {
   const root = path.join(import.meta.dirname, '../../..');
   const app = fs.readFileSync(path.join(root, 'App.jsx'), 'utf8');
   const dataSource = fs.readFileSync(path.join(root, 'utils/crmDataSource.js'), 'utf8');
   const demoLayout = fs.readFileSync(path.join(root, 'pages/crm-demo/CrmDemoLayout.jsx'), 'utf8');
-  assert.match(app, /path="\/crm"/);
+  assert.match(app, /path="\/crm\/demo"/);
+  assert.match(app, /Navigate to="\/crm\/login"/);
   assert.match(app, /CrmDemoAnalyticsPage/);
   assert.match(app, /path="crm\/analytics"/);
   assert.match(app, /path="crm\/calendar"/);

@@ -5,6 +5,7 @@ import { useCrmSession } from './useCrmSession';
 
 export default function CrmPortalReferralsPage() {
   const { user } = useCrmSession();
+  const canRead = crmCan(user, 'crm.referrals.read');
   const canCorrect = crmCan(user, 'crm.referrals.correct_source');
   const canReadConsultancies = crmCan(user, 'crm.consultancies.read');
   const [items, setItems] = useState([]);
@@ -35,6 +36,7 @@ export default function CrmPortalReferralsPage() {
   }
 
   useEffect(() => {
+    if (!canRead) return undefined;
     let cancelled = false;
     Promise.all([
       crmPortalGet('/referrals', { page: 1, limit: 50 }),
@@ -54,7 +56,7 @@ export default function CrmPortalReferralsPage() {
     return () => {
       cancelled = true;
     };
-  }, [canReadConsultancies]);
+  }, [canRead, canReadConsultancies]);
 
   async function onCorrect(event) {
     event.preventDefault();
@@ -69,6 +71,15 @@ export default function CrmPortalReferralsPage() {
     setReason('');
     setNotice({ tone: 'success', text: 'Referral source corrected.' });
     load();
+  }
+
+  if (!canRead) {
+    return (
+      <section>
+        <header className="gx-page-head"><div><h2 className="gx-title">Referrals</h2></div></header>
+        <p>This section is outside your CRM permissions.</p>
+      </section>
+    );
   }
 
   return (

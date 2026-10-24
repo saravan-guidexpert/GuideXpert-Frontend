@@ -138,3 +138,23 @@ export function correctReferralSource(referralId, body) {
     body: JSON.stringify(body),
   });
 }
+
+export function getCrmOperations(params) {
+  return crmRequest(`/operations?${queryString(params)}`);
+}
+
+export function getConsultancyOverview(params) {
+  return crmRequest(`/consultancies/overview?${queryString(params)}`);
+}
+
+export function listCrmActivity(params) {
+  return crmRequest(`/activity?${queryString(params)}`);
+}
+
+export function getCrmActivity(source, id) {
+  return crmRequest(`/activity/${source}/${id}`);
+}
+
+export function getCrmActivitySummary(params) {
+  return crmRequest(`/activity/summary?${queryString(params)}`);
+}

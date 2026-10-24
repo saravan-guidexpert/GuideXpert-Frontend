@@ -23,7 +23,9 @@ export default defineConfig(({ mode }) => {
   const proxyTarget = (env.VITE_PROXY_TARGET || '').trim() || DEFAULT_PROXY_TARGET
   const isHttpsTarget = proxyTarget.startsWith('https://')
 
-  const localApi = 'http://127.0.0.1:5050'
+  const localApi = /^https?:\/\/(127\.0\.0\.1|localhost)(:\d+)?$/i.test(proxyTarget)
+    ? proxyTarget
+    : 'http://127.0.0.1:5050'
   if (mode === 'development') {
     console.info(`[vite] dev proxy: /api → ${proxyTarget}`)
     console.info(`[vite] dev proxy: /api/crm-auth and /api/crm → ${localApi}`)

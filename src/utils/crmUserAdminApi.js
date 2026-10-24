@@ -87,3 +87,27 @@ export function deactivateCrmUser(id, reason) {
 export function resetCrmUserPassword(id, body) {
   return adminCrmUsers(`/${id}/reset-password`, { method: 'POST', body: JSON.stringify(body) });
 }
+
+export function fetchCrmDirectory(params) {
+  return adminCrmUsers(`/directory${queryString(params)}`);
+}
+
+export function fetchCrmUserSessions(id, params) {
+  return adminCrmUsers(`/${id}/sessions${queryString(params)}`);
+}
+
+export function revokeCrmUserSession(id, sessionId) {
+  return adminCrmUsers(`/${id}/sessions/${sessionId}/revoke`, { method: 'POST', body: JSON.stringify({}) });
+}
+
+export function revokeAllCrmUserSessions(id) {
+  return adminCrmUsers(`/${id}/sessions/revoke-all`, { method: 'POST', body: JSON.stringify({}) });
+}
+
+export function assignCrmConsultancy(id, consultancyId) {
+  return adminCrmUsers(`/${id}/assignments`, { method: 'POST', body: JSON.stringify({ consultancyId }) });
+}
+
+export function revokeCrmConsultancy(id, consultancyId) {
+  return adminCrmUsers(`/${id}/assignments/${consultancyId}`, { method: 'DELETE' });
+}

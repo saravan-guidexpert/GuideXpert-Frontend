@@ -7,6 +7,18 @@ export const CONSULTANCY_PIPELINE = Object.freeze([
 
 const STAGE_IDS = CONSULTANCY_PIPELINE.map((stage) => stage.id);
 
+/** Demo follow-up labels grouped into the directory stages. */
+export const FOLLOW_UP_STAGE_GROUPS = Object.freeze([
+  { id: 'fresh', statuses: Object.freeze(['Fresh Lead']) },
+  { id: 'contacted', statuses: Object.freeze(['Contacted', 'Follow-up Required', 'Interested', 'Not Interested', 'On Hold', 'Discontinued', 'Meeting Scheduled']) },
+  { id: 'meeting_done', statuses: Object.freeze(['Meeting Completed']) },
+  { id: 'onboarded', statuses: Object.freeze(['Onboarding in Progress', 'On - Boarded']) },
+]);
+
+const FOLLOW_UP_STAGE = Object.freeze(Object.fromEntries(
+  FOLLOW_UP_STAGE_GROUPS.flatMap((group) => group.statuses.map((status) => [status, group.id])),
+));
+
 export function consultancyStage(value) {
   return STAGE_IDS.includes(value) ? value : 'fresh';
 }
@@ -33,4 +45,23 @@ export function pipelineCounts(rows) {
 export function matchesPipeline(row, stage) {
   if (!stage || stage === 'all') return true;
   return consultancyStage(row && row.pipelineStage) === stage;
+}
+
+export function consultancyBoardStage(row) {
+  if (row && STAGE_IDS.includes(row.pipelineStage)) return row.pipelineStage;
+  return FOLLOW_UP_STAGE[row && row.followUpStatus] || 'fresh';
+}
+
+export function boardCounts(rows) {
+  const counts = { total: 0, fresh: 0, contacted: 0, meeting_done: 0, onboarded: 0 };
+  (rows || []).forEach((row) => {
+    counts.total += 1;
+    counts[consultancyBoardStage(row)] += 1;
+  });
+  return counts;
+}
+
+export function matchesBoardStage(row, stage) {
+  if (!stage || stage === 'all' || stage === 'total') return true;
+  return consultancyBoardStage(row) === stage;
 }

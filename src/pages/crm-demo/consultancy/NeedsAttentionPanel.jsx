@@ -29,7 +29,7 @@ export default function NeedsAttentionPanel({ items, error, onRetry, onOpen }) {
               </>
             );
             if (item.action === 'students') {
-              return <Link key={item.id} className={`gx-ov-attn is-${item.severity}`} to="/crm/students?tab=open">{body}</Link>;
+              return <Link key={item.id} className={`gx-ov-attn is-${item.severity}`} to="/crm/demo/students?tab=open">{body}</Link>;
             }
             return (
               <button key={item.id} type="button" className={`gx-ov-attn is-${item.severity}`} onClick={() => onOpen(item)}>

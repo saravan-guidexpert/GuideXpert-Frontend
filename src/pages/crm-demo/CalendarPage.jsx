@@ -224,7 +224,7 @@ export default function CalendarPage() {
                   const consultancy = consultancies.get(referral.consultancyId);
                   return (
                     <li key={referral.id}>
-                      <Link to={`/crm/students/${referral.crmStudentId}`}>{student?.fullName || referral.studentName || 'Student'}</Link>
+                      <Link to={`/crm/demo/students/${referral.crmStudentId}`}>{student?.fullName || referral.studentName || 'Student'}</Link>
                       <span>{consultancy?.name || referral.consultancyName || 'Consultancy'}</span>
                       <span>{statusOf(student)}</span>
                       <time dateTime={localDayKey(referral.createdAt) || undefined}>{shortDate(referral.createdAt)}</time>

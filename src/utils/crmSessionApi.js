@@ -1,10 +1,12 @@
 import { getApiBaseUrl } from './apiBaseUrl';
+import { beginCrmRequest, rememberCrmSessionKey, shouldEndCrmSession } from './crmSessionGuard';
 
 const CSRF_COOKIE = 'gx_crm_csrf';
 let memoryCsrf = '';
 
 export function rememberCrmCsrf(token) {
   memoryCsrf = token || '';
+  rememberCrmSessionKey(memoryCsrf);
 }
 
 export function readCrmCsrfCookie() {
@@ -23,6 +25,7 @@ export function currentCrmCsrf() {
 }
 
 async function crmFetch(path, options = {}) {
+  const startedEpoch = beginCrmRequest();
   const method = String(options.method || 'GET').toUpperCase();
   const headers = {
     'Content-Type': 'application/json; charset=utf-8',
@@ -48,6 +51,9 @@ async function crmFetch(path, options = {}) {
     body = await response.json();
   } catch {
     body = {};
+  }
+  if (shouldEndCrmSession(response.status, path, startedEpoch) && typeof window !== 'undefined') {
+    window.dispatchEvent(new CustomEvent('gx-crm-unauthorized'));
   }
   if (!response.ok) {
     return {
@@ -88,6 +94,10 @@ export function crmMe() {
   return crmFetch('/crm-auth/me');
 }
 
+export function crmHeartbeat() {
+  return crmFetch('/crm-auth/heartbeat', { method: 'POST', body: '{}' });
+}
+
 export function crmResetPassword(body) {
   return crmFetch('/crm-auth/reset-password', { method: 'POST', body: JSON.stringify(body) });
 }
@@ -98,4 +108,48 @@ export function crmPortalGet(path, params) {
 
 export function crmPortalSend(path, method, body) {
   return crmFetch(`/crm${path}`, { method, body: JSON.stringify(body || {}) });
+}
+
+export function getPortalOperations(params) {
+  return crmPortalGet('/operations', params);
+}
+
+export function getPortalConsultancyOverview(params) {
+  return crmPortalGet('/consultancies/overview', params);
+}
+
+export function listPortalActivity(params) {
+  return crmPortalGet('/activity', params);
+}
+
+export function getPortalActivity(source, id) {
+  return crmPortalGet(`/activity/${source}/${id}`);
+}
+
+export function getPortalActivitySummary(params) {
+  return crmPortalGet('/activity/summary', params);
+}
+
+export function fetchPortalDirectory(params) {
+  return crmPortalGet('/users/directory', params);
+}
+
+export function fetchPortalUserSessions(id, params) {
+  return crmPortalGet(`/users/${id}/sessions`, params);
+}
+
+export function revokePortalUserSession(id, sessionId) {
+  return crmPortalSend(`/users/${id}/sessions/${sessionId}/revoke`, 'POST', {});
+}
+
+export function revokeAllPortalUserSessions(id) {
+  return crmPortalSend(`/users/${id}/sessions/revoke-all`, 'POST', {});
+}
+
+export function assignPortalConsultancy(id, consultancyId) {
+  return crmPortalSend(`/users/${id}/assignments`, 'POST', { consultancyId });
+}
+
+export function revokePortalConsultancy(id, consultancyId) {
+  return crmPortalSend(`/users/${id}/assignments/${consultancyId}`, 'DELETE', {});
 }

@@ -153,14 +153,14 @@ export default function ReferralsPage() {
               </div>
               <div className="gx-co-actions">
                 <Badge tone={selected.sourceCorrectedAt ? 'on' : undefined}>{selected.sourceCorrectedAt ? 'Corrected' : 'Original'}</Badge>
-                <Link className="gx-lime" to={`/crm/consultancies/${selected.consultancyId}`}>Open consultancy</Link>
+                <Link className="gx-lime" to={`/crm/demo/consultancies/${selected.consultancyId}`}>Open consultancy</Link>
               </div>
             </div>
             <dl className="gx-facts">
               <div><dt>Original source</dt><dd>{selected.originalConsultancyName}</dd></div>
               <div><dt>Current source</dt><dd>{currentConsultancyName(selected, consultancies)}{selected.contactName ? ` · ${selected.contactName}` : ''}</dd></div>
               <div><dt>Recorded</dt><dd>{shortDate(selected.createdAt)}</dd></div>
-              <div><dt>Student</dt><dd><Link to={`/crm/students/${selected.crmStudentId}`}>{selected.studentName}</Link></dd></div>
+              <div><dt>Student</dt><dd><Link to={`/crm/demo/students/${selected.crmStudentId}`}>{selected.studentName}</Link></dd></div>
             </dl>
             </section>
             <section className="gx-co-card gx-co-audit">

@@ -24,9 +24,9 @@ function entityLabel(audit) {
 }
 
 function recordPath(audit) {
-  if (audit.entityType === 'student') return `/crm/students/${audit.entityId}`;
-  if (audit.entityType === 'consultancy') return `/crm/consultancies/${audit.entityId}`;
-  if (audit.entityType === 'referral') return `/crm/referrals?id=${audit.entityId}`;
+  if (audit.entityType === 'student') return `/crm/demo/students/${audit.entityId}`;
+  if (audit.entityType === 'consultancy') return `/crm/demo/consultancies/${audit.entityId}`;
+  if (audit.entityType === 'referral') return `/crm/demo/referrals?id=${audit.entityId}`;
   return '';
 }
 

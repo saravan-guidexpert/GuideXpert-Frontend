@@ -251,7 +251,7 @@ export function attentionItems({ students, consultancies, referrals }) {
       title: 'Students without a referral source',
       detail: unreferred.map((student) => student.fullName).filter(Boolean).join(', ') || 'No consultancy is recorded as the referral source.',
       count: unreferred.length,
-      href: '/crm/students?tab=open',
+      href: '/crm/demo/students?tab=open',
     });
   }
   const untouched = students.filter((student) => referred.has(student.id) && statusOf(student) === 'Not started');
@@ -263,7 +263,7 @@ export function attentionItems({ students, consultancies, referrals }) {
         ? `${untouched[0].fullName} was referred and is still Not started.`
         : 'These referred students are still Not started.',
       count: untouched.length,
-      href: '/crm/students?tab=referred&admission=Not%20started',
+      href: '/crm/demo/students?tab=referred&admission=Not%20started',
     });
   }
   const inactive = consultancies.filter((row) => row.status === 'inactive');
@@ -273,7 +273,7 @@ export function attentionItems({ students, consultancies, referrals }) {
       title: 'Inactive consultancies',
       detail: inactive.map((row) => row.name).filter(Boolean).join(', ') || 'Marked inactive.',
       count: inactive.length,
-      href: '/crm/consultancies?status=inactive',
+      href: '/crm/demo/consultancies?status=inactive',
     });
   }
   const inactiveIds = new Set(inactive.map((row) => row.id));
@@ -286,7 +286,7 @@ export function attentionItems({ students, consultancies, referrals }) {
         ? `${tied[0].studentName || 'One student'} is still tied to an inactive consultancy.`
         : 'These referrals still point at an inactive consultancy.',
       count: tied.length,
-      href: '/crm/consultancies?status=inactive',
+      href: '/crm/demo/consultancies?status=inactive',
     });
   }
   return items;

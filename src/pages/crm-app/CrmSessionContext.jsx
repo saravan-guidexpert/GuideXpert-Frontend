@@ -1,5 +1,7 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
-import { crmLogout, crmMe, rememberCrmCsrf } from '../../utils/crmSessionApi';
+import { crmHeartbeat, crmLogout, crmMe, rememberCrmCsrf } from '../../utils/crmSessionApi';
+import { retireCrmSession } from '../../utils/crmSessionGuard';
+import { createPresenceHeartbeat } from '../../utils/crmPresenceHeartbeat';
 import { CrmSessionContext } from './crmSessionStore';
 
 export function CrmSessionProvider({ children }) {
@@ -19,6 +21,22 @@ export function CrmSessionProvider({ children }) {
   }, []);
 
   useEffect(() => {
+    function onUnauthorized() {
+      rememberCrmCsrf('');
+      setState({ status: 'anonymous', user: null });
+    }
+    window.addEventListener('gx-crm-unauthorized', onUnauthorized);
+    return () => window.removeEventListener('gx-crm-unauthorized', onUnauthorized);
+  }, []);
+
+  useEffect(() => {
+    if (state.status !== 'ready') return undefined;
+    const loop = createPresenceHeartbeat({ send: crmHeartbeat });
+    loop.start();
+    return () => loop.stop();
+  }, [state.status]);
+
+  useEffect(() => {
     let cancelled = false;
     crmMe().then((result) => {
       if (cancelled) return;
@@ -36,9 +54,13 @@ export function CrmSessionProvider({ children }) {
   }, []);
 
   const logout = useCallback(async () => {
-    await crmLogout();
-    rememberCrmCsrf('');
-    setState({ status: 'anonymous', user: null });
+    retireCrmSession();
+    const result = await crmLogout();
+    if (result.success || result.status === 401) {
+      rememberCrmCsrf('');
+      setState({ status: 'anonymous', user: null });
+    }
+    return result;
   }, []);
 
   const value = useMemo(() => ({ ...state, refresh, logout }), [state, refresh, logout]);

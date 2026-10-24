@@ -4,6 +4,6 @@ export const CrmDemoContext = createContext(null);
 
 export function useCrmDemo() {
   const value = useContext(CrmDemoContext);
-  if (!value) throw new Error('CRM demo pages must render inside /crm.');
+  if (!value) throw new Error('CRM demo pages must render inside /crm/demo.');
   return value;
 }

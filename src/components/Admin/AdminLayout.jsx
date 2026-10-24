@@ -524,11 +524,6 @@ function AdminChrome({ sidebarOpen, setSidebarOpen, initials, username, onLogout
   const rangeLabel = formatHeaderRange(dateRange.from, dateRange.to);
   const badgeCount = countActiveLeadFilters(leadListFilters);
   const isDashboard = /^\/admin\/dashboard\/?$/.test(location.pathname);
-  const pageTitle = isDashboard
-    ? 'Sales Analytics Dashboard'
-    : [...navItems]
-        .filter((item) => location.pathname === item.to || location.pathname.startsWith(`${item.to}/`))
-        .sort((a, b) => b.to.length - a.to.length)[0]?.label || 'Admin';
 
   return (
     <>
@@ -544,7 +539,7 @@ function AdminChrome({ sidebarOpen, setSidebarOpen, initials, username, onLogout
           </button>
           <div className="min-w-0">
             <h1 className="text-base lg:text-lg font-bold text-gray-900 leading-snug truncate">
-              {pageTitle}
+              Sales Analytics Dashboard
             </h1>
             {rangeLabel && (
               <p className="text-xs text-gray-500 truncate hidden sm:block mt-0.5">{rangeLabel}</p>

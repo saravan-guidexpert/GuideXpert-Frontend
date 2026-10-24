@@ -118,7 +118,7 @@ export default function ConsultancyProfilePage() {
   if (!loaded.success) {
     return (
       <>
-        <p className="gx-crumb"><Link to="/crm/consultancies">Consultancies</Link></p>
+        <p className="gx-crumb"><Link to="/crm/demo/consultancies">Consultancies</Link></p>
         <h2 className="gx-title">Consultancy</h2>
         <div className="gx-notice error" role="alert"><p>{loaded.message || 'Consultancy not found.'}</p></div>
       </>
@@ -316,17 +316,17 @@ export default function ConsultancyProfilePage() {
               <option value="all">All admission statuses</option>
               {ADMISSION_STATUSES.map((status) => <option key={status} value={status}>{status}</option>)}
             </select>
-            {consultancy.status === 'active' ? <Link className="gx-lime" to={`/crm/students?new=1&consultancy=${id}`}>Add student</Link> : <p className="gx-note">Inactive consultancies cannot start a new referral.</p>}
+            {consultancy.status === 'active' ? <Link className="gx-lime" to={`/crm/demo/students?new=1&consultancy=${id}`}>Add student</Link> : <p className="gx-note">Inactive consultancies cannot start a new referral.</p>}
           </div>
           <DataTable
             columns={[
-              { key: 'name', label: 'Student', render: (row) => <Link to={`/crm/students/${row.crmStudentId}`}>{row.studentName}</Link> },
+              { key: 'name', label: 'Student', render: (row) => <Link to={`/crm/demo/students/${row.crmStudentId}`}>{row.studentName}</Link> },
               { key: 'phone', label: 'Phone', render: (row) => studentsById.get(row.crmStudentId)?.phone || '—' },
               { key: 'original', label: 'Original consultancy', render: () => consultancy.name },
               { key: 'referred', label: 'Referral date', render: (row) => shortDate(row.createdAt) },
               { key: 'status', label: 'Admission status', render: (row) => studentsById.get(row.crmStudentId)?.admissionStatus || 'Not started' },
               { key: 'created', label: 'Created', render: (row) => shortDate(studentsById.get(row.crmStudentId)?.createdAt) },
-              { key: 'open', label: 'Actions', render: (row) => <Link to={`/crm/students/${row.crmStudentId}`}>Open</Link> },
+              { key: 'open', label: 'Actions', render: (row) => <Link to={`/crm/demo/students/${row.crmStudentId}`}>Open</Link> },
             ]}
             rows={referredRows}
             empty="No original referrals match these filters."

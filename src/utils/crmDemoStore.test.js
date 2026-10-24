@@ -268,8 +268,8 @@ test('opening the demo again does not replace saved students', () => {
 test('student and consultancy profiles link through the same referral', () => {
   const students = fs.readFileSync(path.join(root, 'pages/crm-demo/StudentsPage.jsx'), 'utf8');
   const profile = fs.readFileSync(path.join(root, 'pages/crm-demo/ConsultancyProfilePage.jsx'), 'utf8');
-  assert.match(students, /\/crm\/consultancies\/\$\{/);
-  assert.match(profile, /\/crm\/students\/\$\{/);
+  assert.match(students, /\/crm\/demo\/consultancies\/\$\{/);
+  assert.match(profile, /\/crm\/demo\/students\/\$\{/);
   const crm = repo();
   const referral = crm.getStudentReferral('st_3').data.referral;
   const consultancy = crm.getConsultancy(referral.consultancyId).data.consultancy;
@@ -292,15 +292,17 @@ test('demo mode is the default and does not select the API client', () => {
   assert.throws(() => selectCrmClient('api', { demo }));
 });
 
-test('the /crm route is public and /admin stays behind ProtectedAdmin', () => {
+test('the CRM login is public and the demo stays outside ProtectedAdmin', () => {
   const source = fs.readFileSync(path.join(root, 'App.jsx'), 'utf8');
-  const crmAt = source.indexOf('path="/crm"');
+  const loginAt = source.indexOf('path="/crm"');
+  const demoAt = source.indexOf('path="/crm/demo"');
   const adminAt = source.indexOf('path="/admin"');
-  assert.ok(crmAt > 0, 'standalone /crm route is registered');
-  assert.ok(adminAt > crmAt, '/crm is registered outside the /admin route tree');
-  const crmRoute = source.slice(crmAt, crmAt + 500);
-  assert.match(crmRoute, /CrmDemoLayout/);
-  assert.doesNotMatch(crmRoute, /ProtectedAdmin/);
+  assert.ok(loginAt > 0, '/crm redirects to the CRM login');
+  assert.ok(demoAt > loginAt, 'the browser demo is registered at /crm/demo');
+  assert.ok(adminAt > demoAt, 'CRM routes stay outside the /admin route tree');
+  assert.match(source.slice(loginAt, loginAt + 120), /Navigate to="\/crm\/login"/);
+  assert.match(source.slice(demoAt, demoAt + 400), /CrmDemoLayout/);
+  assert.doesNotMatch(source.slice(demoAt, demoAt + 400), /ProtectedAdmin/);
   assert.match(source, /function ProtectedAdmin/);
   assert.match(source, /path="\/admin"[\s\S]{0,180}<ProtectedAdmin>/);
   assert.match(source, /if \(!isAuthenticated\)/);

@@ -57,7 +57,7 @@ export default function ConsultancyHeader({
   return (
     <header className="gx-ov-head">
       <div className="gx-ov-id">
-        <p className="gx-crumb"><Link to="/crm/consultancies">Consultancies</Link> <span>/</span> {consultancy.name}</p>
+        <p className="gx-crumb"><Link to="/crm/demo/consultancies">Consultancies</Link> <span>/</span> {consultancy.name}</p>
         <div className="gx-ov-titlebar">
           <h2 className="gx-ov-title">{consultancy.name}</h2>
           <div className="gx-ov-actions">
@@ -87,7 +87,7 @@ export default function ConsultancyHeader({
                   {narrow ? secondary.map((item) => (
                     <button key={item.id} type="button" role="menuitem" onClick={() => runMenu(item.onClick)} disabled={saving}>{item.label}</button>
                   )) : null}
-                  <Link role="menuitem" to="/crm/consultancies" onClick={() => setMenuOpen(false)}>Back to consultancies</Link>
+                  <Link role="menuitem" to="/crm/demo/consultancies" onClick={() => setMenuOpen(false)}>Back to consultancies</Link>
                 </div>
               ) : null}
             </div>

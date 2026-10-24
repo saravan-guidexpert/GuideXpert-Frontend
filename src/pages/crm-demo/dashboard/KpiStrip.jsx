@@ -2,10 +2,10 @@ import { Link } from 'react-router-dom';
 import { FiBriefcase, FiLink, FiUsers } from 'react-icons/fi';
 
 const ITEMS = [
-  { key: 'students', label: 'Total students', icon: FiUsers, href: '/crm/students', field: 'students' },
-  { key: 'consultancies', label: 'Total consultancies', icon: FiBriefcase, href: '/crm/consultancies', field: 'consultancies' },
-  { key: 'referrals', label: 'Total referrals', icon: FiLink, href: '/crm/referrals', field: 'referrals' },
-  { key: 'active', label: 'Active consultancies', icon: FiBriefcase, href: '/crm/consultancies?status=active', field: 'activeConsultancies' },
+  { key: 'students', label: 'Total students', icon: FiUsers, href: '/crm/demo/students', field: 'students' },
+  { key: 'consultancies', label: 'Total consultancies', icon: FiBriefcase, href: '/crm/demo/consultancies', field: 'consultancies' },
+  { key: 'referrals', label: 'Total referrals', icon: FiLink, href: '/crm/demo/referrals', field: 'referrals' },
+  { key: 'active', label: 'Active consultancies', icon: FiBriefcase, href: '/crm/demo/consultancies?status=active', field: 'activeConsultancies' },
 ];
 
 export default function KpiStrip({ counts, hints }) {

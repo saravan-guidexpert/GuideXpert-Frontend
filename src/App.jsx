@@ -46,7 +46,14 @@ import CrmStudentProfilePage from './pages/admin/crm/StudentProfilePage';
 import CrmAnalyticsPage from './pages/admin/crm/AnalyticsPage';
 import CrmCalendarPage from './pages/admin/crm/CalendarPage';
 import CrmAccessPage from './pages/admin/crm/CrmAccessPage';
+import CrmWorkspaceLayout from './pages/admin/crm/workspace/CrmWorkspaceLayout';
+import CrmWorkspaceOverview from './pages/admin/crm/workspace/OverviewPage';
+import CrmWorkspaceUsers from './pages/admin/crm/workspace/UsersPage';
+import CrmWorkspaceConsultancies from './pages/admin/crm/workspace/ConsultanciesPage';
+import CrmWorkspaceActivity from './pages/admin/crm/workspace/ActivityPage';
+import CrmWorkspaceAnalytics from './pages/admin/crm/workspace/AnalyticsPage';
 import CrmDemoLayout from './pages/crm-demo/CrmDemoLayout';
+import CrmDemoLegacyRedirect from './pages/crm-demo/CrmDemoLegacyRedirect';
 import CrmDemoOverviewPage from './pages/crm-demo/OverviewPage';
 import CrmDemoConsultanciesPage from './pages/crm-demo/ConsultanciesPage';
 import CrmDemoConsultancyProfilePage from './pages/crm-demo/ConsultancyProfilePage';
@@ -62,7 +69,8 @@ import CrmResetPage from './pages/crm-app/CrmResetPage';
 import { CrmSessionProvider } from './pages/crm-app/CrmSessionContext';
 import { RequireCrmSession } from './pages/crm-app/RequireCrmSession';
 import CrmAppLayout from './pages/crm-app/CrmAppLayout';
-import CrmHomePage from './pages/crm-app/CrmHomePage';
+import CrmAppIndex from './pages/crm-app/CrmAppIndex';
+import CrmLegacyRedirect from './pages/crm-app/CrmLegacyRedirect';
 import CrmPortalStudentsPage from './pages/crm-app/CrmPortalStudentsPage';
 import CrmPortalConsultanciesPage from './pages/crm-app/CrmPortalConsultanciesPage';
 import CrmPortalReferralsPage from './pages/crm-app/CrmPortalReferralsPage';
@@ -551,7 +559,8 @@ function App() {
           <Route path="/assessment-5" element={<AssessmentForm5 />} />
           <Route path="/assessment-career-dna" element={<AssessmentLayout hideNavAndFooter><AssessmentFormCounsellorTest type="career-dna" /></AssessmentLayout>} />
           <Route path="/assessment-course-fit" element={<AssessmentLayout hideNavAndFooter><AssessmentFormCounsellorTest type="course-fit" /></AssessmentLayout>} />
-          <Route path="/crm" element={<CrmDemoLayout />}>
+          <Route path="/crm" element={<Navigate to="/crm/login" replace />} />
+          <Route path="/crm/demo" element={<CrmDemoLayout />}>
             <Route index element={<CrmDemoOverviewPage />} />
             <Route path="analytics" element={<CrmDemoAnalyticsPage />} />
             <Route path="calendar" element={<CrmDemoCalendarPage />} />
@@ -563,12 +572,19 @@ function App() {
             <Route path="audit" element={<CrmDemoAuditPage />} />
             <Route path="settings" element={<CrmDemoSettingsPage />} />
           </Route>
+          <Route path="/crm/analytics" element={<CrmDemoLegacyRedirect />} />
+          <Route path="/crm/calendar" element={<CrmDemoLegacyRedirect />} />
+          <Route path="/crm/consultancies" element={<CrmDemoLegacyRedirect />} />
+          <Route path="/crm/consultancies/:id" element={<CrmDemoLegacyRedirect />} />
+          <Route path="/crm/students" element={<CrmDemoLegacyRedirect />} />
+          <Route path="/crm/students/:id" element={<CrmDemoLegacyRedirect />} />
+          <Route path="/crm/referrals" element={<CrmDemoLegacyRedirect />} />
+          <Route path="/crm/audit" element={<CrmDemoLegacyRedirect />} />
+          <Route path="/crm/settings" element={<CrmDemoLegacyRedirect />} />
           <Route path="/crm/login" element={<CrmLoginPage />} />
           <Route path="/crm/reset" element={<CrmResetPage />} />
-          <Route path="/crm-app/login" element={<Navigate to="/crm/login" replace />} />
-          <Route path="/crm-app/reset" element={<Navigate to="/crm/reset" replace />} />
           <Route
-            path="/crm-app"
+            path="/crm/app"
             element={
               <CrmSessionProvider>
                 <RequireCrmSession>
@@ -577,11 +593,30 @@ function App() {
               </CrmSessionProvider>
             }
           >
-            <Route index element={<CrmHomePage />} />
+            <Route index element={<CrmAppIndex />} />
+            <Route path="overview" element={<CrmWorkspaceLayout />}>
+              <Route index element={<CrmWorkspaceOverview />} />
+            </Route>
+            <Route path="users" element={<CrmWorkspaceLayout />}>
+              <Route index element={<CrmWorkspaceUsers />} />
+            </Route>
+            <Route path="consultancies" element={<CrmWorkspaceLayout />}>
+              <Route index element={<CrmWorkspaceConsultancies />} />
+            </Route>
+            <Route path="activity" element={<CrmWorkspaceLayout />}>
+              <Route index element={<CrmWorkspaceActivity />} />
+            </Route>
+            <Route path="analytics" element={<CrmWorkspaceLayout />}>
+              <Route index element={<CrmWorkspaceAnalytics />} />
+            </Route>
             <Route path="students" element={<CrmPortalStudentsPage />} />
-            <Route path="consultancies" element={<CrmPortalConsultanciesPage />} />
+            <Route path="consultancy-records" element={<CrmPortalConsultanciesPage />} />
             <Route path="referrals" element={<CrmPortalReferralsPage />} />
           </Route>
+          <Route path="/crm-app" element={<CrmLegacyRedirect />} />
+          <Route path="/crm-app/login" element={<CrmLegacyRedirect />} />
+          <Route path="/crm-app/reset" element={<CrmLegacyRedirect />} />
+          <Route path="/crm-app/*" element={<CrmLegacyRedirect />} />
           <Route path="/admin/login" element={<AdminLogin />} />
           <Route
             path="/admin"

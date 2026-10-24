@@ -119,7 +119,7 @@ export default function StudentsPage() {
   }
 
   function openStudent(nextId) {
-    navigate({ pathname: `/crm/students/${nextId}`, search: directorySearch(params) });
+    navigate({ pathname: `/crm/demo/students/${nextId}`, search: directorySearch(params) });
   }
 
   async function onCreate(event) {
@@ -132,7 +132,7 @@ export default function StudentsPage() {
       setForm(EMPTY);
       closeCreate();
       setNotice(view);
-      navigate({ pathname: `/crm/students/${result.data.student.id}`, search: directorySearch(params) });
+      navigate({ pathname: `/crm/demo/students/${result.data.student.id}`, search: directorySearch(params) });
       return;
     }
     const existing = result.data && result.data.student;
@@ -184,7 +184,7 @@ export default function StudentsPage() {
 
   const dialogOpen = creating || confirming;
   const duplicateLink = notice?.state === 'warning' && notice.data?.student ? (
-    <p className="gx-note"><Link to={`/crm/students/${notice.data.student.id}`}>Open {notice.data.student.fullName}</Link></p>
+    <p className="gx-note"><Link to={`/crm/demo/students/${notice.data.student.id}`}>Open {notice.data.student.fullName}</Link></p>
   ) : null;
 
   return (
@@ -229,11 +229,11 @@ export default function StudentsPage() {
                 { key: 'phone', label: 'Mobile', render: (row) => row.phone || '—' },
                 { key: 'source', label: 'Referring consultancy', render: (row) => {
                   const item = referralOf(row.id);
-                  return item ? <Link to={`/crm/consultancies/${item.consultancyId}`} onClick={(event) => event.stopPropagation()}>{currentConsultancyName(item, consultancies)}</Link> : '—';
+                  return item ? <Link to={`/crm/demo/consultancies/${item.consultancyId}`} onClick={(event) => event.stopPropagation()}>{currentConsultancyName(item, consultancies)}</Link> : '—';
                 } },
                 { key: 'original', label: 'Original consultancy', render: (row) => {
                   const item = referralOf(row.id);
-                  return item ? <Link to={`/crm/consultancies/${item.originalConsultancyId}`} onClick={(event) => event.stopPropagation()}>{item.originalConsultancyName}</Link> : '—';
+                  return item ? <Link to={`/crm/demo/consultancies/${item.originalConsultancyId}`} onClick={(event) => event.stopPropagation()}>{item.originalConsultancyName}</Link> : '—';
                 } },
                 { key: 'referred', label: 'Referral date', render: (row) => shortDate(referralOf(row.id)?.createdAt) },
                 { key: 'admission', label: 'Admission status', render: (row) => row.admissionStatus || 'Not started' },
@@ -247,7 +247,7 @@ export default function StudentsPage() {
             {selected ? (
               <aside className="gx-profile gx-student">
                 <section className="gx-co-card">
-                <Link className="gx-text gx-back" to={`/crm/students${directorySearch(params)}`}>Back to directory</Link>
+                <Link className="gx-text gx-back" to={`/crm/demo/students${directorySearch(params)}`}>Back to directory</Link>
                 <div className="gx-profile-top">
                   <div>
                     <p className="gx-kicker">Student</p>
@@ -283,10 +283,10 @@ export default function StudentsPage() {
                     <div><dt>Mobile</dt><dd>{selected.phone || '—'}</dd></div>
                     <div><dt>Admission status</dt><dd>{selected.admissionStatus || 'Not started'}</dd></div>
                     <div><dt>Referral date</dt><dd>{referral ? shortDate(referral.createdAt) : '—'}</dd></div>
-                    <div><dt>Referring consultancy</dt><dd>{referral ? <Link to={`/crm/consultancies/${referral.consultancyId}`}>{currentConsultancyName(referral, consultancies)}</Link> : 'None'}</dd></div>
+                    <div><dt>Referring consultancy</dt><dd>{referral ? <Link to={`/crm/demo/consultancies/${referral.consultancyId}`}>{currentConsultancyName(referral, consultancies)}</Link> : 'None'}</dd></div>
                   </dl>
                 )}
-                {referral && referral.originalConsultancyId !== referral.consultancyId ? <p className="gx-note">Original source remains <Link to={`/crm/consultancies/${referral.originalConsultancyId}`}>{referral.originalConsultancyName}</Link>. Editing this profile does not change it.</p> : null}
+                {referral && referral.originalConsultancyId !== referral.consultancyId ? <p className="gx-note">Original source remains <Link to={`/crm/demo/consultancies/${referral.originalConsultancyId}`}>{referral.originalConsultancyName}</Link>. Editing this profile does not change it.</p> : null}
                 </section>
                 {!referral ? <section className="gx-co-card"><form className="gx-form" onSubmit={onRefer}>
                   <label>Consultancy
@@ -329,7 +329,7 @@ export default function StudentsPage() {
               </aside>
             ) : selectedMissing ? (
               <aside className="gx-profile">
-                <Link className="gx-text gx-back" to={`/crm/students${directorySearch(params)}`}>Back to directory</Link>
+                <Link className="gx-text gx-back" to={`/crm/demo/students${directorySearch(params)}`}>Back to directory</Link>
                 <p className="gx-note" role="status">Student not found.</p>
               </aside>
             ) : null}

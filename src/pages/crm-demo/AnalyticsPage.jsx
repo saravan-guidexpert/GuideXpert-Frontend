@@ -121,7 +121,7 @@ export default function AnalyticsPage() {
   function openBucket(key) {
     const query = calendarQueryForBucket(key);
     if (!query) return;
-    navigate(`/crm/calendar?${new URLSearchParams(query).toString()}`);
+    navigate(`/crm/demo/calendar?${new URLSearchParams(query).toString()}`);
   }
 
   return (
@@ -226,7 +226,7 @@ export default function AnalyticsPage() {
                   <tbody>
                     {ranked.map((row) => (
                       <tr key={row.id}>
-                        <td><Link to={`/crm/consultancies/${row.id}`}>{row.name}</Link></td>
+                        <td><Link to={`/crm/demo/consultancies/${row.id}`}>{row.name}</Link></td>
                         <td>{row.referrals}</td>
                         <td>{row.admitted}</td>
                         <td>{row.enrolled}</td>

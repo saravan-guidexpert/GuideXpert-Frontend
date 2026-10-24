@@ -19,7 +19,7 @@ export default function ReferralSources({ sources, total, error, onRetry }) {
           {sources.map((source) => (
             <li key={source.id}>
               <div className="gx-source-row">
-                <Link className="gx-ellipsis" to={`/crm/consultancies/${source.id}`}>{source.name}</Link>
+                <Link className="gx-ellipsis" to={`/crm/demo/consultancies/${source.id}`}>{source.name}</Link>
                 <strong>{source.count}</strong>
               </div>
               <div

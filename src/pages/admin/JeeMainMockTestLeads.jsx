@@ -16,7 +16,12 @@ import { ADMIN_VIEW_ALL_LIMIT } from '../../constants/adminListLimits';
 import { CURRENT_STUDYING_OPTIONS } from '../../constants/jeeMainMockTestForm';
 import { useAuth } from '../../hooks/useAuth';
 import { fetchAllPaginatedRows } from '../../utils/adminPagedFetch';
-import { getJeeMainMockTestLeads, getJeeMainMockTestSummary, getStoredToken } from '../../utils/adminApi';
+import {
+  getIitCounsellingSavedUtmLinks,
+  getJeeMainMockTestLeads,
+  getJeeMainMockTestSummary,
+  getStoredToken,
+} from '../../utils/adminApi';
 
 function formatDateParts(d) {
   if (!d) return null;
@@ -96,6 +101,47 @@ function platformLabel(source) {
   return PLATFORM_LABELS[value.toLowerCase()] || value;
 }
 
+const ORGANIC_LEAD_LABEL = 'Organic lead';
+
+function normalizeUtmToken(value) {
+  return String(value || '').trim().toLowerCase();
+}
+
+function savedInfluencerNames(links) {
+  const names = new Set();
+  for (const link of links || []) {
+    const name = normalizeUtmToken(link?.influencerName);
+    if (name) names.add(name);
+    const href = String(link?.utmLink || '').trim();
+    if (!href) continue;
+    try {
+      const content = normalizeUtmToken(new URL(href).searchParams.get('utm_content'));
+      if (content) names.add(content);
+    } catch {
+      /* ignore malformed saved links */
+    }
+  }
+  return names;
+}
+
+function savedLinksFromResult(result) {
+  if (!result?.success) return [];
+  const body = result.data;
+  if (Array.isArray(body?.data)) return body.data;
+  if (Array.isArray(body)) return body;
+  return [];
+}
+
+/** A name is shown only when it matches a saved UTM link. Anything else is an organic lead. */
+function influencerLabel(row, savedNames) {
+  const name = String(row?.influencerName || '').trim();
+  const content = String(row?.utm_content || '').trim();
+  if (!savedNames) return name || ORGANIC_LEAD_LABEL;
+  if (name && savedNames.has(normalizeUtmToken(name))) return name;
+  if (content && savedNames.has(normalizeUtmToken(content))) return content;
+  return ORGANIC_LEAD_LABEL;
+}
+
 const COPY_FIELDS = [
   { key: 'createdAt', label: 'Started' },
   { key: 'submittedAt', label: 'Submitted' },
@@ -164,15 +210,18 @@ function StatusBadge({ completed }) {
   );
 }
 
-function InfluencerCell({ row }) {
-  const name = String(row.influencerName || '').trim();
+function InfluencerCell({ row, savedNames, linksReady }) {
+  if (!linksReady) return <EmptyMark />;
+  const name = influencerLabel(row, savedNames);
+  if (name === ORGANIC_LEAD_LABEL) {
+    return <div className="text-gray-500">{ORGANIC_LEAD_LABEL}</div>;
+  }
   const platform = platformLabel(row.utm_source);
   const campaign = String(row.utm_campaign || '').trim();
-  if (!name && !platform) return <EmptyMark />;
-  const detail = [name ? platform : '', campaign].filter(Boolean).join(' · ');
+  const detail = [platform, campaign].filter(Boolean).join(' · ');
   return (
-    <div className="min-w-[9rem]" title={[name || platform, detail].filter(Boolean).join(' — ')}>
-      <div className="font-medium text-gray-950">{name || platform}</div>
+    <div className="min-w-[9rem]" title={[name, detail].filter(Boolean).join(' — ')}>
+      <div className="font-medium text-gray-950">{name}</div>
       {detail ? <div className="mt-0.5 text-xs text-gray-500">{detail}</div> : null}
     </div>
   );
@@ -221,8 +270,28 @@ export default function JeeMainMockTestLeads() {
   const [copyModalOpen, setCopyModalOpen] = useState(false);
   const [copyLoading, setCopyLoading] = useState(false);
   const [copyRecords, setCopyRecords] = useState([]);
+  const [savedNames, setSavedNames] = useState(null);
+  const [linksReady, setLinksReady] = useState(false);
   const cancelledRef = useRef(false);
   const requestIdRef = useRef(0);
+
+  useEffect(() => {
+    let cancelled = false;
+    const targets = ['iitCounselling', 'oneOnOneSession', 'guidanceBookingConfirmation', 'becomeCounsellor', 'mainPage'];
+    Promise.all(targets.map((linkTarget) => getIitCounsellingSavedUtmLinks(getStoredToken(), { linkTarget }))).then((results) => {
+      if (cancelled) return;
+      if (results.some((result) => result.status === 401)) {
+        setLinksReady(true);
+        return;
+      }
+      const loaded = results.some((result) => result.success);
+      setSavedNames(loaded ? savedInfluencerNames(results.flatMap(savedLinksFromResult)) : null);
+      setLinksReady(true);
+    });
+    return () => {
+      cancelled = true;
+    };
+  }, []);
 
   const hasActiveFilters = Object.values(filters).some(Boolean);
   const dayCounts = useMemo(() => {
@@ -677,7 +746,7 @@ export default function JeeMainMockTestLeads() {
                         <StatusBadge completed={row.formCompleted} />
                       </td>
                       <td className="px-4 py-3.5 text-gray-700">
-                        <InfluencerCell row={row} />
+                        <InfluencerCell row={row} savedNames={savedNames} linksReady={linksReady} />
                       </td>
                       <td className="whitespace-nowrap px-4 py-3.5 font-medium text-gray-950">{row.studentName || <EmptyMark />}</td>
                       <td className="whitespace-nowrap px-4 py-3.5 font-medium tabular-nums tracking-tight text-gray-800">{row.mobileNumber || <EmptyMark />}</td>
@@ -738,7 +807,9 @@ export default function JeeMainMockTestLeads() {
         onClose={() => setCopyModalOpen(false)}
         fields={COPY_FIELDS}
         records={copyRecords}
-        getCellValue={getCellValue}
+        getCellValue={(row, key) => (
+          key === 'influencerName' ? (influencerLabel(row, savedNames) || ORGANIC_LEAD_LABEL) : getCellValue(row, key)
+        )}
         recordLabel="registrations"
         dedupeByPhoneKey="mobileNumber"
       />

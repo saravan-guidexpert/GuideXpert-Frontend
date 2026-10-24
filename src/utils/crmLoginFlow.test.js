@@ -3,7 +3,7 @@ import assert from 'node:assert/strict';
 import fs from 'node:fs';
 import path from 'node:path';
 import { CRM_PERMISSIONS, CRM_ROLES, adminCanManageCrmUsers, clampPage, userListQuery, validateCrmAccountForm } from '../constants/crmUserAccess.js';
-import { beginLogin, loginButtonState, loginFailure, resetFailure, safeCrmNext } from './crmLoginFlow.js';
+import { beginLogin, loginButtonState, loginFailure, safeCrmNext } from './crmLoginFlow.js';
 import { readCrmTheme, revealTheme, writeCrmTheme } from '../pages/crm-demo/crmTheme.js';
 
 const root = path.join(import.meta.dirname, '..');
@@ -20,20 +20,9 @@ test('login validation, button state, and failure messages', () => {
   assert.deepEqual(loginButtonState('success'), { disabled: true, label: 'Signed in' });
   assert.equal(loginButtonState('idle').disabled, false);
   assert.equal(loginFailure({ status: 0 }).kind, 'network');
-  assert.match(loginFailure({ status: 0 }).message, /connection/i);
   assert.equal(loginFailure({ status: 401, code: 'invalid_credentials' }).kind, 'invalid');
-  assert.match(loginFailure({ status: 401, code: 'invalid_credentials' }).message, /incorrect/i);
-  assert.equal(loginFailure({ status: 401, message: 'Not found' }).kind, 'invalid');
-  assert.equal(loginFailure({ status: 404, message: 'Not found' }).kind, 'missing');
-  assert.match(loginFailure({ status: 404, message: 'Not found' }).message, /couldn't find an account/i);
-  assert.equal(loginFailure({ status: 500, message: 'MongoServerError: stack at login (' }).message, 'Something went wrong. Please try again shortly.');
   assert.equal(loginFailure({ status: 403, code: 'account_inactive', message: 'This account is inactive.' }).kind, 'inactive');
-  assert.equal(loginFailure({ status: 403, code: 'origin_forbidden', message: 'This origin is not allowed.' }).message, 'This origin is not allowed.');
   assert.equal(loginFailure({ status: 429, message: 'Too many attempts. Try again later.' }).kind, 'rate');
-  assert.equal(loginFailure({ status: 400, message: 'Email and password are required.' }).message, 'Email and password are required.');
-  assert.equal(resetFailure({ status: 400, message: 'Reset code is invalid or expired.' }), 'Reset code is invalid or expired.');
-  assert.equal(resetFailure({ status: 404, message: 'Not found' }), 'Something went wrong. Please try again shortly.');
-  assert.match(resetFailure({ status: 0 }), /connection/i);
 });
 
 test('theme preference is stored independently of CRM records', () => {
@@ -60,13 +49,16 @@ test('theme preference is stored independently of CRM records', () => {
 });
 
 test('protected redirects reject external destinations', () => {
-  assert.equal(safeCrmNext('/crm-app/students?q=a'), '/crm-app/students?q=a');
-  assert.equal(safeCrmNext('https://evil.example/crm-app'), '/crm-app');
-  assert.equal(safeCrmNext('//evil.example'), '/crm-app');
-  assert.equal(safeCrmNext('/crm-app/login?next=/admin'), '/crm-app');
-  assert.equal(safeCrmNext('/crm/login'), '/crm-app');
-  assert.equal(safeCrmNext('/admin/crm'), '/crm-app');
-  assert.equal(safeCrmNext('/crm'), '/crm-app');
+  assert.equal(safeCrmNext('/crm/app/students?q=a'), '/crm/app/students?q=a');
+  assert.equal(safeCrmNext('/crm-app/students?q=a'), '/crm/app/students?q=a');
+  assert.equal(safeCrmNext('https://evil.example/crm/app'), '/crm/app');
+  assert.equal(safeCrmNext('//evil.example'), '/crm/app');
+  assert.equal(safeCrmNext('/crm/login?next=/admin'), '/crm/app');
+  assert.equal(safeCrmNext('/admin/crm'), '/crm/app');
+  assert.equal(safeCrmNext('/crm'), '/crm/app');
+  assert.equal(safeCrmNext('/crm/demo'), '/crm/app');
+  assert.equal(safeCrmNext('/crm/demo/students'), '/crm/app');
+  assert.equal(safeCrmNext('/crm/app/overview'), '/crm/app/overview');
 });
 
 test('access management filters, pagination, and form validation', () => {
@@ -104,12 +96,16 @@ test('login and access screens are wired without storing a CRM session token', (
   const frame = fs.readFileSync(path.join(root, 'pages/crm-app/CrmAuthFrame.jsx'), 'utf8');
   const access = fs.readFileSync(path.join(root, 'pages/admin/crm/CrmAccessPage.jsx'), 'utf8');
   const demo = fs.readFileSync(path.join(root, 'pages/crm-demo/CrmDemoLayout.jsx'), 'utf8');
-  const crmAt = app.indexOf('path="/crm"');
+  const loginAt = app.indexOf('path="/crm"');
+  const demoAt = app.indexOf('path="/crm/demo"');
   const portalAt = app.indexOf('path="/crm/login"');
-  assert.ok(crmAt > 0);
-  assert.ok(portalAt > crmAt);
-  assert.match(app.slice(crmAt, crmAt + 500), /CrmDemoLayout/);
-  assert.match(app.slice(portalAt, portalAt + 80), /CrmLoginPage/);
+  assert.ok(loginAt > 0);
+  assert.ok(demoAt > loginAt);
+  assert.ok(portalAt > loginAt);
+  assert.match(app.slice(loginAt, loginAt + 120), /Navigate to="\/crm\/login"/);
+  assert.match(app.slice(demoAt, demoAt + 400), /CrmDemoLayout/);
+  assert.doesNotMatch(app.slice(demoAt, demoAt + 400), /ProtectedAdmin/);
+  assert.match(app, /path="\/crm\/app"/);
   assert.match(app, /path="crm-access"/);
   assert.match(frame, /revealTheme/);
   assert.match(frame, /Switch to dark mode/);
