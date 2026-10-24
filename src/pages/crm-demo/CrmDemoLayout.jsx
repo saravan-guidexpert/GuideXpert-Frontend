@@ -1,9 +1,9 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { NavLink, Outlet, useLocation, useNavigate } from 'react-router-dom';
-import { FiBarChart2, FiBriefcase, FiCalendar, FiChevronsLeft, FiChevronsRight, FiClock, FiGrid, FiLink, FiMenu, FiMoon, FiSearch, FiSettings, FiSun, FiUsers, FiX } from 'react-icons/fi';
+import { FiBarChart2, FiBell, FiBriefcase, FiCalendar, FiChevronsLeft, FiChevronsRight, FiClock, FiGrid, FiLink, FiMenu, FiMoon, FiSearch, FiSettings, FiSun, FiUsers, FiX } from 'react-icons/fi';
 import { browserCrmDemo } from '../../utils/crmDemoStore';
 import { selectCrmClient } from '../../utils/crmDataSource';
-import { itemsOf } from './crmFormat';
+import { activityTitle, itemsOf, shortDate } from './crmFormat';
 import { CrmDemoContext } from './useCrmDemo';
 import { readCrmTheme, revealTheme, writeCrmTheme } from './crmTheme';
 import './crmShell.css';
@@ -43,6 +43,60 @@ function NavItems({ onNavigate }) {
       </NavLink>
     );
   });
+}
+
+function Announcements({ client }) {
+  const boxRef = useRef(null);
+  const [open, setOpen] = useState(false);
+  const items = useMemo(
+    () => (open ? itemsOf(client.listAudits({ page: 1, limit: 5 })).slice(0, 5) : []),
+    [client, open]
+  );
+
+  useEffect(() => {
+    if (!open) return undefined;
+    function onPointer(event) {
+      if (!boxRef.current?.contains(event.target)) setOpen(false);
+    }
+    function onKey(event) {
+      if (event.key === 'Escape') setOpen(false);
+    }
+    document.addEventListener('pointerdown', onPointer);
+    document.addEventListener('keydown', onKey);
+    return () => {
+      document.removeEventListener('pointerdown', onPointer);
+      document.removeEventListener('keydown', onKey);
+    };
+  }, [open]);
+
+  return (
+    <div className="gx-announce" ref={boxRef}>
+      <button
+        type="button"
+        className="gx-tool"
+        aria-label="Announcements"
+        aria-expanded={open}
+        aria-controls="gx-announcements"
+        onClick={() => setOpen((value) => !value)}
+      >
+        <FiBell size={18} strokeWidth={1.75} />
+      </button>
+      {open ? (
+        <div id="gx-announcements" className="gx-announce-pop" role="region" aria-label="Announcements">
+          <div className="gx-announce-head">
+            <strong>Announcements</strong>
+            <NavLink to="/crm/audit" onClick={() => setOpen(false)}>View all</NavLink>
+          </div>
+          {items.length === 0 ? <p>No announcements yet.</p> : items.map((entry) => (
+            <NavLink key={entry.id} to={`/crm/audit?id=${entry.id}`} onClick={() => setOpen(false)}>
+              <strong>{activityTitle(entry.action)}</strong>
+              <small>{shortDate(entry.createdAt)}</small>
+            </NavLink>
+          ))}
+        </div>
+      ) : null}
+    </div>
+  );
 }
 
 function TopSearch({ client, compact, onExpand }) {
@@ -208,22 +262,6 @@ export default function CrmDemoLayout() {
             <NavItems onNavigate={() => closeMenu(false)} />
           </nav>
           <div className="gx-side-foot">
-            <button
-              type="button"
-              className="gx-theme"
-              aria-label={theme === 'dark' ? 'Switch to light mode' : 'Switch to dark mode'}
-              onClick={(event) => {
-                const rect = event.currentTarget.getBoundingClientRect();
-                const next = theme === 'dark' ? 'light' : 'dark';
-                revealTheme(next, { x: rect.left + rect.width / 2, y: rect.top + rect.height / 2 }, (value) => {
-                  setTheme(value);
-                  writeCrmTheme(value);
-                });
-              }}
-            >
-              {theme === 'dark' ? <FiSun size={16} strokeWidth={1.75} /> : <FiMoon size={16} strokeWidth={1.75} />}
-              <span className="gx-label">{theme === 'dark' ? 'Light mode' : 'Dark mode'}</span>
-            </button>
             <NavLink to="/crm/settings" data-label="Settings" onClick={() => closeMenu(false)} className={({ isActive }) => (isActive ? 'active' : '')}>
               <span className="gx-ico"><FiSettings size={18} strokeWidth={1.75} /></span>
               <span className="gx-label">Settings</span>
@@ -231,11 +269,35 @@ export default function CrmDemoLayout() {
           </div>
         </aside>
         <div className="gx-workspace">
-          <div className="gx-mobile-bar">
+          <header className="gx-topbar">
             <button ref={menuRef} type="button" className="gx-menu" aria-label={menu ? 'Close menu' : 'Open menu'} aria-expanded={menu} onClick={() => (menu ? closeMenu(true) : setMenu(true))}>
               {menu ? <FiX size={18} /> : <FiMenu size={18} />}
             </button>
-          </div>
+            <NavLink to="/crm" className="gx-brand gx-top-brand" end>
+              <span className="gx-ico"><Mark /></span>
+              <span className="gx-top-name">GuideXpert</span>
+            </NavLink>
+            <div className="gx-top-tools">
+              <button
+                type="button"
+                className="gx-theme"
+                aria-label={theme === 'dark' ? 'Switch to light mode' : 'Switch to dark mode'}
+                title={theme === 'dark' ? 'Light mode' : 'Dark mode'}
+                onClick={(event) => {
+                  const rect = event.currentTarget.getBoundingClientRect();
+                  const next = theme === 'dark' ? 'light' : 'dark';
+                  revealTheme(next, { x: rect.left + rect.width / 2, y: rect.top + rect.height / 2 }, (value) => {
+                    setTheme(value);
+                    writeCrmTheme(value);
+                  });
+                }}
+              >
+                {theme === 'dark' ? <FiSun size={18} strokeWidth={1.75} /> : <FiMoon size={18} strokeWidth={1.75} />}
+              </button>
+              <Announcements client={client} />
+              <NavLink to="/crm/settings" className="gx-avatar" aria-label="Profile" title="Demo Workspace">GX</NavLink>
+            </div>
+          </header>
           <div className="gx-content">
             {snapshot.success ? <Outlet /> : (
               <div className="gx-notice warning" role="alert">
