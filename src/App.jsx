@@ -46,12 +46,6 @@ import CrmStudentProfilePage from './pages/admin/crm/StudentProfilePage';
 import CrmAnalyticsPage from './pages/admin/crm/AnalyticsPage';
 import CrmCalendarPage from './pages/admin/crm/CalendarPage';
 import CrmAccessPage from './pages/admin/crm/CrmAccessPage';
-import CrmWorkspaceLayout from './pages/admin/crm/workspace/CrmWorkspaceLayout';
-import CrmWorkspaceOverview from './pages/admin/crm/workspace/OverviewPage';
-import CrmWorkspaceUsers from './pages/admin/crm/workspace/UsersPage';
-import CrmWorkspaceConsultancies from './pages/admin/crm/workspace/ConsultanciesPage';
-import CrmWorkspaceActivity from './pages/admin/crm/workspace/ActivityPage';
-import CrmWorkspaceAnalytics from './pages/admin/crm/workspace/AnalyticsPage';
 import CrmDemoLayout from './pages/crm-demo/CrmDemoLayout';
 import CrmDemoLegacyRedirect from './pages/crm-demo/CrmDemoLegacyRedirect';
 import CrmDemoOverviewPage from './pages/crm-demo/OverviewPage';
@@ -68,12 +62,8 @@ import CrmLoginPage from './pages/crm-app/CrmLoginPage';
 import CrmResetPage from './pages/crm-app/CrmResetPage';
 import { CrmSessionProvider } from './pages/crm-app/CrmSessionContext';
 import { RequireCrmSession } from './pages/crm-app/RequireCrmSession';
-import CrmAppLayout from './pages/crm-app/CrmAppLayout';
 import CrmAppIndex from './pages/crm-app/CrmAppIndex';
 import CrmLegacyRedirect from './pages/crm-app/CrmLegacyRedirect';
-import CrmPortalStudentsPage from './pages/crm-app/CrmPortalStudentsPage';
-import CrmPortalConsultanciesPage from './pages/crm-app/CrmPortalConsultanciesPage';
-import CrmPortalReferralsPage from './pages/crm-app/CrmPortalReferralsPage';
 import ExecutiveDashboard from './pages/admin/ExecutiveDashboard';
 import AlertsDashboard from './pages/admin/AlertsDashboard';
 import ReportsDashboard from './pages/admin/ReportsDashboard';
@@ -588,30 +578,12 @@ function App() {
             element={
               <CrmSessionProvider>
                 <RequireCrmSession>
-                  <CrmAppLayout />
+                  <CrmAppIndex />
                 </RequireCrmSession>
               </CrmSessionProvider>
             }
           >
-            <Route index element={<CrmAppIndex />} />
-            <Route path="overview" element={<CrmWorkspaceLayout />}>
-              <Route index element={<CrmWorkspaceOverview />} />
-            </Route>
-            <Route path="users" element={<CrmWorkspaceLayout />}>
-              <Route index element={<CrmWorkspaceUsers />} />
-            </Route>
-            <Route path="consultancies" element={<CrmWorkspaceLayout />}>
-              <Route index element={<CrmWorkspaceConsultancies />} />
-            </Route>
-            <Route path="activity" element={<CrmWorkspaceLayout />}>
-              <Route index element={<CrmWorkspaceActivity />} />
-            </Route>
-            <Route path="analytics" element={<CrmWorkspaceLayout />}>
-              <Route index element={<CrmWorkspaceAnalytics />} />
-            </Route>
-            <Route path="students" element={<CrmPortalStudentsPage />} />
-            <Route path="consultancy-records" element={<CrmPortalConsultanciesPage />} />
-            <Route path="referrals" element={<CrmPortalReferralsPage />} />
+            <Route path="*" element={<CrmAppIndex />} />
           </Route>
           <Route path="/crm-app" element={<CrmLegacyRedirect />} />
           <Route path="/crm-app/login" element={<CrmLegacyRedirect />} />
