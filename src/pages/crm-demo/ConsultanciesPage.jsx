@@ -54,7 +54,7 @@ function followTone(status) {
 export default function ConsultanciesPage() {
   const navigate = useNavigate();
   const [params, setParams] = useSearchParams();
-  const { client, demoRole, refresh } = useCrmDemo();
+  const { client, demoRole, refresh, basePath, mode } = useCrmDemo();
   const superAdmin = demoRole === 'super_admin';
   const search = params.get('q') || '';
   const relationship = params.get('status') === 'active' || params.get('status') === 'inactive' ? params.get('status') : 'all';
@@ -178,7 +178,7 @@ export default function ConsultanciesPage() {
       setForm(EMPTY);
       replaceParams((copy) => copy.delete('new'));
       refresh();
-      navigate({ pathname: `/crm/demo/consultancies/${result.data.consultancy.id}`, search: directoryQuery() });
+      navigate({ pathname: `${basePath}/consultancies/${result.data.consultancy.id}`, search: directoryQuery() });
     }
   }
 
@@ -225,7 +225,7 @@ export default function ConsultanciesPage() {
       width: '18%',
       render: (row) => (
         <span className="gx-firm">
-          <button type="button" className="gx-firm-name" onClick={(event) => { event.stopPropagation(); navigate({ pathname: `/crm/demo/consultancies/${row.id}`, search: directoryQuery() }); }}>{row.name}</button>
+          <button type="button" className="gx-firm-name" onClick={(event) => { event.stopPropagation(); navigate({ pathname: `${basePath}/consultancies/${row.id}`, search: directoryQuery() }); }}>{row.name}</button>
           <span className="gx-sub">{row.primaryContact?.name || 'No primary contact'}</span>
         </span>
       ),
@@ -238,7 +238,7 @@ export default function ConsultanciesPage() {
         <span className="gx-owner">
           <span className="gx-avatar" aria-hidden="true">{initials(row.ownerName)}</span>
           <span className="gx-owner-copy">
-            <span className="gx-owner-name">{row.ownerName}</span>
+            <span className="gx-owner-name">{row.ownerName || (row.pipelineStored === false ? 'Not assigned' : '—')}</span>
             {superAdmin ? <span className="gx-sub">{row.createdByName}</span> : null}
           </span>
         </span>
@@ -250,7 +250,7 @@ export default function ConsultanciesPage() {
       width: '14%',
       render: (row) => (
         <span className="gx-status-stack">
-          <Badge tone={followTone(row.followUpStatus)}>{row.followUpStatus}</Badge>
+          <Badge tone={followTone(row.followUpStatus)}>{row.pipelineStored === false ? 'Not stored' : row.followUpStatus}</Badge>
           {isFollowUpOverdue(row, now) ? <Badge tone="late">Overdue</Badge> : null}
         </span>
       ),
@@ -286,7 +286,7 @@ export default function ConsultanciesPage() {
       width: '15%',
       render: (row) => (
         <span className="gx-row-actions">
-          <button type="button" className="gx-row-btn" onClick={(event) => { event.stopPropagation(); navigate({ pathname: `/crm/demo/consultancies/${row.id}`, search: directoryQuery() }); }}>Open</button>
+          <button type="button" className="gx-row-btn" onClick={(event) => { event.stopPropagation(); navigate({ pathname: `${basePath}/consultancies/${row.id}`, search: directoryQuery() }); }}>Open</button>
           <button type="button" className="gx-row-btn" onClick={(event) => { event.stopPropagation(); setStatusFor(row); setStatusForm({ followUpStatus: row.followUpStatus || 'Fresh Lead', callingStatus: row.callingStatus || '', scheduledAt: '', outcome: '', notes: '', nextAction: '', reason: '' }); }}>Status</button>
           <button type="button" className="gx-row-btn" onClick={(event) => { event.stopPropagation(); setRemarkFor(row); setRemarkText(''); }}>Remark</button>
         </span>
@@ -303,10 +303,11 @@ export default function ConsultanciesPage() {
           <p className="gx-dir-lede">Manage relationships, track admissions partners, and stay on top of follow-ups.</p>
         </div>
         <div className="gx-dir-head-side">
-          <span className="gx-env-pill">{superAdmin ? 'Browser demo · all owners' : 'Browser demo'}</span>
+          <span className="gx-env-pill">{mode === 'api' ? 'Signed-in CRM' : (superAdmin ? 'Browser demo · all owners' : 'Browser demo')}</span>
           <button type="button" className="gx-lime" onClick={() => replaceParams((copy) => copy.set('new', '1'))}>+ Add consultancy</button>
         </div>
       </header>
+      {mode === 'api' ? <div className="gx-notice warning" role="status"><p>Remarks, follow-ups, calling status, consultancy pipeline, and owner are not stored on the server. Those saves are rejected. Name, record status, notes, contacts, students, and referrals are saved.</p></div> : null}
       {directoryError ? (
         <div className="gx-notice error" role="alert">
           <p>{directoryError}</p>
@@ -406,7 +407,7 @@ export default function ConsultanciesPage() {
               <button type="button" className="gx-btn" onClick={resetFilters}>Clear filters</button>
             </div>
           ) : (
-            <DataTable wrapClass="gx-dir-table" columns={columns} rows={rows} onSelect={(id) => navigate({ pathname: `/crm/demo/consultancies/${id}`, search: directoryQuery() })} empty="No consultancies match these filters." />
+            <DataTable wrapClass="gx-dir-table" columns={columns} rows={rows} onSelect={(id) => navigate({ pathname: `${basePath}/consultancies/${id}`, search: directoryQuery() })} empty="No consultancies match these filters." />
           )}
           </section>
         </>

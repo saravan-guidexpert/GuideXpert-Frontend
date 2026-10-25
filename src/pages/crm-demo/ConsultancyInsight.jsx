@@ -28,7 +28,7 @@ function activityLabel(audit) {
 
 export default function ConsultancyInsight({ consultancy, contacts }) {
   const navigate = useNavigate();
-  const { client, refresh } = useCrmDemo();
+  const { client, refresh, basePath } = useCrmDemo();
   const [period, setPeriod] = useState('30');
   const [from, setFrom] = useState('');
   const [to, setTo] = useState('');
@@ -143,17 +143,17 @@ export default function ConsultancyInsight({ consultancy, contacts }) {
           </div>
           <DataTable
             columns={[
-              { key: 'name', label: 'Student', render: (row) => <Link to={`/crm/demo/students/${row.studentId}`} onClick={(event) => event.stopPropagation()}>{row.name}<small className="gx-sub">{row.phone}</small></Link> },
+              { key: 'name', label: 'Student', render: (row) => <Link to={`${basePath}/students/${row.studentId}`} onClick={(event) => event.stopPropagation()}>{row.name}<small className="gx-sub">{row.phone}</small></Link> },
               { key: 'date', label: 'Referral date', render: (row) => shortDate(row.createdAt) },
               { key: 'status', label: 'Admission status', render: (row) => row.status },
               { key: 'days', label: 'Days since referral', render: (row) => row.days },
               { key: 'activity', label: 'Last activity', render: (row) => row.activity },
-              { key: 'open', label: 'Action', render: (row) => <Link to={`/crm/demo/students/${row.studentId}`} onClick={(event) => event.stopPropagation()}>Open</Link> },
+              { key: 'open', label: 'Action', render: (row) => <Link to={`${basePath}/students/${row.studentId}`} onClick={(event) => event.stopPropagation()}>Open</Link> },
             ]}
             rows={tableRows}
             onSelect={(rowId) => {
               const match = tableRows.find((row) => row.id === rowId);
-              if (match) navigate(`/crm/demo/students/${match.studentId}`);
+              if (match) navigate(`${basePath}/students/${match.studentId}`);
             }}
             empty={summary.total === 0 ? 'No students have been referred by this consultancy.' : 'No linked students match these filters.'}
           />

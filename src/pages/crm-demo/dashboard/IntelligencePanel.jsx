@@ -18,7 +18,7 @@ import { useCrmDemo } from '../useCrmDemo';
 import '../crmInsight.css';
 
 export default function IntelligencePanel() {
-  const { client, refresh } = useCrmDemo();
+  const { client, refresh, basePath } = useCrmDemo();
   const [period, setPeriod] = useState('30');
   const [from, setFrom] = useState('');
   const [to, setTo] = useState('');
@@ -57,7 +57,7 @@ export default function IntelligencePanel() {
         <div className="gx-intel-grid">
           <div>
             <p className="gx-kicker">New referrals</p>
-            <Link className="gx-intel-stat" to="/crm/demo/calendar">
+            <Link className="gx-intel-stat" to={`${basePath}/calendar`}>
               <strong>{inPeriod.length}</strong>
               <span>{range.label}</span>
             </Link>
@@ -83,7 +83,7 @@ export default function IntelligencePanel() {
                   <li key={row.id}>
                     <span className="gx-rank">{index + 1}</span>
                     <div className="gx-board-copy">
-                      <Link className="gx-ellipsis" to={`/crm/demo/consultancies/${row.id}`}>{row.name}</Link>
+                      <Link className="gx-ellipsis" to={`${basePath}/consultancies/${row.id}`}>{row.name}</Link>
                       <small>{row.referrals} referred · {row.admitted} admitted or enrolled · {row.enrolled} enrolled</small>
                     </div>
                   </li>
@@ -93,7 +93,7 @@ export default function IntelligencePanel() {
             <p className="gx-help">Ranked by enrolled students in the period, then admissions, then referral count.</p>
             <p className="gx-kicker">Recent referrals</p>
             {recent.length === 0 ? <p className="gx-help">No referral dates are on record.</p> : recent.map((referral) => (
-              <Link key={referral.id} className="gx-activity" to={`/crm/demo/students/${referral.crmStudentId}`}>
+              <Link key={referral.id} className="gx-activity" to={`${basePath}/students/${referral.crmStudentId}`}>
                 <span className="gx-act-copy">
                   <strong>{referral.studentName || 'Student'}</strong>
                   <small>{referral.consultancyName || 'Consultancy'}</small>

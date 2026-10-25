@@ -13,7 +13,8 @@ function messageOf(result) {
 }
 
 export default function ReferralsPage() {
-  const { client, demoManager, refresh } = useCrmDemo();
+  const { client, demoManager, refresh, basePath, mode, canCorrectReferral } = useCrmDemo();
+  const canCorrect = mode === 'api' ? canCorrectReferral : demoManager;
   const [params, setParams] = useSearchParams();
   const id = params.get('id') || '';
   const [search, setSearch] = useState('');
@@ -153,14 +154,14 @@ export default function ReferralsPage() {
               </div>
               <div className="gx-co-actions">
                 <Badge tone={selected.sourceCorrectedAt ? 'on' : undefined}>{selected.sourceCorrectedAt ? 'Corrected' : 'Original'}</Badge>
-                <Link className="gx-lime" to={`/crm/demo/consultancies/${selected.consultancyId}`}>Open consultancy</Link>
+                <Link className="gx-lime" to={`${basePath}/consultancies/${selected.consultancyId}`}>Open consultancy</Link>
               </div>
             </div>
             <dl className="gx-facts">
               <div><dt>Original source</dt><dd>{selected.originalConsultancyName}</dd></div>
               <div><dt>Current source</dt><dd>{currentConsultancyName(selected, consultancies)}{selected.contactName ? ` · ${selected.contactName}` : ''}</dd></div>
               <div><dt>Recorded</dt><dd>{shortDate(selected.createdAt)}</dd></div>
-              <div><dt>Student</dt><dd><Link to={`/crm/demo/students/${selected.crmStudentId}`}>{selected.studentName}</Link></dd></div>
+              <div><dt>Student</dt><dd><Link to={`${basePath}/students/${selected.crmStudentId}`}>{selected.studentName}</Link></dd></div>
             </dl>
             </section>
             <section className="gx-co-card gx-co-audit">
@@ -169,9 +170,9 @@ export default function ReferralsPage() {
                 <p key={row.id} className="gx-note">{row.action} · {row.actorLabel || 'Demo'} · {shortDate(row.createdAt)}{row.reason ? ` · ${row.reason}` : ''}</p>
               ))}
             </section>
-            {demoManager ? (
+            {canCorrect ? (
               <section className="gx-co-card"><form className="gx-form" onSubmit={(event) => { event.preventDefault(); setConfirming(true); }}>
-                <p className="gx-note">Demo manager mode is simulated in this browser. It is not secure server-side access control. The original consultancy is kept.</p>
+                <p className="gx-note">{mode === 'api' ? 'The server checks this account before changing the current source. The original consultancy is kept, and a reason is required.' : 'Demo manager mode is simulated in this browser. It is not secure server-side access control. The original consultancy is kept.'}</p>
                 <label>New consultancy
                   <select value={correction.consultancyId} required onChange={(event) => setCorrection({ ...correction, consultancyId: event.target.value })}>
                     <option value="">Select a consultancy</option>

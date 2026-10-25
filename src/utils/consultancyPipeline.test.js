@@ -46,4 +46,9 @@ test('directory stages follow the consultancy status when no pipeline stage is s
   assert.equal(matchesBoardStage({ followUpStatus: 'Fresh Lead' }, 'total'), true);
   assert.equal(matchesBoardStage({ followUpStatus: 'On - Boarded' }, 'onboarded'), true);
   assert.equal(matchesBoardStage({ followUpStatus: 'Contacted' }, 'fresh'), false);
+  const unstored = boardCounts([{ pipelineStored: false, followUpStatus: '' }, { followUpStatus: 'Fresh Lead' }]);
+  assert.equal(unstored.total, 2);
+  assert.equal(unstored.fresh, 1);
+  assert.equal(matchesBoardStage({ pipelineStored: false }, 'fresh'), false);
+  assert.equal(consultancyBoardStage({ pipelineStored: false }), null);
 });

@@ -1,6 +1,8 @@
 import { Link } from 'react-router-dom';
+import { useCrmDemo } from '../useCrmDemo';
 
 export default function NeedsAttentionPanel({ items, error, onRetry, onOpen }) {
+  const { basePath } = useCrmDemo();
   return (
     <section className="gx-ov-card gx-ov-attention gx-ov-rise" aria-labelledby="gx-attention-title">
       <div className="gx-ov-card-head">
@@ -29,7 +31,7 @@ export default function NeedsAttentionPanel({ items, error, onRetry, onOpen }) {
               </>
             );
             if (item.action === 'students') {
-              return <Link key={item.id} className={`gx-ov-attn is-${item.severity}`} to="/crm/demo/students?tab=open">{body}</Link>;
+              return <Link key={item.id} className={`gx-ov-attn is-${item.severity}`} to={item.href || `${basePath}/students?tab=open`}>{body}</Link>;
             }
             return (
               <button key={item.id} type="button" className={`gx-ov-attn is-${item.severity}`} onClick={() => onOpen(item)}>

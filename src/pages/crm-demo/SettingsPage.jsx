@@ -5,7 +5,7 @@ import { Badge, Dialog, Notice, PageHeader } from './CrmKit';
 import { useCrmDemo } from './useCrmDemo';
 
 export default function SettingsPage() {
-  const { client, demoManager, demoRole, refresh } = useCrmDemo();
+  const { client, demoManager, demoRole, refresh, mode } = useCrmDemo();
   const [notice, setNotice] = useState(null);
   const [confirming, setConfirming] = useState(false);
   const [confirmingVolume, setConfirmingVolume] = useState(false);
@@ -47,7 +47,8 @@ export default function SettingsPage() {
 
   return (
     <>
-      <PageHeader title="Settings" subtitle="Access and data for this workspace." />
+      <PageHeader title="Settings" subtitle={mode === 'api' ? 'Signed-in account access. Demo tools do not change server records.' : 'Access and data for this workspace.'} />
+      {mode === 'api' ? <div className="gx-notice warning" role="status"><p>Manager, role, reset, and sample-volume controls stay visible so the workspace matches the demo. Using them is rejected. Permissions come from the CRM account.</p></div> : null}
       <Notice notice={notice} />
       <section className="gx-settings" aria-label="Workspace settings">
         <header className="gx-settings-head">

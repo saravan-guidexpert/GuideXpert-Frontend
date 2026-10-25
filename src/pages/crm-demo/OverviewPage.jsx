@@ -28,7 +28,7 @@ import './overview.css';
 
 export default function CrmDemoOverviewPage() {
   const navigate = useNavigate();
-  const { client, refresh } = useCrmDemo();
+  const { client, refresh, basePath, workspaceName, workspaceLede } = useCrmDemo();
   const [period, setPeriod] = useState('year');
   const [picked, setPicked] = useState('');
   const now = useMemo(() => new Date(), []);
@@ -55,7 +55,7 @@ export default function CrmDemoOverviewPage() {
   const chart = buildChart(period, students, referrals, now);
   const focus = chart.points.some((point) => point.key === picked) ? picked : '';
   const sources = referralSources(referrals, consultancies);
-  const attention = attentionItems({ students, consultancies, referrals });
+  const attention = attentionItems({ students, consultancies, referrals, basePath });
   const hints = recordError
     ? null
     : kpiHints({
@@ -80,8 +80,8 @@ export default function CrmDemoOverviewPage() {
     <div className="gx-home">
       <header className="gx-dash-head">
         <div className="gx-dash-copy">
-          <h1>{dayGreeting(now)}, Demo Workspace</h1>
-          <p className="gx-lede">Local demo records for consultancies, students and referrals. Stored in this browser.</p>
+          <h1>{dayGreeting(now)}, {workspaceName}</h1>
+          <p className="gx-lede">{workspaceLede}</p>
         </div>
       </header>
       <KpiStrip
@@ -103,12 +103,12 @@ export default function CrmDemoOverviewPage() {
           if (period === '90' && point?.start && point?.end) {
             const from = localDayStamp(point.start);
             const to = localDayStamp(point.end);
-            navigate(`/crm/demo/calendar?view=agenda&from=${from}&to=${to}&month=${from.slice(0, 7)}`);
+            navigate(`${basePath}/calendar?view=agenda&from=${from}&to=${to}&month=${from.slice(0, 7)}`);
             return;
           }
           const query = calendarQueryForBucket(key);
-          if (query?.day) navigate(`/crm/demo/calendar?day=${query.day}`);
-          else if (query?.month) navigate(`/crm/demo/calendar?month=${query.month}`);
+          if (query?.day) navigate(`${basePath}/calendar?day=${query.day}`);
+          else if (query?.month) navigate(`${basePath}/calendar?month=${query.month}`);
           else setPicked((current) => (current === key ? '' : key));
         }}
         error={recordError}

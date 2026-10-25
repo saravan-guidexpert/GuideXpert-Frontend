@@ -1,6 +1,8 @@
 import { Link } from 'react-router-dom';
+import { useCrmDemo } from '../useCrmDemo';
 
 export default function ReferralSources({ sources, total, error, onRetry }) {
+  const { basePath } = useCrmDemo();
   return (
     <section className="gx-panel gx-sources-card" aria-labelledby="gx-sources-title">
       <div className="gx-panel-head">
@@ -19,7 +21,7 @@ export default function ReferralSources({ sources, total, error, onRetry }) {
           {sources.map((source) => (
             <li key={source.id}>
               <div className="gx-source-row">
-                <Link className="gx-ellipsis" to={`/crm/demo/consultancies/${source.id}`}>{source.name}</Link>
+                <Link className="gx-ellipsis" to={`${basePath}/consultancies/${source.id}`}>{source.name}</Link>
                 <strong>{source.count}</strong>
               </div>
               <div

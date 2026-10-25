@@ -62,7 +62,7 @@ import CrmLoginPage from './pages/crm-app/CrmLoginPage';
 import CrmResetPage from './pages/crm-app/CrmResetPage';
 import { CrmSessionProvider } from './pages/crm-app/CrmSessionContext';
 import { RequireCrmSession } from './pages/crm-app/RequireCrmSession';
-import CrmAppIndex from './pages/crm-app/CrmAppIndex';
+import CrmAppShell from './pages/crm-app/CrmAppShell';
 import CrmLegacyRedirect from './pages/crm-app/CrmLegacyRedirect';
 import ExecutiveDashboard from './pages/admin/ExecutiveDashboard';
 import AlertsDashboard from './pages/admin/AlertsDashboard';
@@ -578,12 +578,21 @@ function App() {
             element={
               <CrmSessionProvider>
                 <RequireCrmSession>
-                  <CrmAppIndex />
+                  <CrmAppShell />
                 </RequireCrmSession>
               </CrmSessionProvider>
             }
           >
-            <Route path="*" element={<CrmAppIndex />} />
+            <Route index element={<CrmDemoOverviewPage />} />
+            <Route path="analytics" element={<CrmDemoAnalyticsPage />} />
+            <Route path="calendar" element={<CrmDemoCalendarPage />} />
+            <Route path="consultancies" element={<CrmDemoConsultanciesPage />} />
+            <Route path="consultancies/:id" element={<CrmDemoConsultancyProfilePage />} />
+            <Route path="students" element={<CrmDemoStudentsPage />} />
+            <Route path="students/:id" element={<CrmDemoStudentProfilePage />} />
+            <Route path="referrals" element={<CrmDemoReferralsPage />} />
+            <Route path="audit" element={<CrmDemoAuditPage />} />
+            <Route path="settings" element={<CrmDemoSettingsPage />} />
           </Route>
           <Route path="/crm-app" element={<CrmLegacyRedirect />} />
           <Route path="/crm-app/login" element={<CrmLegacyRedirect />} />

@@ -268,8 +268,8 @@ test('opening the demo again does not replace saved students', () => {
 test('student and consultancy profiles link through the same referral', () => {
   const students = fs.readFileSync(path.join(root, 'pages/crm-demo/StudentsPage.jsx'), 'utf8');
   const profile = fs.readFileSync(path.join(root, 'pages/crm-demo/ConsultancyProfilePage.jsx'), 'utf8');
-  assert.match(students, /\/crm\/demo\/consultancies\/\$\{/);
-  assert.match(profile, /\/crm\/demo\/students\/\$\{/);
+  assert.match(students, /\$\{basePath\}\/consultancies\/\$\{/);
+  assert.match(profile, /\$\{basePath\}\/students\/\$\{/);
   const crm = repo();
   const referral = crm.getStudentReferral('st_3').data.referral;
   const consultancy = crm.getConsultancy(referral.consultancyId).data.consultancy;

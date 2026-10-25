@@ -3,6 +3,7 @@ import { Link } from 'react-router-dom';
 import { FiMoreHorizontal } from 'react-icons/fi';
 import { Badge } from '../CrmKit';
 import { shortDate } from '../crmFormat';
+import { useCrmDemo } from '../useCrmDemo';
 import { callTone, followTone } from './overviewModel';
 import useMatchMedia from './useMatchMedia';
 
@@ -19,6 +20,7 @@ export default function ConsultancyHeader({
   onEdit,
   onStudents,
 }) {
+  const { basePath } = useCrmDemo();
   const narrow = useMatchMedia('(max-width: 760px)');
   const menuRef = useRef(null);
   const [menuOpen, setMenuOpen] = useState(false);
@@ -57,7 +59,7 @@ export default function ConsultancyHeader({
   return (
     <header className="gx-ov-head">
       <div className="gx-ov-id">
-        <p className="gx-crumb"><Link to="/crm/demo/consultancies">Consultancies</Link> <span>/</span> {consultancy.name}</p>
+        <p className="gx-crumb"><Link to={`${basePath}/consultancies`}>Consultancies</Link> <span>/</span> {consultancy.name}</p>
         <div className="gx-ov-titlebar">
           <h2 className="gx-ov-title">{consultancy.name}</h2>
           <div className="gx-ov-actions">
@@ -87,7 +89,7 @@ export default function ConsultancyHeader({
                   {narrow ? secondary.map((item) => (
                     <button key={item.id} type="button" role="menuitem" onClick={() => runMenu(item.onClick)} disabled={saving}>{item.label}</button>
                   )) : null}
-                  <Link role="menuitem" to="/crm/demo/consultancies" onClick={() => setMenuOpen(false)}>Back to consultancies</Link>
+                  <Link role="menuitem" to={`${basePath}/consultancies`} onClick={() => setMenuOpen(false)}>Back to consultancies</Link>
                 </div>
               ) : null}
             </div>
@@ -96,12 +98,12 @@ export default function ConsultancyHeader({
         <p className="gx-ov-contact">{contactLine}</p>
         <div className="gx-ov-badges">
           <Badge tone={consultancy.status === 'active' ? 'on' : 'off'}>{consultancy.status === 'active' ? 'Active' : 'Inactive'}</Badge>
-          <Badge tone={followTone(consultancy.followUpStatus)}>{consultancy.followUpStatus}</Badge>
+          <Badge tone={followTone(consultancy.followUpStatus)}>{consultancy.pipelineStored === false ? 'Not stored' : consultancy.followUpStatus}</Badge>
           <Badge tone={callTone(consultancy.callingStatus)}>{consultancy.callingStatus || 'No calling status'}</Badge>
           {overdue ? <span className="gx-ov-overdue"><Badge>Overdue</Badge></span> : null}
         </div>
         <ul className="gx-ov-facts">
-          <li><span>Owner</span> <strong>{consultancy.ownerName || '—'}</strong></li>
+          <li><span>Owner</span> <strong>{consultancy.ownerName || (consultancy.pipelineStored === false ? 'Not assigned' : '—')}</strong></li>
           <li><span>Last contact</span> <strong>{shortDate(consultancy.lastContactAt)}</strong></li>
           <li><span>Next</span> <strong>{shortDate(consultancy.nextFollowUpAt)}</strong></li>
           <li>{originalCount == null ? <strong>—</strong> : <><strong>{originalCount}</strong> <span>{originalCount === 1 ? 'original referral' : 'original referrals'}</span></>}</li>

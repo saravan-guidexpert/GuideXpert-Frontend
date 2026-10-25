@@ -51,7 +51,7 @@ function weekDates(anchorKey) {
 }
 
 export default function CalendarPage() {
-  const { client, refresh } = useCrmDemo();
+  const { client, refresh, basePath } = useCrmDemo();
   const [params, setParams] = useSearchParams();
   const now = useMemo(() => new Date(), []);
   const view = ['week', 'agenda'].includes(params.get('view')) ? params.get('view') : 'month';
@@ -224,7 +224,7 @@ export default function CalendarPage() {
                   const consultancy = consultancies.get(referral.consultancyId);
                   return (
                     <li key={referral.id}>
-                      <Link to={`/crm/demo/students/${referral.crmStudentId}`}>{student?.fullName || referral.studentName || 'Student'}</Link>
+                      <Link to={`${basePath}/students/${referral.crmStudentId}`}>{student?.fullName || referral.studentName || 'Student'}</Link>
                       <span>{consultancy?.name || referral.consultancyName || 'Consultancy'}</span>
                       <span>{statusOf(student)}</span>
                       <time dateTime={localDayKey(referral.createdAt) || undefined}>{shortDate(referral.createdAt)}</time>

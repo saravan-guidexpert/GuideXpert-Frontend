@@ -23,15 +23,15 @@ function entityLabel(audit) {
   return audit.entityId || 'Record';
 }
 
-function recordPath(audit) {
-  if (audit.entityType === 'student') return `/crm/demo/students/${audit.entityId}`;
-  if (audit.entityType === 'consultancy') return `/crm/demo/consultancies/${audit.entityId}`;
-  if (audit.entityType === 'referral') return `/crm/demo/referrals?id=${audit.entityId}`;
+function recordPath(audit, basePath) {
+  if (audit.entityType === 'student') return `${basePath}/students/${audit.entityId}`;
+  if (audit.entityType === 'consultancy') return `${basePath}/consultancies/${audit.entityId}`;
+  if (audit.entityType === 'referral') return `${basePath}/referrals?id=${audit.entityId}`;
   return '';
 }
 
 export default function AuditPage() {
-  const { client, refresh } = useCrmDemo();
+  const { client, refresh, basePath } = useCrmDemo();
   const [params, setParams] = useSearchParams();
   const id = params.get('id') || '';
   const [search, setSearch] = useState('');
@@ -60,7 +60,7 @@ export default function AuditPage() {
     showChange && toValue ? { label: 'Recorded value', value: toValue } : null,
     reason ? { label: 'Reason', value: reason } : null,
   ].filter(Boolean);
-  const related = selected ? recordPath(selected) : '';
+  const related = selected ? recordPath(selected, basePath) : '';
 
   return (
     <>
