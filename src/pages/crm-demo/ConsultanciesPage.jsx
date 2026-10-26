@@ -307,7 +307,6 @@ export default function ConsultanciesPage() {
           <button type="button" className="gx-lime" onClick={() => replaceParams((copy) => copy.set('new', '1'))}>+ Add consultancy</button>
         </div>
       </header>
-      {mode === 'api' ? <div className="gx-notice warning" role="status"><p>Remarks, follow-ups, calling status, consultancy pipeline, and owner are not stored on the server. Those saves are rejected. Name, record status, notes, contacts, students, and referrals are saved.</p></div> : null}
       {directoryError ? (
         <div className="gx-notice error" role="alert">
           <p>{directoryError}</p>

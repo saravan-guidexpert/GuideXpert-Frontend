@@ -12,6 +12,7 @@ import {
   formatTimestamp,
   isObjectId,
   metricText,
+  PHASE_A_TIME_ZONE,
   workspaceRouteDecision,
 } from '../../../../utils/crmWorkspace';
 import { useCrmResource } from './useCrmResource';
@@ -24,8 +25,8 @@ export default function ActivityPage() {
   const decision = workspaceRouteDecision(user, 'activity');
   const [filters, setFilters] = useState(INITIAL);
   const [selected, setSelected] = useState(null);
-  const built = useMemo(() => activityListQuery(filters), [filters]);
-  const summaryBuilt = useMemo(() => activitySummaryQuery(filters), [filters]);
+  const built = useMemo(() => activityListQuery({ ...filters, timeZone: PHASE_A_TIME_ZONE }), [filters]);
+  const summaryBuilt = useMemo(() => activitySummaryQuery({ ...filters, timeZone: PHASE_A_TIME_ZONE }), [filters]);
   const list = useCrmResource(
     decision.state === 'allowed' && !built.error,
     `list:${built.error || JSON.stringify(built.query)}`,
@@ -55,7 +56,7 @@ export default function ActivityPage() {
   const revoked = metricText(summary.data?.security?.sessionRevocations, HIDDEN_METRIC);
   const event = detail.data?.event;
   const columns = [
-    { key: 'when', label: 'When', render: (row) => formatTimestamp(row.createdAt) },
+    { key: 'when', label: 'When', render: (row) => formatTimestamp(row.createdAt, PHASE_A_TIME_ZONE) },
     { key: 'source', label: 'Source', render: (row) => row.source },
     { key: 'summary', label: 'Event', render: (row) => (
       <button type="button" className="text-left text-[#003366] underline" onClick={() => setSelected({ source: row.source, id: row.id })}>
@@ -66,9 +67,14 @@ export default function ActivityPage() {
   ];
 
   return (
-    <div className="space-y-4">
-      <p className="text-sm text-gray-500">Business and security events that this account is allowed to read. Outcome is not stored, so it is not shown.</p>
-      <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-5">
+    <div className="gx-admin-page">
+      <header className="gx-page-head">
+        <div>
+          <h2 className="gx-title">Activity</h2>
+          <p className="gx-subtitle">Business and security events that this account is allowed to read. Date filters use {PHASE_A_TIME_ZONE} calendar days. That zone is pending business-owner confirmation. Outcome is not stored, so it is not shown.</p>
+        </div>
+      </header>
+      <div className="gx-toolbar">
         <SelectField label="Source" value={filters.source} onChange={(source) => update({ source })}>
           <option value="both">Business and security</option>
           <option value="business">Business</option>
@@ -84,12 +90,12 @@ export default function ActivityPage() {
       </div>
       {built.error ? <Banner tone="warning">{built.error}</Banner> : null}
       {summary.data ? (
-        <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
-          <article className="rounded-xl border border-gray-200 bg-white p-3"><p className="text-sm text-gray-500">Business events</p><p className="text-xl font-semibold text-[#003366]">{summary.data.business?.total ?? 0}</p></article>
-          <article className="rounded-xl border border-gray-200 bg-white p-3"><p className="text-sm text-gray-500">Failed sign-ins</p><p className="text-xl font-semibold text-[#003366]">{failed.text}</p><p className="text-xs text-gray-500">{failed.detail}</p></article>
-          <article className="rounded-xl border border-gray-200 bg-white p-3"><p className="text-sm text-gray-500">Inactive sign-ins</p><p className="text-xl font-semibold text-[#003366]">{inactive.text}</p><p className="text-xs text-gray-500">{inactive.detail}</p></article>
-          <article className="rounded-xl border border-gray-200 bg-white p-3"><p className="text-sm text-gray-500">Session revocations</p><p className="text-xl font-semibold text-[#003366]">{revoked.text}</p><p className="text-xs text-gray-500">{revoked.detail}</p></article>
-        </div>
+        <section className="gx-kpis" aria-label="Activity totals">
+          <article className="gx-kpi"><span className="gx-kpi-top"><em>Business events</em></span><strong>{summary.data.business?.total ?? 0}</strong></article>
+          <article className="gx-kpi"><span className="gx-kpi-top"><em>Failed sign-ins</em></span><strong>{failed.text}</strong><small>{failed.detail}</small></article>
+          <article className="gx-kpi"><span className="gx-kpi-top"><em>Inactive sign-ins</em></span><strong>{inactive.text}</strong><small>{inactive.detail}</small></article>
+          <article className="gx-kpi"><span className="gx-kpi-top"><em>Session revocations</em></span><strong>{revoked.text}</strong><small>{revoked.detail}</small></article>
+        </section>
       ) : null}
       {summary.notice ? <Banner tone={summary.notice.tone}>{summary.notice.message}</Banner> : null}
       {list.notice ? <Banner tone={list.notice.tone}>{list.notice.message}</Banner> : null}
@@ -105,7 +111,7 @@ export default function ActivityPage() {
         </>
       ) : null}
       {selected ? (
-        <section className="rounded-xl border border-gray-200 bg-white p-4">
+        <section className="gx-card">
           {detail.loading ? <SkeletonBlock className="h-24" /> : null}
           {detail.notice ? <Banner tone={detail.notice.tone}>{detail.notice.message}</Banner> : null}
           {event ? (
@@ -113,7 +119,7 @@ export default function ActivityPage() {
               <div>
                 <p className="text-xs uppercase tracking-wide text-gray-500">{event.source} · {event.category}</p>
                 <h3 className="text-lg font-semibold text-[#003366]">{event.summary || event.action}</h3>
-                <p className="text-sm text-gray-500">{formatTimestamp(event.createdAt)} · {event.action}</p>
+                <p className="text-sm text-gray-500">{formatTimestamp(event.createdAt, PHASE_A_TIME_ZONE)} · {event.action}</p>
               </div>
               {event.reason ? <p className="text-sm text-gray-700">Reason: {event.reason}</p> : null}
               <ChangeList changes={event.changes} />

@@ -736,6 +736,7 @@
   overflow-wrap: anywhere;
 }
 .gx-table tbody tr { cursor: pointer; }
+.gx-table-wrap.is-static tbody tr { cursor: default; }
 .gx-table tbody tr:focus-visible { outline: 2px solid var(--ink); outline-offset: -2px; }
 .gx-table tbody tr:hover { background: var(--hover); }
 .gx-table tbody tr.is-selected { background: var(--selected); }
@@ -1203,3 +1204,22 @@
   white-space: nowrap;
   text-overflow: ellipsis;
 }
+
+.gx-admin .gx-badge.is-on { background: var(--ok-wash); color: #3f5c16; }
+.gx-admin .gx-badge.is-warn { background: var(--warn-wash); color: #8a5a12; }
+.gx-admin .gx-badge.is-off { background: var(--hover); color: var(--muted); }
+.gx-admin .gx-badge.is-invited { background: var(--paper); color: var(--ink); border: 1px solid var(--line); }
+.gx-app[data-theme="dark"].gx-admin .gx-badge.is-on { color: #d7ee9a; }
+.gx-app[data-theme="dark"].gx-admin .gx-badge.is-warn { color: #e6c27a; }
+.gx-admin-page { display: flex; flex-direction: column; gap: 16px; }
+.gx-admin-page .gx-page-head { margin-bottom: 0; }
+.gx-admin .gx-top-tools { margin-left: auto; }
+.gx-admin .text-gray-500,
+.gx-admin .text-gray-600,
+.gx-admin .text-gray-700 { color: var(--muted); }
+.gx-admin .text-\[\#003366\] { color: var(--ink); }
+.gx-admin .bg-white { background: var(--white); }
+.gx-admin .bg-gray-50,
+.gx-admin .bg-gray-100 { background: var(--paper); }
+.gx-admin .border-gray-200,
+.gx-admin .border-gray-300 { border-color: var(--line); }

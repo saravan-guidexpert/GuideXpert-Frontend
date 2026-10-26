@@ -1,7 +1,7 @@
 import { useMemo, useState } from 'react';
 import { useCrmSession } from '../../../crm-app/useCrmSession';
 import { useDebouncedValue } from '../../../../hooks/useDebouncedValue';
-import { assignPortalConsultancy, fetchPortalDirectory, getPortalConsultancyOverview, revokePortalConsultancy } from '../../../../utils/crmSessionApi';
+import { assignPortalConsultancy, fetchPortalDirectory, getPortalConsultancyOverview, listPortalActivity, revokePortalConsultancy } from '../../../../utils/crmSessionApi';
 import { Banner, Pagination } from '../crmUi';
 import {
   HIDDEN_METRIC,
@@ -9,8 +9,10 @@ import {
   applyCrmResult,
   applyFilterPatch,
   emptyCopy,
+  formatTimestamp,
   metricText,
   overviewQuery,
+  PHASE_A_TIME_ZONE,
   workspaceRouteDecision,
 } from '../../../../utils/crmWorkspace';
 import { useCrmResource } from './useCrmResource';
@@ -46,6 +48,11 @@ export default function ConsultanciesPage() {
   const shownTarget = target
     ? (overview.data?.items || []).find((row) => row.id === target.id) || target
     : null;
+  const history = useCrmResource(
+    decision.state === 'allowed' && Boolean(target?.id),
+    `history:${target?.id || ''}:${reloadKey}`,
+    () => listPortalActivity({ source: 'security', consultancyId: target.id, page: 1, limit: 20 })
+  );
 
   function update(patch) {
     setFilters((current) => applyFilterPatch(current, patch));
@@ -98,9 +105,14 @@ export default function ConsultanciesPage() {
   ];
 
   return (
-    <div className="space-y-4">
-      <p className="text-sm text-gray-500">Active assignees are CRM users whose assignment has not been revoked. A revoked assignment drops access on the next request.</p>
-      <div className="grid gap-3 md:grid-cols-3">
+    <div className="gx-admin-page">
+      <header className="gx-page-head">
+        <div>
+          <h2 className="gx-title">Consultancies</h2>
+          <p className="gx-subtitle">Active assignees are CRM users whose assignment has not been revoked. The unassigned count can be organization-wide while this list stays limited to consultancies assigned to this account. Assignment history shows events this account is allowed to read.</p>
+        </div>
+      </header>
+      <div className="gx-toolbar">
         <SelectField label="Status" value={filters.status} onChange={(status) => update({ status })}>
           <option value="">Any status</option>
           <option value="active">Active</option>
@@ -112,7 +124,7 @@ export default function ConsultanciesPage() {
           <option value="unassigned">No active assignee</option>
         </SelectField>
         {overview.data ? (
-          <article className="rounded-xl border border-gray-200 bg-white p-4">
+          <article className="gx-kpi">
             <p className="text-sm text-gray-500">Unassigned consultancies</p>
             <p className="text-2xl font-semibold text-[#003366]">{unassigned.text}</p>
             <p className="text-xs text-gray-500">{unassigned.detail || overview.data.unassignedMeaning || 'No active CRM assignment.'}</p>
@@ -129,7 +141,7 @@ export default function ConsultanciesPage() {
         </>
       ) : null}
       {shownTarget ? (
-        <section className="rounded-xl border border-gray-200 bg-white p-4">
+        <section className="gx-card">
           <h3 className="font-semibold text-[#003366]">{shownTarget.name}</h3>
           <p className="text-sm text-gray-500">{shownTarget.activeAssignees} active assignee{shownTarget.activeAssignees === 1 ? '' : 's'}</p>
           <ul className="mt-3 space-y-2">
@@ -149,6 +161,20 @@ export default function ConsultanciesPage() {
             ))}
             {shownTarget.assignees?.length ? null : <li className="text-sm text-gray-500">No active assignees are listed.</li>}
           </ul>
+          <h4 className="mt-4 font-medium text-[#003366]">Assignment history</h4>
+          <p className="text-xs text-gray-500">Events this account is allowed to read for this consultancy. This is not a complete organization history, and it does not measure who did the work.</p>
+          {history.notice ? <div className="mt-2"><Banner tone={history.notice.tone}>{history.notice.message}</Banner></div> : null}
+          {history.loading ? <SkeletonBlock className="mt-2 h-12" /> : null}
+          {history.data ? (
+            <ul className="mt-2 space-y-1">
+              {(history.data.items || []).map((event) => (
+                <li key={event.id} className="text-sm text-gray-600">
+                  {formatTimestamp(event.createdAt, PHASE_A_TIME_ZONE)} · {event.summary || event.action}
+                </li>
+              ))}
+              {history.data.items?.length ? null : <li className="text-sm text-gray-500">No assignment events are visible for this consultancy.</li>}
+            </ul>
+          ) : null}
           {actions.manageAssignment ? (
             <div className="mt-4 grid gap-3 md:grid-cols-[1fr_1fr_auto] md:items-end">
               <TextField label="Find an active CRM user" value={userQuery} onChange={setUserQuery} placeholder="Name or email" />

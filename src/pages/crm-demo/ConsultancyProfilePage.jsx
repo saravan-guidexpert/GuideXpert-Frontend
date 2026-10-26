@@ -76,8 +76,9 @@ function ChartFrame({ data, children, caption }) {
 
 export default function ConsultancyProfilePage() {
   const { id } = useParams();
-  const { client, demoRole, refresh, basePath, mode } = useCrmDemo();
+  const { client, demoRole, refresh, basePath, mode, sessionUser, canManageAssignments } = useCrmDemo();
   const superAdmin = demoRole === 'super_admin';
+  const canReassign = mode === 'api' ? Boolean(canManageAssignments) : superAdmin;
   const [tab, setTab] = useState('overview');
   const [period, setPeriod] = useState('30');
   const [customFrom, setCustomFrom] = useState('');
@@ -95,6 +96,7 @@ export default function ConsultancyProfilePage() {
   const [statusOpen, setStatusOpen] = useState(false);
   const [statusForm, setStatusForm] = useState(EMPTY_STATUS);
   const [ownerId, setOwnerId] = useState('');
+  const [ownerChoices, setOwnerChoices] = useState([]);
   const [studentQuery, setStudentQuery] = useState('');
   const [studentStatus, setStudentStatus] = useState('all');
   const [calendarFocus, setCalendarFocus] = useState('');
@@ -104,6 +106,18 @@ export default function ConsultancyProfilePage() {
     if (tab !== 'calendar' || !calendarFocus) return;
     document.getElementById(`gx-follow-${calendarFocus}`)?.scrollIntoView({ block: 'nearest' });
   }, [tab, calendarFocus]);
+
+  useEffect(() => {
+    if (!canReassign || mode !== 'api' || typeof client.listOwnerChoices !== 'function') return undefined;
+    let cancelled = false;
+    client.listOwnerChoices().then((result) => {
+      if (cancelled || !result || result.success !== true) return;
+      setOwnerChoices(Array.isArray(result.data?.items) ? result.data.items : []);
+    });
+    return () => {
+      cancelled = true;
+    };
+  }, [canReassign, client, mode]);
 
   const loaded = client.getConsultancy(id);
   const consultancy = loaded.success ? loaded.data.consultancy : null;
@@ -230,7 +244,7 @@ export default function ConsultancyProfilePage() {
     run(() => client.setFollowUp(id, {
       followUpStatus: 'Meeting Completed',
       outcome: 'Completed from calendar',
-      notes: row?.notes || 'Completed in the demo.',
+      notes: row?.notes || (mode === 'api' ? 'Completed from the calendar.' : 'Completed in the demo.'),
     }));
   }
 
@@ -251,7 +265,6 @@ export default function ConsultancyProfilePage() {
 
   return (
     <div className="gx-co">
-      {mode === 'api' ? <div className="gx-notice warning" role="status"><p>Remarks, follow-ups, calling status, consultancy pipeline, and owner are not stored on the server. Those saves are rejected. Name, notes, contacts, and linked students are saved.</p></div> : null}
       <ConsultancyHeader
         consultancy={consultancy}
         originalCount={referralsReady ? original.length : null}
@@ -441,6 +454,8 @@ export default function ConsultancyProfilePage() {
           remarksError={remarkLoad.ok ? '' : remarkLoad.message}
           auditsError={auditsLoad.ok ? '' : auditsLoad.message}
           now={now}
+          persisted={mode === 'api'}
+          currentAuthorId={mode === 'api' ? (sessionUser?.id || '') : DEMO_ACTOR.id}
           onAdd={openRemark}
           onEdit={openRemarkEdit}
           onRetry={refresh}
@@ -503,15 +518,21 @@ export default function ConsultancyProfilePage() {
               <div><dt>Created by</dt><dd>{consultancy.createdByName || '—'}</dd></div>
               <div><dt>Owner</dt><dd>{consultancy.ownerName || '—'}</dd></div>
             </dl>
-            {superAdmin ? (
+            {canReassign ? (
               <form className="gx-set-owner" onSubmit={(event) => { event.preventDefault(); run(() => client.reassignOwner(id, { ownerId: ownerId || consultancy.ownerId })); }}>
                 <label>Reassign owner
-                  <select aria-label="Owner" value={ownerId || consultancy.ownerId} onChange={(event) => setOwnerId(event.target.value)}>
-                    <option value={DEMO_ACTOR.id}>{DEMO_ACTOR.name}</option>
-                    <option value={DEMO_SEED_ACTOR.id}>{DEMO_SEED_ACTOR.name}</option>
+                  <select aria-label="Owner" value={ownerId || consultancy.ownerId || ''} onChange={(event) => setOwnerId(event.target.value)}>
+                    {mode === 'api'
+                      ? ownerChoices.map((person) => <option key={person.id} value={person.id}>{person.name}</option>)
+                      : (
+                        <>
+                          <option value={DEMO_ACTOR.id}>{DEMO_ACTOR.name}</option>
+                          <option value={DEMO_SEED_ACTOR.id}>{DEMO_SEED_ACTOR.name}</option>
+                        </>
+                      )}
                   </select>
                 </label>
-                <button className="gx-btn" type="submit" disabled={saving}>Save owner</button>
+                <button className="gx-btn" type="submit" disabled={saving || (mode === 'api' && ownerChoices.length === 0)}>Save owner</button>
               </form>
             ) : null}
           </section>
@@ -605,6 +626,7 @@ export default function ConsultancyProfilePage() {
       {remarking || editingRemark ? (
         <RemarkDialog
           mode={editingRemark ? 'edit' : 'add'}
+          persisted={mode === 'api'}
           text={remarkText}
           onChange={(value) => { setRemarkText(value); setRemarkError(''); }}
           saving={saving}

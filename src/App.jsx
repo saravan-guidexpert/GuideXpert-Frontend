@@ -59,11 +59,18 @@ import CrmDemoSettingsPage from './pages/crm-demo/SettingsPage';
 import CrmDemoAnalyticsPage from './pages/crm-demo/AnalyticsPage';
 import CrmDemoCalendarPage from './pages/crm-demo/CalendarPage';
 import CrmLoginPage from './pages/crm-app/CrmLoginPage';
+import CrmAdminLoginPage from './pages/crm-app/CrmAdminLoginPage';
 import CrmResetPage from './pages/crm-app/CrmResetPage';
 import { CrmSessionProvider } from './pages/crm-app/CrmSessionContext';
 import { RequireCrmSession } from './pages/crm-app/RequireCrmSession';
 import CrmAppShell from './pages/crm-app/CrmAppShell';
 import CrmLegacyRedirect from './pages/crm-app/CrmLegacyRedirect';
+import CrmWorkspaceLayout from './pages/admin/crm/workspace/CrmWorkspaceLayout';
+import CrmWorkspaceOverviewPage from './pages/admin/crm/workspace/OverviewPage';
+import CrmWorkspaceUsersPage from './pages/admin/crm/workspace/UsersPage';
+import CrmWorkspaceConsultanciesPage from './pages/admin/crm/workspace/ConsultanciesPage';
+import CrmWorkspaceActivityPage from './pages/admin/crm/workspace/ActivityPage';
+import CrmWorkspaceAnalyticsPage from './pages/admin/crm/workspace/AnalyticsPage';
 import ExecutiveDashboard from './pages/admin/ExecutiveDashboard';
 import AlertsDashboard from './pages/admin/AlertsDashboard';
 import ReportsDashboard from './pages/admin/ReportsDashboard';
@@ -572,6 +579,7 @@ function App() {
           <Route path="/crm/audit" element={<CrmDemoLegacyRedirect />} />
           <Route path="/crm/settings" element={<CrmDemoLegacyRedirect />} />
           <Route path="/crm/login" element={<CrmLoginPage />} />
+          <Route path="/crm/admin/login" element={<CrmAdminLoginPage />} />
           <Route path="/crm/reset" element={<CrmResetPage />} />
           <Route
             path="/crm/app"
@@ -598,6 +606,23 @@ function App() {
           <Route path="/crm-app/login" element={<CrmLegacyRedirect />} />
           <Route path="/crm-app/reset" element={<CrmLegacyRedirect />} />
           <Route path="/crm-app/*" element={<CrmLegacyRedirect />} />
+          <Route
+            path="/crm/admin"
+            element={
+              <CrmSessionProvider>
+                <RequireCrmSession loginPath="/crm/admin/login">
+                  <CrmWorkspaceLayout />
+                </RequireCrmSession>
+              </CrmSessionProvider>
+            }
+          >
+            <Route index element={<Navigate to="overview" replace />} />
+            <Route path="overview" element={<CrmWorkspaceOverviewPage />} />
+            <Route path="users" element={<CrmWorkspaceUsersPage />} />
+            <Route path="consultancies" element={<CrmWorkspaceConsultanciesPage />} />
+            <Route path="activity" element={<CrmWorkspaceActivityPage />} />
+            <Route path="analytics" element={<CrmWorkspaceAnalyticsPage />} />
+          </Route>
           <Route path="/admin/login" element={<AdminLogin />} />
           <Route
             path="/admin"

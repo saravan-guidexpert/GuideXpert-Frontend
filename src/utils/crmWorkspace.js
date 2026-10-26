@@ -2,7 +2,7 @@ import { crmCan } from '../constants/crmUserAccess.js';
 import { interpretCrmResult } from './crmAccess.js';
 import { analyticsParams } from '../pages/admin/crm/crmProductionQuery.js';
 
-export const WORKSPACE_HOME = '/crm/app';
+export const WORKSPACE_HOME = '/crm/admin';
 export const CRM_WORKSPACE_PERMISSION = 'crm.roles.manage';
 
 export const WORKSPACE_SECTIONS = Object.freeze([
@@ -10,7 +10,7 @@ export const WORKSPACE_SECTIONS = Object.freeze([
   { id: 'users', to: `${WORKSPACE_HOME}/users`, label: 'CRM Users', access: 'workspace', end: false },
   { id: 'consultancies', to: `${WORKSPACE_HOME}/consultancies`, label: 'Consultancies', access: 'workspace', end: false },
   { id: 'activity', to: `${WORKSPACE_HOME}/activity`, label: 'Activity', access: 'workspace', end: false },
-  { id: 'analytics', to: `${WORKSPACE_HOME}/analytics`, label: 'Analytics', access: 'workspace', end: false },
+  { id: 'analytics', to: `${WORKSPACE_HOME}/analytics`, label: 'Operations', access: 'workspace', end: false },
 ]);
 
 const ACTIVITY_ACTIONS = Object.freeze([
@@ -28,6 +28,14 @@ const ACTIVITY_ACTIONS = Object.freeze([
   'crm_user.logout',
   'crm_session.revoked',
   'crm_session.revoked_all',
+  'consultancy.follow_up',
+  'consultancy.follow_up_updated',
+  'consultancy.follow_up_completed',
+  'consultancy.follow_up_cancelled',
+  'consultancy.calling_status',
+  'consultancy.remark_added',
+  'consultancy.remark_edited',
+  'consultancy.owner_reassigned',
 ]);
 
 export function activityActionOptions() {
@@ -46,6 +54,23 @@ export function workspaceAccess(user) {
 export function visibleWorkspaceSections(user) {
   const access = workspaceAccess(user);
   return WORKSPACE_SECTIONS.filter((section) => access[section.access]);
+}
+
+export function workspaceServerDecision(result) {
+  const interpreted = interpretCrmResult(result, { expectList: true });
+  if (interpreted.state === 'ok' || interpreted.state === 'empty') {
+    return { state: 'allowed', message: '' };
+  }
+  if (interpreted.state === 'forbidden') {
+    return {
+      state: 'forbidden',
+      message: 'This workspace is limited to CRM administrators.',
+    };
+  }
+  if (interpreted.state === 'unauthorized') {
+    return { state: 'anonymous', message: interpreted.message };
+  }
+  return { state: 'error', message: interpreted.message || 'Cannot reach the server.' };
 }
 
 export function workspaceRouteDecision(user, sectionId) {
@@ -113,6 +138,7 @@ export function activityListQuery(input) {
   const search = input.q && String(input.q).trim();
   if (search) query.q = search;
   if (input.consultancyId) query.consultancyId = input.consultancyId;
+  if (input.timeZone) query.timeZone = input.timeZone;
   return { query };
 }
 
@@ -177,10 +203,14 @@ export function consultancyComparisonRows(items) {
   }));
 }
 
+export const PHASE_A_TIME_ZONE = 'Asia/Kolkata';
+
 export function presenceBadge(state) {
   if (state === 'online') return { label: 'Online', tone: 'online' };
   if (state === 'idle') return { label: 'Idle', tone: 'idle' };
   if (state === 'offline') return { label: 'Offline', tone: 'offline' };
+  if (state === 'inactive') return { label: 'Inactive', tone: 'inactive' };
+  if (state === 'invited') return { label: 'Invited', tone: 'invited' };
   return { label: 'Unknown', tone: 'offline' };
 }
 
@@ -198,11 +228,32 @@ export function snapshotValue(value, missing) {
   return String(value);
 }
 
-export function formatTimestamp(value) {
+export function observedSessionSpan(session) {
+  const start = Date.parse(session && session.createdAt);
+  if (!Number.isFinite(start)) {
+    return { text: '—', detail: 'Sign-in time is not stored.' };
+  }
+  const revoked = Date.parse(session.revokedAt);
+  const seen = Date.parse(session.lastSeenAt);
+  const end = Number.isFinite(revoked) ? revoked : seen;
+  if (!Number.isFinite(end) || end < start) {
+    return { text: '—', detail: 'No observed end. A heartbeat is not working time.' };
+  }
+  const minutes = Math.max(0, Math.round((end - start) / 60000));
+  const text = minutes < 60 ? `${minutes} min` : `${Math.floor(minutes / 60)} h ${minutes % 60} min`;
+  return {
+    text,
+    detail: Number.isFinite(revoked)
+      ? 'Sign-in to revocation. This is not active working time.'
+      : 'Sign-in to the last heartbeat. This is not active working time.',
+  };
+}
+
+export function formatTimestamp(value, timeZone) {
   if (!value) return '—';
   const date = new Date(value);
   if (Number.isNaN(date.getTime())) return '—';
-  return date.toLocaleString();
+  return date.toLocaleString(undefined, timeZone ? { timeZone } : undefined);
 }
 
 export function isObjectId(value) {

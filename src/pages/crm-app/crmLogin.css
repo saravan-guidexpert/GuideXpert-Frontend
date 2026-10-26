@@ -153,6 +153,19 @@
   animation: gx-login-enter 640ms cubic-bezier(0.22, 1, 0.36, 1) both;
 }
 
+.gx-login-kicker {
+  display: inline-flex;
+  margin: 0 0 16px;
+  padding: 4px 10px;
+  border: 1px solid rgba(223, 255, 0, 0.45);
+  border-radius: 999px;
+  color: var(--lime);
+  font-size: 12px;
+  font-weight: 650;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
 .gx-login-display {
   margin: 0;
   max-width: 8.6em;

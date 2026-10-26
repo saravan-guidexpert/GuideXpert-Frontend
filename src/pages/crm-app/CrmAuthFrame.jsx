@@ -13,13 +13,13 @@ function Mark() {
   );
 }
 
-function BrandLockup({ compact = false }) {
+function BrandLockup({ compact = false, label = 'CRM' }) {
   return (
     <div className={compact ? 'gx-login-brand' : 'gx-login-lockup'}>
       <span className="gx-login-mark" aria-hidden="true"><Mark /></span>
       <div>
         <strong>GuideXpert</strong>
-        <span>CRM</span>
+        <span>{label}</span>
       </div>
     </div>
   );
@@ -35,7 +35,8 @@ export function CrmAuthAlert({ tone = 'error', children }) {
   );
 }
 
-export default function CrmAuthFrame({ title, lede, children }) {
+export default function CrmAuthFrame({ title, lede, children, variant = 'staff' }) {
+  const admin = variant === 'admin';
   const [theme, setTheme] = useState(readCrmTheme);
 
   useEffect(() => {
@@ -44,8 +45,8 @@ export default function CrmAuthFrame({ title, lede, children }) {
   }, [theme]);
 
   return (
-    <div className="gx-login" data-theme={theme}>
-      <aside className="gx-login-stage" aria-label="GuideXpert CRM">
+    <div className={`gx-login${admin ? ' is-admin' : ''}`} data-theme={theme}>
+      <aside className="gx-login-stage" aria-label={admin ? 'GuideXpert Super Admin' : 'GuideXpert CRM'}>
         <RippleGrid
           className="gx-login-ripple"
           color="#ffffff"
@@ -62,11 +63,14 @@ export default function CrmAuthFrame({ title, lede, children }) {
           mouseInteraction
           clickRipple
         />
-        <BrandLockup />
+        <BrandLockup label={admin ? 'Super Admin' : 'CRM'} />
         <div className="gx-login-stage-body">
-          <p className="gx-login-display">Admissions relationships, managed better.</p>
+          {admin ? <p className="gx-login-kicker">Restricted workspace</p> : null}
+          <p className="gx-login-display">{admin ? 'Staff access, in one place.' : 'Admissions relationships, managed better.'}</p>
           <p className="gx-login-stage-copy">
-            Manage consultancies, student referrals, and follow-ups in one workspace.
+            {admin
+              ? 'Review presence, assignments, and activity for the CRM team.'
+              : 'Manage consultancies, student referrals, and follow-ups in one workspace.'}
           </p>
         </div>
         <div className="gx-login-preview" aria-hidden="true">
@@ -89,7 +93,7 @@ export default function CrmAuthFrame({ title, lede, children }) {
       <main className="gx-login-panel">
         <div className="gx-login-form">
           <div className="gx-login-top">
-            <BrandLockup compact />
+            <BrandLockup compact label={admin ? 'Super Admin' : 'CRM'} />
             <button
               type="button"
               className="gx-theme"

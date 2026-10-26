@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { NavLink, Outlet, useLocation, useNavigate } from 'react-router-dom';
-import { FiBarChart2, FiBell, FiBriefcase, FiCalendar, FiClock, FiGrid, FiLink, FiLogOut, FiMenu, FiMoon, FiSearch, FiSettings, FiSun, FiUsers, FiX } from 'react-icons/fi';
+import { FiBarChart2, FiBell, FiBriefcase, FiCalendar, FiClock, FiGrid, FiLink, FiLogOut, FiMenu, FiMoon, FiSearch, FiSettings, FiShield, FiSun, FiUsers, FiX } from 'react-icons/fi';
 import { browserCrmDemo } from '../../utils/crmDemoStore';
 import { selectCrmClient } from '../../utils/crmDataSource';
 import { itemsOf } from './crmFormat';
@@ -136,6 +136,8 @@ export default function CrmDemoLayout({
   client: clientProp = null,
   sessionUser = null,
   canCorrectReferral = false,
+  canManageAssignments = false,
+  superAdminHref = null,
   onSignOut = null,
 }) {
   const location = useLocation();
@@ -173,11 +175,13 @@ export default function CrmDemoLayout({
     theme,
     basePath,
     mode,
+    sessionUser,
+    canManageAssignments: mode === 'api' && canManageAssignments,
     workspaceName: mode === 'api' ? (sessionUser?.fullName || 'CRM workspace') : 'Demo Workspace',
     workspaceLede: mode === 'api'
       ? 'Signed-in consultancy, student, and referral records from the server.'
       : 'Local demo records for consultancies, students and referrals. Stored in this browser.',
-  }), [client, demoManager, demoRole, canCorrectReferral, refresh, theme, basePath, mode, sessionUser]);
+  }), [client, demoManager, demoRole, canCorrectReferral, canManageAssignments, refresh, theme, basePath, mode, sessionUser]);
   const [menu, setMenu] = useState(false);
   const [menuPath, setMenuPath] = useState(location.pathname);
   if (menuPath !== location.pathname) {
@@ -228,6 +232,12 @@ export default function CrmDemoLayout({
             <NavItems basePath={basePath} onNavigate={() => closeMenu(false)} />
           </nav>
           <div className="gx-side-foot">
+            {superAdminHref ? (
+              <NavLink to={superAdminHref} data-label="Super Admin" onClick={() => closeMenu(false)}>
+                <span className="gx-ico"><FiShield size={18} strokeWidth={1.75} /></span>
+                <span className="gx-label">Super Admin</span>
+              </NavLink>
+            ) : null}
             <NavLink to={`${basePath}/settings`} data-label="Settings" onClick={() => closeMenu(false)} className={({ isActive }) => (isActive ? 'active' : '')}>
               <span className="gx-ico"><FiSettings size={18} strokeWidth={1.75} /></span>
               <span className="gx-label">Settings</span>

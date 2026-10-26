@@ -40,7 +40,7 @@ function whenLabel(iso, now) {
   return { exact, relative };
 }
 
-export function RemarkDialog({ mode, text, onChange, saving, error, onClose, onSubmit }) {
+export function RemarkDialog({ mode, text, onChange, saving, error, onClose, onSubmit, persisted = false }) {
   const helpId = useId();
   const countId = useId();
   const errorId = useId();
@@ -48,7 +48,9 @@ export function RemarkDialog({ mode, text, onChange, saving, error, onClose, onS
   const title = mode === 'edit' ? 'Edit remark' : 'Add remark';
   const description = mode === 'edit'
     ? 'Update this note. The author and original time stay on the record, and the previous wording is kept.'
-    : 'Add a note for this consultancy. It is saved in this browser with the current demo author.';
+    : (persisted
+      ? 'Add a note for this consultancy. It is saved for this signed-in account.'
+      : 'Add a note for this consultancy. It is saved in this browser with the current demo author.');
   return (
     <Dialog
       title={title}
@@ -95,10 +97,10 @@ export function RemarkDialog({ mode, text, onChange, saving, error, onClose, onS
   );
 }
 
-function RemarkCard({ remark, now, menuOpen, historyOpen, onEdit, onToggleMenu, onCloseMenu, onToggleHistory }) {
+function RemarkCard({ remark, now, menuOpen, historyOpen, onEdit, onToggleMenu, onCloseMenu, onToggleHistory, currentAuthorId }) {
   const menuRef = useRef(null);
   const versions = previousRemarkVersions(remark);
-  const canEdit = remark.authorId === DEMO_ACTOR.id;
+  const canEdit = remark.authorId === currentAuthorId;
   const stamp = whenLabel(remark.createdAt, now);
   const edited = remark.updatedAt && remark.updatedAt !== remark.createdAt;
   const author = remark.authorName || 'Demo';
@@ -211,6 +213,8 @@ export default function RemarksActivity({
   onAdd,
   onEdit,
   onRetry,
+  persisted = false,
+  currentAuthorId = DEMO_ACTOR.id,
 }) {
   const titleId = useId();
   const [mode, setMode] = useState('all');
@@ -275,7 +279,7 @@ export default function RemarksActivity({
           </p>
           <p className="gx-ra-store" role="note">
             <FiInfo size={14} strokeWidth={1.75} aria-hidden="true" />
-            <span>This history is stored in the browser. It is not tamper-proof and it is not a server audit log.</span>
+            <span>{persisted ? 'Remarks and activity are saved on the server for this consultancy.' : 'This history is stored in the browser. It is not tamper-proof and it is not a server audit log.'}</span>
           </p>
         </div>
         <button type="button" className="gx-lime" onClick={onAdd}>
@@ -347,6 +351,7 @@ export default function RemarksActivity({
                     onToggleMenu={toggleMenu}
                     onCloseMenu={closeMenu}
                     onToggleHistory={toggleHistory}
+                    currentAuthorId={currentAuthorId}
                   />
                 ) : <EventRow entry={entry} now={now} />}
               </li>

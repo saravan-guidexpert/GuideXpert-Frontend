@@ -13,6 +13,7 @@ function request(method, path, params, body) {
 export default function CrmAppShell() {
   const { user, logout } = useCrmSession();
   const canCorrectReferral = crmCan(user, 'crm.referrals.correct_source');
+  const canManageAssignments = crmCan(user, 'crm.roles.manage');
   const client = useMemo(() => createCrmApiRepository({ request, user, canCorrectReferral }), [user, canCorrectReferral]);
 
   return (
@@ -22,6 +23,8 @@ export default function CrmAppShell() {
       client={client}
       sessionUser={user}
       canCorrectReferral={canCorrectReferral}
+      canManageAssignments={canManageAssignments}
+      superAdminHref={canManageAssignments ? '/crm/admin' : null}
       onSignOut={logout}
     />
   );

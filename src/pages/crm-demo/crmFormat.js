@@ -45,6 +45,8 @@ const ACTIVITY_TITLES = {
   'demo_role.previewed': 'Demo role preview',
   'consultancy.follow_up': 'Consultancy status updated',
   'consultancy.calling_status': 'Calling status updated',
+  'consultancy.follow_up_updated': 'Follow-up updated',
+  'consultancy.follow_up_completed': 'Follow-up completed',
   'consultancy.follow_up_cancelled': 'Follow-up cancelled',
   'consultancy.remark_added': 'Remark added',
   'consultancy.remark_edited': 'Remark edited',

@@ -1,4 +1,4 @@
-import { useEffect, useRef } from 'react';
+import { createContext, useContext, useEffect, useRef } from 'react';
 import {
   Bar,
   BarChart,
@@ -8,30 +8,33 @@ import {
   XAxis,
   YAxis,
 } from 'recharts';
+import { chartPalette } from '../../../crm-demo/crmTheme';
 import { accountBadge, metricText, presenceBadge, snapshotValue } from '../../../../utils/crmWorkspace';
 
-const TONE = {
-  online: 'bg-emerald-50 text-emerald-800 ring-emerald-200',
-  idle: 'bg-amber-50 text-amber-900 ring-amber-200',
-  offline: 'bg-gray-100 text-gray-700 ring-gray-200',
-};
+const AdminThemeContext = createContext('light');
+
+export function AdminThemeProvider({ theme, children }) {
+  return <AdminThemeContext.Provider value={theme}>{children}</AdminThemeContext.Provider>;
+}
+
+function useAdminTheme() {
+  return useContext(AdminThemeContext);
+}
+
+const TONE = { online: 'is-on', idle: 'is-warn', offline: 'is-off', inactive: 'is-off', invited: 'is-invited' };
 
 export function StatusBadge({ kind, value }) {
   const badge = kind === 'presence' ? presenceBadge(value) : accountBadge(value);
-  return (
-    <span className={`inline-flex rounded-full px-2 py-0.5 text-xs font-medium ring-1 ring-inset ${TONE[badge.tone]}`}>
-      {badge.label}
-    </span>
-  );
+  return <span className={`gx-badge ${TONE[badge.tone] || 'is-off'}`}>{badge.label}</span>;
 }
 
 export function MetricCard({ label, value, whenNull, hint }) {
   const shown = metricText(value, whenNull);
   return (
-    <article className="rounded-xl border border-gray-200 bg-white p-4">
-      <p className="text-sm text-gray-500">{label}</p>
-      <p className="mt-1 text-2xl font-semibold text-[#003366]">{shown.text}</p>
-      <p className="mt-1 text-xs text-gray-500">{shown.detail || hint}</p>
+    <article className="gx-kpi">
+      <span className="gx-kpi-top"><em>{label}</em></span>
+      <strong>{shown.text}</strong>
+      <small>{shown.detail || hint}</small>
     </article>
   );
 }
@@ -41,52 +44,54 @@ export function SkeletonBlock({ className = 'h-24' }) {
 }
 
 export function EmptyState({ children }) {
-  return <p className="rounded-xl border border-dashed border-gray-300 bg-white px-4 py-8 text-center text-sm text-gray-500">{children}</p>;
+  return <p className="gx-note">{children}</p>;
 }
 
 export function AccessNote({ children }) {
-  return <p className="rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-950">{children}</p>;
+  return <p className="gx-notice warning" role="status">{children}</p>;
 }
-
-const fieldClass = 'rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm outline-none focus:border-[#003366] focus:ring-2 focus:ring-[#003366]/20';
 
 export function SelectField({ label, value, onChange, children }) {
   return (
-    <label className="block text-sm text-gray-700">
-      <span className="mb-1 block font-medium">{label}</span>
-      <select className={`${fieldClass} w-full`} value={value} onChange={(event) => onChange(event.target.value)}>
-        {children}
-      </select>
-    </label>
+    <div className="gx-form">
+      <label>
+        <span>{label}</span>
+        <select className="gx-select" value={value} onChange={(event) => onChange(event.target.value)}>
+          {children}
+        </select>
+      </label>
+    </div>
   );
 }
 
 export function TextField({ label, value, onChange, type = 'text', placeholder }) {
   return (
-    <label className="block text-sm text-gray-700">
-      <span className="mb-1 block font-medium">{label}</span>
-      <input
-        className={`${fieldClass} w-full`}
-        type={type}
-        value={value}
-        placeholder={placeholder}
-        onChange={(event) => onChange(event.target.value)}
-      />
-    </label>
+    <div className="gx-form">
+      <label>
+        <span>{label}</span>
+        <input
+          type={type}
+          value={value}
+          placeholder={placeholder}
+          onChange={(event) => onChange(event.target.value)}
+        />
+      </label>
+    </div>
   );
 }
 
 export function CountChart({ rows, xKey, yKey, label }) {
+  const palette = chartPalette(useAdminTheme());
   if (!rows.length) return <EmptyState>No points to chart for this selection.</EmptyState>;
   return (
     <div className="h-64 w-full" role="img" aria-label={label}>
       <ResponsiveContainer width="100%" height="100%">
         <BarChart data={rows} margin={{ top: 8, right: 8, left: 0, bottom: 24 }}>
-          <CartesianGrid strokeDasharray="3 3" stroke="#e5e7eb" />
-          <XAxis dataKey={xKey} tick={{ fontSize: 11 }} interval={0} angle={-28} textAnchor="end" height={56} />
-          <YAxis allowDecimals={false} tick={{ fontSize: 11 }} width={36} />
+          <CartesianGrid strokeDasharray="3 3" stroke={palette.grid} />
+          <XAxis dataKey={xKey} tick={{ fontSize: 11, fill: palette.tick }} interval={0} angle={-28} textAnchor="end" height={56} />
+          <YAxis allowDecimals={false} tick={{ fontSize: 11, fill: palette.tick }} width={36} />
           <Tooltip />
-          <Bar dataKey={yKey} fill="#003366" radius={[4, 4, 0, 0]} />
+          <Bar dataKey={yKey} fill={palette.bar} radius={[4, 4, 0, 0]} />
         </BarChart>
       </ResponsiveContainer>
     </div>
@@ -96,20 +101,20 @@ export function CountChart({ rows, xKey, yKey, label }) {
 export function DataTable({ columns, rows, empty }) {
   if (!rows.length) return <EmptyState>{empty}</EmptyState>;
   return (
-    <div className="overflow-x-auto rounded-xl border border-gray-200 bg-white">
-      <table className="min-w-full text-left text-sm">
-        <thead className="bg-gray-50 text-xs uppercase tracking-wide text-gray-500">
+    <div className="gx-table-wrap is-static">
+      <table className="gx-table">
+        <thead>
           <tr>
             {columns.map((column) => (
-              <th key={column.key} className="px-3 py-2 font-medium">{column.label}</th>
+              <th key={column.key}>{column.label}</th>
             ))}
           </tr>
         </thead>
         <tbody>
           {rows.map((row) => (
-            <tr key={row.rowKey || row.id} className="border-t border-gray-100">
+            <tr key={row.rowKey || row.id}>
               {columns.map((column) => (
-                <td key={column.key} className="px-3 py-2 align-top text-gray-800">{column.render(row)}</td>
+                <td key={column.key}>{column.render(row)}</td>
               ))}
             </tr>
           ))}
@@ -149,19 +154,19 @@ export function ConfirmDialog({ open, title, body, confirmLabel, busy, onConfirm
   }, [open, onClose]);
   if (!open) return null;
   return (
-    <div className="fixed inset-0 z-50 flex items-end justify-center bg-black/40 p-4 sm:items-center" onClick={onClose}>
+    <div className="gx-modal" onClick={onClose}>
       <div
         role="dialog"
         aria-modal="true"
         aria-labelledby="crm-confirm-title"
-        className="w-full max-w-md rounded-xl bg-white p-5 shadow-xl"
+        className="gx-modal-card"
         onClick={(event) => event.stopPropagation()}
       >
-        <h3 id="crm-confirm-title" className="text-lg font-semibold text-[#003366]">{title}</h3>
-        <p className="mt-2 text-sm text-gray-600">{body}</p>
-        <div className="mt-4 flex justify-end gap-2">
-          <button ref={cancelRef} type="button" className="rounded-lg border border-gray-300 px-3 py-2 text-sm" onClick={onClose}>Cancel</button>
-          <button type="button" className="rounded-lg bg-red-700 px-3 py-2 text-sm font-medium text-white disabled:opacity-60" disabled={busy} onClick={onConfirm}>
+        <h3 id="crm-confirm-title">{title}</h3>
+        <p className="gx-help">{body}</p>
+        <div className="gx-actions">
+          <button ref={cancelRef} type="button" className="gx-btn" onClick={onClose}>Cancel</button>
+          <button type="button" className="gx-btn" disabled={busy} onClick={onConfirm}>
             {busy ? 'Working…' : confirmLabel}
           </button>
         </div>
@@ -183,12 +188,12 @@ const PERIODS = [
 export function PeriodControls({ period, from, to, onPeriod, onFrom, onTo }) {
   return (
     <div className="space-y-3">
-      <div className="flex gap-2 overflow-x-auto pb-1" role="group" aria-label="Date range">
+      <div className="gx-toolbar" role="group" aria-label="Date range">
         {PERIODS.map(([id, label]) => (
           <button
             key={id}
             type="button"
-            className={`shrink-0 rounded-lg border px-3 py-1.5 text-sm focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#003366] ${period === id ? 'border-[#003366] bg-[#003366] text-white' : 'border-gray-300 bg-white'}`}
+            className={`gx-chip${period === id ? ' is-on' : ''}`}
             onClick={() => onPeriod(id)}
           >
             {label}

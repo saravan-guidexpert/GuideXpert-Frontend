@@ -1,10 +1,10 @@
 import { useMemo, useState } from 'react';
 import { useCrmSession } from '../../../crm-app/useCrmSession';
 import { getPortalOperations } from '../../../../utils/crmSessionApi';
-import { browserTimeZone } from '../crmProductionQuery';
 import { Banner, Pagination } from '../crmUi';
 import {
   HIDDEN_METRIC,
+  PHASE_A_TIME_ZONE,
   RANGE_METRIC,
   admissionChartRows,
   applyFilterPatch,
@@ -22,7 +22,7 @@ import { AccessNote, CountChart, DataTable, MetricCard, PeriodControls, Skeleton
 export default function AnalyticsPage() {
   const { user } = useCrmSession();
   const decision = workspaceRouteDecision(user, 'analytics');
-  const timeZone = useMemo(() => browserTimeZone(), []);
+  const timeZone = PHASE_A_TIME_ZONE;
   const [filters, setFilters] = useState({ period: '30', from: '', to: '', page: 1, limit: 20 });
   const built = useMemo(
     () => operationsQuery({ ...filters, timeZone }),
@@ -47,8 +47,13 @@ export default function AnalyticsPage() {
   ];
 
   return (
-    <div className="space-y-4">
-      <p className="text-sm text-gray-500">Comparisons use the same referral definition: referredAt in the selected window, counted at the referral’s current consultancy. Admission charts use the current status only.</p>
+    <div className="gx-admin-page">
+      <header className="gx-page-head">
+        <div>
+          <h2 className="gx-title">Operations</h2>
+          <p className="gx-subtitle">Comparisons use referredAt in the selected window, in {timeZone}, counted at the referral’s current consultancy. Admission charts use the current status only. {timeZone} is pending business-owner confirmation. This is not a staff ranking and does not show conversion rates.</p>
+        </div>
+      </header>
       <PeriodControls
         period={filters.period}
         from={filters.from}
@@ -62,23 +67,23 @@ export default function AnalyticsPage() {
       {operations.loading ? <SkeletonBlock className="h-40" /> : null}
       {data ? (
         <>
-          <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
+          <section className="gx-kpis" aria-label="Operations totals">
             <MetricCard label="New referrals" value={data.period?.newReferrals} whenNull={HIDDEN_METRIC} hint={data.range?.label} />
             <MetricCard label="Previous window" value={data.period?.previousNewReferrals} whenNull={RANGE_METRIC} hint={previous.detail || 'Same length, immediately before'} />
             <MetricCard label="Students now" value={data.current?.students?.total} whenNull={HIDDEN_METRIC} hint="Current state, not the selected period" />
             <MetricCard label="Unassigned consultancies" value={data.consultancies?.unassigned} whenNull={HIDDEN_METRIC} hint="Current state" />
-          </div>
-          <section className="rounded-xl border border-gray-200 bg-white p-4">
+          </section>
+          <section className="gx-card">
             <h3 className="font-semibold text-[#003366]">Referral trend</h3>
             <p className="mb-3 text-sm text-gray-500">{data.period?.volume?.grain === 'day' ? 'One bar per day.' : 'One bar per month.'}</p>
             <CountChart rows={volumeChartRows(data.period?.volume)} xKey="label" yKey="count" label="Referral trend" />
           </section>
-          <section className="rounded-xl border border-gray-200 bg-white p-4">
+          <section className="gx-card">
             <h3 className="font-semibold text-[#003366]">Current admission status</h3>
             <p className="mb-3 text-sm text-gray-500">{populationLabel(data.current?.admissionStatus?.population)} This is not a history of status changes.</p>
             <CountChart rows={admissionChartRows(data.current?.admissionStatus)} xKey="status" yKey="count" label="Current admission status" />
           </section>
-          <section className="space-y-3 rounded-xl border border-gray-200 bg-white p-4">
+          <section className="gx-card">
             <h3 className="font-semibold text-[#003366]">Consultancy comparison</h3>
             <p className="text-sm text-gray-500">New referrals on this page, for the selected window.</p>
             <CountChart rows={consultancyComparisonRows(data.consultancies?.items)} xKey="name" yKey="referrals" label="Consultancy referral comparison" />

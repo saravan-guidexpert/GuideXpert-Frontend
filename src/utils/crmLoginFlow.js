@@ -1,3 +1,5 @@
+import { workspaceServerDecision } from './crmWorkspace.js';
+
 export function loginFieldErrors({ identifier, password }) {
   const errors = {};
   if (!String(identifier || '').trim()) errors.identifier = 'Enter your email or username.';
@@ -53,16 +55,65 @@ export function resetFailure(result) {
 }
 
 const CRM_APP_HOME = '/crm/app';
+export const CRM_ADMIN_HOME = '/crm/admin';
+export const CRM_ADMIN_LOGIN = '/crm/admin/login';
 
-export function safeCrmNext(value) {
-  if (typeof value !== 'string') return CRM_APP_HOME;
+function isCrmDestination(path) {
+  return path === CRM_APP_HOME
+    || path.startsWith(`${CRM_APP_HOME}/`)
+    || path === CRM_ADMIN_HOME
+    || path.startsWith(`${CRM_ADMIN_HOME}/`);
+}
+
+export function safeCrmNext(value, home) {
+  const fallback = home === CRM_ADMIN_HOME ? CRM_ADMIN_HOME : CRM_APP_HOME;
+  if (typeof value !== 'string') return fallback;
   let path = value.trim();
   if (path === '/crm-app' || path.startsWith('/crm-app/')) path = `/crm/app${path.slice('/crm-app'.length)}`;
-  if (path !== CRM_APP_HOME && !path.startsWith(`${CRM_APP_HOME}/`)) return CRM_APP_HOME;
-  if (path.startsWith('/crm/app/login') || path.startsWith('/crm/app/reset')) return CRM_APP_HOME;
+  if (!isCrmDestination(path)) return fallback;
+  if (path.startsWith('/crm/app/login') || path.startsWith('/crm/app/reset')) return fallback;
+  if (path.startsWith('/crm/admin/login') || path.startsWith('/crm/admin/reset')) return fallback;
   if (path.includes('..') || path.includes('\\') || path.includes('://') || path.includes('\n') || path.includes('\0')) {
-    return CRM_APP_HOME;
+    return fallback;
   }
-  if (path.length > 300) return CRM_APP_HOME;
+  if (path.length > 300) return fallback;
   return path;
+}
+
+export function crmSessionRedirect(status, pathname, search = '', loginPath = '/crm/login') {
+  if (status === 'loading' || status === 'ready') return null;
+  const next = `${pathname || ''}${search || ''}`;
+  return `${loginPath}?next=${encodeURIComponent(next)}`;
+}
+
+export function adminAccessDecision({ loginResult, sessionResult, accessResult, next } = {}) {
+  if (loginResult && !loginResult.success) {
+    return { action: 'error', error: loginFailure(loginResult) };
+  }
+  if (!sessionResult || !sessionResult.success) {
+    return {
+      action: 'error',
+      error: { kind: 'network', message: 'Sign-in could not start a session. Please try again.' },
+    };
+  }
+  const access = workspaceServerDecision(accessResult);
+  if (access.state === 'allowed') {
+    return { action: 'enter', to: safeCrmNext(next, CRM_ADMIN_HOME) };
+  }
+  if (access.state === 'forbidden') {
+    return {
+      action: 'denied',
+      message: 'This account is signed in, but it does not have Super Admin access.',
+    };
+  }
+  if (access.state === 'anonymous') {
+    return {
+      action: 'error',
+      error: { kind: 'network', message: 'Sign-in could not start a session. Please try again.' },
+    };
+  }
+  return {
+    action: 'error',
+    error: { kind: 'network', message: access.message || 'Cannot reach the server. Check your connection and try again.' },
+  };
 }

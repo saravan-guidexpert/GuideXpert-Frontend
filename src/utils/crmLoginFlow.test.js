@@ -3,7 +3,7 @@ import assert from 'node:assert/strict';
 import fs from 'node:fs';
 import path from 'node:path';
 import { CRM_PERMISSIONS, CRM_ROLES, adminCanManageCrmUsers, clampPage, userListQuery, validateCrmAccountForm } from '../constants/crmUserAccess.js';
-import { beginLogin, loginButtonState, loginFailure, safeCrmNext } from './crmLoginFlow.js';
+import { adminAccessDecision, beginLogin, crmSessionRedirect, loginButtonState, loginFailure, safeCrmNext } from './crmLoginFlow.js';
 import { readCrmTheme, revealTheme, writeCrmTheme } from '../pages/crm-demo/crmTheme.js';
 
 const root = path.join(import.meta.dirname, '..');
@@ -59,6 +59,81 @@ test('protected redirects reject external destinations', () => {
   assert.equal(safeCrmNext('/crm/demo'), '/crm/app');
   assert.equal(safeCrmNext('/crm/demo/students'), '/crm/app');
   assert.equal(safeCrmNext('/crm/app/overview'), '/crm/app/overview');
+  assert.equal(safeCrmNext('/crm/admin'), '/crm/admin');
+  assert.equal(safeCrmNext('/crm/admin/users?q=a'), '/crm/admin/users?q=a');
+  assert.equal(safeCrmNext('/crm/administration'), '/crm/app');
+  assert.equal(safeCrmNext('https://evil.example/crm/admin'), '/crm/app');
+  assert.equal(safeCrmNext('/crm/admin/../app'), '/crm/app');
+  assert.equal(safeCrmNext(undefined, '/crm/admin'), '/crm/admin');
+  assert.equal(safeCrmNext('https://evil.example/crm/admin', '/crm/admin'), '/crm/admin');
+  assert.equal(safeCrmNext('/crm/admin/users?page=2', '/crm/admin'), '/crm/admin/users?page=2');
+  assert.equal(safeCrmNext('/crm/admin/login', '/crm/admin'), '/crm/admin');
+});
+
+test('super admin sign-in enters only after the directory permission check', () => {
+  const allowed = adminAccessDecision({
+    loginResult: { success: true, status: 200 },
+    sessionResult: { success: true, status: 200, data: { user: { permissions: ['crm.roles.manage'] } } },
+    accessResult: { success: true, status: 200, data: { items: [], total: 0 } },
+    next: '/crm/admin/users',
+  });
+  assert.equal(allowed.action, 'enter');
+  assert.equal(allowed.to, '/crm/admin/users');
+  const home = adminAccessDecision({
+    loginResult: { success: true, status: 200 },
+    sessionResult: { success: true, status: 200 },
+    accessResult: { success: true, status: 200, data: { items: [{ id: '1' }] } },
+  });
+  assert.equal(home.to, '/crm/admin');
+  const invalid = adminAccessDecision({
+    loginResult: { success: false, status: 401, code: 'invalid_credentials' },
+  });
+  assert.equal(invalid.action, 'error');
+  assert.equal(invalid.error.kind, 'invalid');
+  const denied = adminAccessDecision({
+    loginResult: { success: true, status: 200 },
+    sessionResult: { success: true, status: 200 },
+    accessResult: { success: false, status: 403, code: 'permission_denied' },
+    next: '/crm/admin/users',
+  });
+  assert.equal(denied.action, 'denied');
+  assert.equal(denied.to, undefined);
+  const expired = adminAccessDecision({
+    loginResult: { success: true, status: 200 },
+    sessionResult: { success: true, status: 200 },
+    accessResult: { success: false, status: 401, code: 'session_expired' },
+  });
+  assert.equal(expired.action, 'error');
+  assert.equal(expired.to, undefined);
+  const offline = adminAccessDecision({
+    loginResult: { success: false, status: 0 },
+  });
+  assert.equal(offline.error.kind, 'network');
+});
+
+test('an ended super admin session returns to its own login', () => {
+  assert.equal(crmSessionRedirect('ready', '/crm/admin/users', '', '/crm/admin/login'), null);
+  assert.equal(
+    crmSessionRedirect('anonymous', '/crm/admin/users', '?page=2', '/crm/admin/login'),
+    '/crm/admin/login?next=%2Fcrm%2Fadmin%2Fusers%3Fpage%3D2',
+  );
+  assert.equal(crmSessionRedirect('anonymous', '/crm/app', '', '/crm/login'), '/crm/login?next=%2Fcrm%2Fapp');
+  const app = fs.readFileSync(path.join(root, 'App.jsx'), 'utf8');
+  const userLogin = fs.readFileSync(path.join(root, 'pages/crm-app/CrmLoginPage.jsx'), 'utf8');
+  const adminLogin = fs.readFileSync(path.join(root, 'pages/crm-app/CrmAdminLoginPage.jsx'), 'utf8');
+  const loginAt = app.indexOf('path="/crm/admin/login"');
+  const workspaceAt = app.indexOf('path="/crm/admin"\n');
+  assert.ok(loginAt > 0);
+  assert.ok(workspaceAt > loginAt);
+  const loginRoute = app.slice(loginAt, app.indexOf('/>', loginAt) + 2);
+  assert.match(loginRoute, /CrmAdminLoginPage/);
+  assert.doesNotMatch(loginRoute, /RequireCrmSession/);
+  assert.match(app.slice(workspaceAt, workspaceAt + 500), /loginPath="\/crm\/admin\/login"/);
+  assert.match(adminLogin, /fetchPortalDirectory/);
+  assert.match(adminLogin, /adminAccessDecision/);
+  assert.doesNotMatch(adminLogin, /password\s*[:=]\s*['"][^'"]+['"]/);
+  assert.doesNotMatch(userLogin, /fetchPortalDirectory|CrmAdminLoginPage/);
+  assert.match(userLogin, /safeCrmNext\(params\.get\('next'\)\)/);
 });
 
 test('access management filters, pagination, and form validation', () => {

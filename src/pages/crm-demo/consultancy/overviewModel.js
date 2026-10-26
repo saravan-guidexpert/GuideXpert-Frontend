@@ -233,6 +233,11 @@ export function activityPresentation(row, now) {
   } else if (row?.action === 'consultancy.calling_status') {
     kind = 'call';
     context = after.callingStatus || '';
+  } else if (row?.action === 'consultancy.follow_up_completed') {
+    kind = 'done';
+  } else if (row?.action === 'consultancy.follow_up_updated') {
+    kind = 'status';
+    context = after.followUpStatus || '';
   } else if (row?.action === 'consultancy.follow_up_cancelled') {
     kind = 'cancelled';
   }

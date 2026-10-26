@@ -1,7 +1,3 @@
-function unsupported(feature) {
-  return Promise.resolve(fail(409, `${feature} is not stored for signed-in CRM records yet. Nothing was saved.`, 'not_stored'));
-}
-
 function ok(status, message, data) {
   return { success: true, status, code: null, message, data };
 }
@@ -31,7 +27,17 @@ function slicePage(rows, query) {
 }
 
 function emptyCache() {
-  return { ready: false, error: null, consultancies: [], contacts: [], students: [], referrals: [], audits: [] };
+  return {
+    ready: false,
+    error: null,
+    consultancies: [],
+    contacts: [],
+    students: [],
+    referrals: [],
+    audits: [],
+    followUps: [],
+    remarks: [],
+  };
 }
 
 async function readPages(request, path, params) {
@@ -63,15 +69,16 @@ function presentConsultancy(row, contacts, referrals) {
     studentCount: referrals.filter((item) => item.consultancyId === row.id).length,
     originalStudentCount: referrals.filter((item) => item.originalConsultancyId === row.id).length,
     createdById: row.createdBy || null,
-    createdByName: '',
-    ownerId: null,
-    ownerName: '',
-    followUpStatus: '',
-    callingStatus: '',
-    pipelineStored: false,
-    lastContactAt: null,
-    nextFollowUpAt: null,
-    latestRemark: null,
+    createdByName: row.createdByName || '',
+    ownerId: row.ownerId || null,
+    ownerName: row.ownerName || '',
+    followUpStatus: row.followUpStatus || '',
+    callingStatus: row.callingStatus || '',
+    pipelineStage: row.pipelineStage || '',
+    pipelineStored: Boolean(row.followUpStatus),
+    lastContactAt: row.lastContactAt || null,
+    nextFollowUpAt: row.nextFollowUpAt || null,
+    latestRemark: row.latestRemark || null,
     createdAt: row.createdAt,
     updatedAt: row.updatedAt,
   };
@@ -118,20 +125,27 @@ export function createCrmApiRepository({ request, user = null, canCorrectReferra
       cache = { ...emptyCache(), error: failed.message || 'CRM records could not be loaded.' };
       return fail(failed.status || 503, cache.error, failed.code || 'load_failed');
     }
-    const contactLists = await Promise.all(consultanciesResult.data.items.map((row) => readPages(request, `/consultancies/${row.id}/contacts`)));
-    const contactError = contactLists.find((item) => !item || item.success !== true);
-    if (contactError) {
-      cache = { ...emptyCache(), error: contactError.message || 'Consultancy contacts could not be loaded.' };
-      return fail(contactError.status || 503, cache.error, contactError.code || 'load_failed');
+    const rows = consultanciesResult.data.items;
+    const [contactLists, followLists, remarkLists] = await Promise.all([
+      Promise.all(rows.map((row) => readPages(request, `/consultancies/${row.id}/contacts`))),
+      Promise.all(rows.map((row) => readPages(request, `/consultancies/${row.id}/follow-ups`))),
+      Promise.all(rows.map((row) => readPages(request, `/consultancies/${row.id}/remarks`))),
+    ]);
+    const detailError = [...contactLists, ...followLists, ...remarkLists].find((item) => !item || item.success !== true);
+    if (detailError) {
+      cache = { ...emptyCache(), error: detailError.message || 'Consultancy details could not be loaded.' };
+      return fail(detailError.status || 503, cache.error, detailError.code || 'load_failed');
     }
     cache = {
       ready: true,
       error: null,
-      consultancies: consultanciesResult.data.items,
+      consultancies: rows,
       students: studentsResult.data.items,
       referrals: referralsResult.data.items,
       audits: auditsResult.data.items.map((row) => presentAudit(row, actor)),
       contacts: contactLists.flatMap((item) => item.data.items),
+      followUps: followLists.flatMap((item) => item.data.items),
+      remarks: remarkLists.flatMap((item) => item.data.items),
     };
     return ok(200, '', { counts: counts() });
   }
@@ -155,11 +169,11 @@ export function createCrmApiRepository({ request, user = null, canCorrectReferra
     },
     capabilities() {
       return {
-        followUps: false,
-        remarks: false,
-        pipeline: false,
-        calling: false,
-        owner: false,
+        followUps: true,
+        remarks: true,
+        pipeline: true,
+        calling: true,
+        owner: true,
         demoTools: false,
         sourceCorrection: allowCorrection,
       };
@@ -186,16 +200,10 @@ export function createCrmApiRepository({ request, user = null, canCorrectReferra
       return slicePage(rows, query);
     },
     async createConsultancy(body = {}) {
-      const result = await mutate('/consultancies', 'POST', {
-        name: body.name,
-        status: body.status,
-        notes: body.notes,
-      });
-      if (!result || result.success !== true) return result;
-      return {
-        ...result,
-        message: 'Consultancy created. Pipeline status, calling status, remarks, follow-ups, and owner were not stored.',
-      };
+      const payload = { name: body.name, status: body.status, notes: body.notes };
+      if (body.followUpStatus) payload.followUpStatus = body.followUpStatus;
+      if (Object.prototype.hasOwnProperty.call(body, 'callingStatus')) payload.callingStatus = body.callingStatus;
+      return mutate('/consultancies', 'POST', payload);
     },
     getConsultancy(id) {
       const pending = requireReady();
@@ -205,19 +213,11 @@ export function createCrmApiRepository({ request, user = null, canCorrectReferra
       return ok(200, '', { consultancy: row });
     },
     async updateConsultancy(id, body = {}) {
-      const result = await mutate(`/consultancies/${id}`, 'PATCH', {
-        name: body.name,
-        status: body.status,
-        notes: body.notes,
-      });
-      if (!result || result.success !== true) return result;
-      const dropped = body.followUpStatus || body.callingStatus || body.ownerId || body.pipelineStage;
-      return {
-        ...result,
-        message: dropped
-          ? 'Name, record status, and notes were saved. Pipeline status, calling status, and owner were not stored.'
-          : result.message,
-      };
+      const payload = { name: body.name, status: body.status, notes: body.notes };
+      if (body.followUpStatus) payload.followUpStatus = body.followUpStatus;
+      if (Object.prototype.hasOwnProperty.call(body, 'callingStatus')) payload.callingStatus = body.callingStatus;
+      if (body.pipelineStage) payload.pipelineStage = body.pipelineStage;
+      return mutate(`/consultancies/${id}`, 'PATCH', payload);
     },
     listContacts(consultancyId, query = {}) {
       const pending = requireReady();
@@ -280,30 +280,46 @@ export function createCrmApiRepository({ request, user = null, canCorrectReferra
       if (pending) return pending;
       return slicePage(cache.audits, query);
     },
-    listFollowUps(_consultancyId, query = {}) {
+    listFollowUps(consultancyId, query = {}) {
       const pending = requireReady();
       if (pending) return pending;
-      return slicePage([], query);
+      return slicePage(cache.followUps.filter((row) => row.consultancyId === consultancyId), query);
     },
-    listRemarks(_consultancyId, query = {}) {
+    listRemarks(consultancyId, query = {}) {
       const pending = requireReady();
       if (pending) return pending;
-      return slicePage([], query);
+      return slicePage(cache.remarks.filter((row) => row.consultancyId === consultancyId), query);
     },
-    setFollowUp() {
-      return unsupported('Follow-ups, calling status, and consultancy pipeline');
+    setFollowUp(id, body) {
+      return mutate(`/consultancies/${id}/follow-ups`, 'POST', body);
     },
-    addRemark() {
-      return unsupported('Remarks');
+    addRemark(id, body) {
+      return mutate(`/consultancies/${id}/remarks`, 'POST', body);
     },
-    editRemark() {
-      return unsupported('Remarks');
+    editRemark(consultancyId, remarkId, body) {
+      return mutate(`/consultancies/${consultancyId}/remarks/${remarkId}`, 'PATCH', body);
     },
-    cancelFollowUp() {
-      return unsupported('Follow-ups');
+    cancelFollowUp(consultancyId, followUpId) {
+      return mutate(`/consultancies/${consultancyId}/follow-ups/${followUpId}/cancel`, 'POST', {});
     },
-    reassignOwner() {
-      return unsupported('Consultancy owner');
+    reassignOwner(id, body) {
+      return mutate(`/consultancies/${id}/owner`, 'POST', { ownerId: body && body.ownerId });
+    },
+    async listOwnerChoices() {
+      const items = [];
+      let page = 1;
+      let total = Infinity;
+      while (items.length < total && page <= 10) {
+        const result = await request('GET', '/users/directory', { page, limit: 100, status: 'active' });
+        if (!result || result.success !== true) return result || fail(0, 'Cannot reach the server.', 'network');
+        const batch = Array.isArray(result.data?.items) ? result.data.items : [];
+        total = Number(result.data?.total);
+        if (!Number.isFinite(total)) total = items.length + batch.length;
+        items.push(...batch);
+        if (batch.length === 0) break;
+        page += 1;
+      }
+      return ok(200, '', { items: items.map((row) => ({ id: row.id, name: row.fullName || row.name || '' })) });
     },
     setDemoRole() {
       return Promise.resolve(fail(403, 'Signed-in access comes from the CRM account. The browser role switch does not change it.', 'not_stored'));
