@@ -10,6 +10,7 @@ import {
   admissionChartRows,
   formatTimestamp,
   operationsQuery,
+  overviewConsultancyNote,
   populationLabel,
   volumeChartRows,
   workspaceRouteDecision,
@@ -94,30 +95,34 @@ export default function OverviewPage() {
               <h3 className="font-semibold text-[#003366]">{data.aggregateScope === 'module' && data.scope === 'assigned' ? 'Assigned consultancies' : 'Consultancy summary'}</h3>
               <Link className="text-sm text-[#003366] underline" to={`${WORKSPACE_HOME}/consultancies`}>Open consultancies</Link>
             </div>
-            <div className="gx-table-wrap is-static">
-              <table className="gx-table">
-                <thead>
-                  <tr>
-                    <th>Name</th>
-                    <th>Status</th>
-                    <th>Students</th>
-                    <th>New referrals</th>
-                    <th>Active assignees</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {(data.consultancies?.items || []).map((row) => (
-                    <tr key={row.id}>
-                      <td>{row.name}</td>
-                      <td>{row.status}</td>
-                      <td>{row.students}</td>
-                      <td>{row.newReferrals}</td>
-                      <td>{row.activeAssignees}</td>
+            {(data.consultancies?.items || []).length ? (
+              <div className="gx-table-wrap is-static">
+                <table className="gx-table">
+                  <thead>
+                    <tr>
+                      <th>Name</th>
+                      <th>Status</th>
+                      <th>Students</th>
+                      <th>New referrals</th>
+                      <th>Active assignees</th>
                     </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
+                  </thead>
+                  <tbody>
+                    {data.consultancies.items.map((row) => (
+                      <tr key={row.id}>
+                        <td>{row.name}</td>
+                        <td>{row.status}</td>
+                        <td>{row.students}</td>
+                        <td>{row.newReferrals}</td>
+                        <td>{row.activeAssignees}</td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            ) : (
+              <p className="gx-note">{overviewConsultancyNote(data)}</p>
+            )}
           </section>
         </>
       ) : null}

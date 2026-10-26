@@ -71,6 +71,8 @@ import CrmWorkspaceUsersPage from './pages/admin/crm/workspace/UsersPage';
 import CrmWorkspaceConsultanciesPage from './pages/admin/crm/workspace/ConsultanciesPage';
 import CrmWorkspaceActivityPage from './pages/admin/crm/workspace/ActivityPage';
 import CrmWorkspaceAnalyticsPage from './pages/admin/crm/workspace/AnalyticsPage';
+import CrmWorkspaceHistoryPage from './pages/admin/crm/workspace/HistoryPage';
+import CrmWorkspaceIntelligencePage from './pages/admin/crm/workspace/IntelligencePage';
 import ExecutiveDashboard from './pages/admin/ExecutiveDashboard';
 import AlertsDashboard from './pages/admin/AlertsDashboard';
 import ReportsDashboard from './pages/admin/ReportsDashboard';
@@ -622,6 +624,8 @@ function App() {
             <Route path="consultancies" element={<CrmWorkspaceConsultanciesPage />} />
             <Route path="activity" element={<CrmWorkspaceActivityPage />} />
             <Route path="analytics" element={<CrmWorkspaceAnalyticsPage />} />
+            <Route path="history" element={<CrmWorkspaceHistoryPage />} />
+            <Route path="intelligence" element={<CrmWorkspaceIntelligencePage />} />
           </Route>
           <Route path="/admin/login" element={<AdminLogin />} />
           <Route

@@ -130,6 +130,30 @@ export function getPortalActivitySummary(params) {
   return crmPortalGet('/activity/summary', params);
 }
 
+export function getPortalAdmissionHistory(params) {
+  return crmPortalGet('/history/admissions', params);
+}
+
+export function getPortalAssignmentHistory(params) {
+  return crmPortalGet('/history/assignments', params);
+}
+
+export function getPortalDailyHistory(params) {
+  return crmPortalGet('/history/daily', params);
+}
+
+export function getPortalFollowUpIntelligence(params) {
+  return crmPortalGet('/intelligence/follow-ups', params);
+}
+
+export function getPortalDayEndReport(params) {
+  return crmPortalGet('/intelligence/day-end', params);
+}
+
+export function getPortalWorkload(params) {
+  return crmPortalGet('/intelligence/workload', params);
+}
+
 export function fetchPortalDirectory(params) {
   return crmPortalGet('/users/directory', params);
 }

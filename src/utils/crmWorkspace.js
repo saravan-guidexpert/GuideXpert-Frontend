@@ -11,6 +11,8 @@ export const WORKSPACE_SECTIONS = Object.freeze([
   { id: 'consultancies', to: `${WORKSPACE_HOME}/consultancies`, label: 'Consultancies', access: 'workspace', end: false },
   { id: 'activity', to: `${WORKSPACE_HOME}/activity`, label: 'Activity', access: 'workspace', end: false },
   { id: 'analytics', to: `${WORKSPACE_HOME}/analytics`, label: 'Operations', access: 'workspace', end: false },
+  { id: 'history', to: `${WORKSPACE_HOME}/history`, label: 'History', access: 'workspace', end: false },
+  { id: 'intelligence', to: `${WORKSPACE_HOME}/intelligence`, label: 'Intelligence', access: 'workspace', end: false },
 ]);
 
 const ACTIVITY_ACTIONS = Object.freeze([
@@ -153,6 +155,136 @@ export function activitySummaryQuery(input) {
   return { query };
 }
 
+export function historyDefaultRange(now = new Date(), timeZone = PHASE_A_TIME_ZONE) {
+  const format = new Intl.DateTimeFormat('en-CA', { timeZone, year: 'numeric', month: '2-digit', day: '2-digit' });
+  const to = format.format(now);
+  const from = format.format(new Date(now.getTime() - (29 * 24 * 60 * 60 * 1000)));
+  return { from, to, timeZone };
+}
+
+export function historyQuery(input) {
+  const from = input.from || '';
+  const to = input.to || '';
+  if (!from || !to) return { error: 'Enter both dates.' };
+  if (from > to) return { error: 'Enter a start date on or before the end date.' };
+  const query = {
+    page: input.page || 1,
+    limit: input.limit || 20,
+    from,
+    to,
+  };
+  if (input.timeZone) query.timeZone = input.timeZone;
+  if (input.kind === 'initial' || input.kind === 'transition') query.kind = input.kind;
+  if (input.assignment === 'active' || input.assignment === 'revoked') query.assignment = input.assignment;
+  if (input.actorId && isObjectId(input.actorId)) query.actorId = input.actorId;
+  if (input.consultancyId && isObjectId(input.consultancyId)) query.consultancyId = input.consultancyId;
+  if (input.userId && isObjectId(input.userId)) query.userId = input.userId;
+  if (input.fromStatus) query.fromStatus = input.fromStatus;
+  if (input.toStatus) query.toStatus = input.toStatus;
+  return { query };
+}
+
+export function historyEmptyMessage(section) {
+  if (section === 'admissions') {
+    return 'No recorded admission-status events match these filters. Students without an audit are not shown.';
+  }
+  if (section === 'assignments') {
+    return 'No assignment intervals overlap these filters.';
+  }
+  return 'No recorded activity falls on these days. Missing days are not shown as zero.';
+}
+
+const INTELLIGENCE_BUCKETS = Object.freeze(['overdue', 'due_today', 'upcoming', 'unscheduled', 'completed', 'cancelled']);
+const INTELLIGENCE_EVENTS = Object.freeze(['admission', 'assignment', 'follow_up', 'exception']);
+
+function intelligenceIds(input, query) {
+  if (input.timeZone) query.timeZone = input.timeZone;
+  if (input.consultancyId && isObjectId(input.consultancyId)) query.consultancyId = input.consultancyId;
+  if (input.userId && isObjectId(input.userId)) query.userId = input.userId;
+}
+
+export function intelligenceQuery(input) {
+  const from = input.from || '';
+  const to = input.to || '';
+  if (!from || !to) return { error: 'Enter both dates.' };
+  if (from > to) return { error: 'Enter a start date on or before the end date.' };
+  const query = { page: input.page || 1, limit: input.limit || 20, from, to };
+  intelligenceIds(input, query);
+  if (INTELLIGENCE_BUCKETS.includes(input.bucket)) query.bucket = input.bucket;
+  return { query };
+}
+
+export function dayEndQuery(input) {
+  const date = input.date || '';
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(date)) return { error: 'Enter a reporting date.' };
+  const query = { page: input.page || 1, limit: input.limit || 20, date };
+  intelligenceIds(input, query);
+  if (INTELLIGENCE_EVENTS.includes(input.event)) query.event = input.event;
+  return { query };
+}
+
+export function intelligenceEmptyMessage(section) {
+  if (section === 'follow-ups') {
+    return 'No follow-ups match these filters. A follow-up with no due date is not listed as overdue.';
+  }
+  if (section === 'day-end') {
+    return 'No recorded events match this reporting day. Missing history is not filled in.';
+  }
+  return 'No assigned staff match these filters. Staff are not ranked by activity.';
+}
+
+export function completionRateText(completion) {
+  if (!completion || completion.rate == null) {
+    return {
+      text: '—',
+      detail: 'No scheduled follow-ups form a denominator in this window.',
+      unavailable: true,
+    };
+  }
+  const percent = Math.round(completion.rate * 1000) / 10;
+  return {
+    text: `${percent}%`,
+    detail: `${completion.numerator} completed of ${completion.denominator} scheduled. Cancelled rows are excluded.`,
+    unavailable: false,
+  };
+}
+
+export function intelligenceScopeNote(data) {
+  if (!data) return '';
+  if (data.aggregateScope === 'module' && data.scope === 'assigned') {
+    return 'These totals are organization-wide. The records below stay inside consultancies assigned to this account.';
+  }
+  if (data.scope === 'assigned' || data.aggregateScope === 'assigned') {
+    return 'These totals and records stay inside consultancies assigned to this account.';
+  }
+  if (data.scope === 'module') {
+    return 'These totals and records include what this platform account can read.';
+  }
+  return '';
+}
+
+export function historyAdmissionScopeNote(data) {
+  if (!data) return '';
+  if (data.scope === 'assigned') {
+    return 'This list stays inside consultancies assigned to this account. It is not the whole organization.';
+  }
+  if (data.scope === 'module') {
+    return 'This list includes every recorded event the platform account can read.';
+  }
+  return '';
+}
+
+export function historyDailyScopeNote(data) {
+  if (!data) return '';
+  if (data.aggregateScope === 'module') {
+    return 'These counts are organization-wide. The lists above stay assignment-scoped.';
+  }
+  if (data.aggregateScope === 'assigned' || data.aggregateScope === 'consultancy') {
+    return 'These counts stay inside the consultancies this account can read.';
+  }
+  return '';
+}
+
 export function metricText(value, whenNull) {
   if (value == null) return { text: whenNull.text, detail: whenNull.detail, unavailable: true };
   return { text: String(value), detail: '', unavailable: false };
@@ -201,6 +333,15 @@ export function consultancyComparisonRows(items) {
     referrals: Number(row.newReferrals) || 0,
     students: Number(row.students) || 0,
   }));
+}
+
+export function overviewConsultancyNote(data) {
+  const items = data && data.consultancies && data.consultancies.items;
+  if (!Array.isArray(items) || items.length) return '';
+  if (data.aggregateScope === 'module' && data.scope === 'assigned') {
+    return 'No consultancies are assigned to this account. Organization totals above are not this list.';
+  }
+  return 'No consultancies are in this view.';
 }
 
 export const PHASE_A_TIME_ZONE = 'Asia/Kolkata';

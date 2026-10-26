@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from 'react';
-import { FiActivity, FiArrowUpRight, FiBarChart2, FiBriefcase, FiClock, FiGrid, FiLogOut, FiMenu, FiMoon, FiSun, FiUsers, FiX } from 'react-icons/fi';
-import { Link, NavLink, Navigate, Outlet, useLocation } from 'react-router-dom';
+import { FiActivity, FiArrowUpRight, FiBarChart2, FiBriefcase, FiClock, FiGrid, FiLayers, FiLogOut, FiMenu, FiMoon, FiSun, FiUsers, FiX } from 'react-icons/fi';
+import { NavLink, Navigate, Outlet, useLocation, useNavigate } from 'react-router-dom';
 import { useCrmSession } from '../../../crm-app/useCrmSession';
 import { fetchPortalDirectory } from '../../../../utils/crmSessionApi';
 import { CRM_ADMIN_LOGIN, crmSessionRedirect } from '../../../../utils/crmLoginFlow';
@@ -16,6 +16,8 @@ const ICONS = {
   consultancies: FiBriefcase,
   activity: FiClock,
   analytics: FiBarChart2,
+  history: FiLayers,
+  intelligence: FiActivity,
 };
 
 function Mark() {
@@ -38,6 +40,7 @@ function Gate({ children }) {
 
 export default function CrmWorkspaceLayout() {
   const location = useLocation();
+  const navigate = useNavigate();
   const { user, logout } = useCrmSession();
   const menuRef = useRef(null);
   const sideRef = useRef(null);
@@ -56,12 +59,18 @@ export default function CrmWorkspaceLayout() {
   useEffect(() => {
     let cancelled = false;
     fetchPortalDirectory({ page: 1, limit: 1 }).then((result) => {
-      if (!cancelled) setGate(workspaceServerDecision(result));
+      if (cancelled) return;
+      const decision = workspaceServerDecision(result);
+      if (decision.state === 'forbidden') {
+        navigate(crmSessionRedirect('forbidden', location.pathname, location.search, CRM_ADMIN_LOGIN), { replace: true });
+        return;
+      }
+      setGate(decision);
     });
     return () => {
       cancelled = true;
     };
-  }, [attempt]);
+  }, [attempt, location.pathname, location.search, logout, navigate]);
 
   useEffect(() => {
     document.documentElement.setAttribute('data-crm-theme', theme);
@@ -100,16 +109,6 @@ export default function CrmWorkspaceLayout() {
   if (gate.state === 'anonymous') {
     const redirect = crmSessionRedirect('anonymous', location.pathname, location.search, CRM_ADMIN_LOGIN);
     return <Navigate to={redirect} replace />;
-  }
-  if (gate.state === 'forbidden') {
-    return (
-      <Gate>
-        <AccessNote>
-          {gate.message}{' '}
-          <Link to="/crm/app">Return to the CRM</Link>
-        </AccessNote>
-      </Gate>
-    );
   }
   if (gate.state !== 'allowed') {
     return (

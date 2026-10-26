@@ -12,9 +12,20 @@ import {
   applyFilterPatch,
   directoryQuery,
   emptyCopy,
+  completionRateText,
+  dayEndQuery,
+  historyAdmissionScopeNote,
+  historyDailyScopeNote,
+  historyDefaultRange,
+  historyEmptyMessage,
+  historyQuery,
+  intelligenceEmptyMessage,
+  intelligenceQuery,
+  intelligenceScopeNote,
   metricText,
   observedSessionSpan,
   operationsQuery,
+  overviewConsultancyNote,
   overviewQuery,
   reduceCrmLoad,
   snapshotValue,
@@ -45,6 +56,8 @@ test('workspace sections follow the CRM administrator permission and ignore plat
     '/crm/admin/consultancies',
     '/crm/admin/activity',
     '/crm/admin/analytics',
+    '/crm/admin/history',
+    '/crm/admin/intelligence',
   ]);
   assert.deepEqual(visibleWorkspaceSections(manager), []);
   assert.deepEqual(visibleWorkspaceSections(viewer), []);
@@ -151,11 +164,16 @@ test('admin CRM routes stay behind ProtectedAdmin and the public demo stays moun
   assert.match(superAdmin, /CrmWorkspaceActivityPage/);
   assert.match(superAdmin, /CrmWorkspaceOverviewPage/);
   assert.match(superAdmin, /CrmWorkspaceAnalyticsPage/);
+  assert.match(superAdmin, /CrmWorkspaceHistoryPage/);
+  assert.match(superAdmin, /CrmWorkspaceIntelligencePage/);
   assert.doesNotMatch(superAdmin, /ProtectedAdmin|CrmDemoLayout|CrmAppShell/);
   const layout = readFileSync(new URL('../pages/admin/crm/workspace/CrmWorkspaceLayout.jsx', import.meta.url), 'utf8');
   const shell = readFileSync(new URL('../pages/crm-app/CrmAppShell.jsx', import.meta.url), 'utf8');
   assert.match(layout, /fetchPortalDirectory/);
   assert.match(layout, /workspaceServerDecision/);
+  assert.match(layout, /decision\.state === 'forbidden'/);
+  assert.match(layout, /crmSessionRedirect\('forbidden'/);
+  assert.doesNotMatch(layout, /Return to the CRM/);
   assert.match(shell, /crm\.roles\.manage/);
   assert.match(shell, /superAdminHref=\{canManageAssignments \? '\/crm\/admin' : null\}/);
   assert.match(layout, /crmShell\.css/);
@@ -177,6 +195,93 @@ test('observed session span uses stored timestamps and does not treat a heartbea
   assert.equal(revoked.text, '1 h 0 min');
   assert.match(revoked.detail, /revocation/);
   assert.match(observedSessionSpan({ createdAt: '2026-10-25T10:00:00.000Z' }).detail, /not working time/);
+});
+
+test('history filters keep the timezone explicit and do not invent an empty day', () => {
+  const range = historyDefaultRange(new Date('2026-04-02T18:30:00.000Z'), 'Asia/Kolkata');
+  assert.equal(range.timeZone, 'Asia/Kolkata');
+  assert.equal(range.to, '2026-04-03');
+  const query = historyQuery({ ...range, kind: 'transition', assignment: 'revoked', page: 2 });
+  assert.equal(query.query.timeZone, 'Asia/Kolkata');
+  assert.equal(query.query.kind, 'transition');
+  assert.equal(query.query.assignment, 'revoked');
+  assert.equal(query.query.page, 2);
+  assert.equal(historyQuery({ from: '2026-04-03', to: '2026-04-02', timeZone: 'UTC' }).error.includes('start date'), true);
+  assert.equal(historyQuery({ from: '', to: '2026-04-02' }).error, 'Enter both dates.');
+  const scoped = historyQuery({
+    from: '2026-04-01',
+    to: '2026-04-02',
+    consultancyId: '507f1f77bcf86cd799439011',
+    actorId: 'not-an-id',
+    userId: '507f1f77bcf86cd799439012',
+  });
+  assert.equal(scoped.query.consultancyId, '507f1f77bcf86cd799439011');
+  assert.equal(scoped.query.actorId, undefined);
+  assert.equal(scoped.query.userId, '507f1f77bcf86cd799439012');
+  assert.match(historyEmptyMessage('admissions'), /without an audit/);
+  assert.match(historyEmptyMessage('daily'), /not shown as zero/);
+  assert.equal(historyAdmissionScopeNote(null), '');
+  assert.equal(historyDailyScopeNote(null), '');
+  assert.match(historyAdmissionScopeNote({ scope: 'assigned' }), /not the whole organization/);
+  assert.match(historyAdmissionScopeNote({ scope: 'module' }), /platform account can read/);
+  assert.match(historyDailyScopeNote({ aggregateScope: 'module' }), /organization-wide/);
+  assert.match(historyDailyScopeNote({ aggregateScope: 'assigned' }), /consultancies this account can read/);
+  const page = readFileSync(new URL('../pages/admin/crm/workspace/HistoryPage.jsx', import.meta.url), 'utf8');
+  assert.match(page, /historyAdmissionScopeNote\(admissions\.data\)/);
+  assert.match(page, /historyDailyScopeNote\(daily\.data\)/);
+  assert.match(page, /\{admissionScope\}/);
+  assert.match(page, /\{dailyScope\}/);
+  assert.doesNotMatch(page, /data\?\.scope === 'assigned'/);
+  assert.doesNotMatch(page, /aggregateScope === 'module'/);
+});
+
+test('intelligence filters keep a rate empty until a scheduled cohort exists', () => {
+  const range = historyDefaultRange(new Date('2026-04-02T18:30:00.000Z'), 'Asia/Kolkata');
+  assert.equal(range.to, '2026-04-03');
+  const query = intelligenceQuery({ ...range, bucket: 'overdue', userId: '507f1f77bcf86cd799439012', consultancyId: 'not-an-id' });
+  assert.equal(query.query.timeZone, 'Asia/Kolkata');
+  assert.equal(query.query.bucket, 'overdue');
+  assert.equal(query.query.userId, '507f1f77bcf86cd799439012');
+  assert.equal(query.query.consultancyId, undefined);
+  assert.equal(intelligenceQuery({ ...range, bucket: 'rank' }).query.bucket, undefined);
+  assert.equal(intelligenceQuery({ from: '2026-04-03', to: '2026-04-02' }).error.includes('start date'), true);
+  const day = dayEndQuery({ date: '2026-04-03', timeZone: 'Asia/Kolkata', event: 'exception' });
+  assert.equal(day.query.date, '2026-04-03');
+  assert.equal(day.query.event, 'exception');
+  assert.equal(dayEndQuery({ date: '04/03/2026' }).error, 'Enter a reporting date.');
+  assert.equal(dayEndQuery({ date: '2026-04-03', event: 'ranking' }).query.event, undefined);
+  assert.equal(completionRateText(null).unavailable, true);
+  assert.equal(completionRateText({ denominator: 0, numerator: 0, rate: null }).text, '—');
+  assert.equal(completionRateText({ denominator: 2, numerator: 1, rate: 0.5 }).text, '50%');
+  assert.equal(intelligenceScopeNote(null), '');
+  assert.match(intelligenceScopeNote({ aggregateScope: 'module', scope: 'assigned' }), /organization-wide/);
+  assert.match(intelligenceEmptyMessage('follow-ups'), /not listed as overdue/);
+  assert.match(intelligenceEmptyMessage('workload'), /not ranked/);
+  const page = readFileSync(new URL('../pages/admin/crm/workspace/IntelligencePage.jsx', import.meta.url), 'utf8');
+  assert.match(page, /rows=\{trend\}/);
+  assert.match(page, /workspaceRouteDecision\(user, 'intelligence'\)/);
+  assert.match(page, /completionRateText\(row\.completion\)/);
+  assert.doesNotMatch(page, /overdueApproximation\}/);
+  assert.doesNotMatch(page, /sort\(\(left, right\) => right\.(admissionsRecorded|followUpsCompleted)/);
+  assert.match(page, /not working time/);
+});
+
+test('an empty assigned consultancy list does not stand in for organization totals', () => {
+  assert.equal(overviewConsultancyNote({
+    aggregateScope: 'module',
+    scope: 'assigned',
+    consultancies: { items: [] },
+  }), 'No consultancies are assigned to this account. Organization totals above are not this list.');
+  assert.equal(overviewConsultancyNote({
+    aggregateScope: 'module',
+    scope: 'module',
+    consultancies: { items: [] },
+  }), 'No consultancies are in this view.');
+  assert.equal(overviewConsultancyNote({
+    aggregateScope: 'module',
+    scope: 'assigned',
+    consultancies: { items: [{ id: '1' }] },
+  }), '');
 });
 
 test('activity filters accept stored follow-up actions and still drop unknown actions', () => {
