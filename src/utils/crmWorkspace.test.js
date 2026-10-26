@@ -23,6 +23,7 @@ import {
   intelligenceQuery,
   intelligenceScopeNote,
   metricText,
+  paginationSummary,
   observedSessionSpan,
   operationsQuery,
   overviewConsultancyNote,
@@ -233,6 +234,21 @@ test('history filters keep the timezone explicit and do not invent an empty day'
   assert.match(page, /\{dailyScope\}/);
   assert.doesNotMatch(page, /data\?\.scope === 'assigned'/);
   assert.doesNotMatch(page, /aggregateScope === 'module'/);
+});
+
+test('an empty list says there are no results and disables paging', () => {
+  const empty = paginationSummary(1, 20, 0);
+  assert.equal(empty.label, '0 results');
+  assert.equal(empty.previousDisabled, true);
+  assert.equal(empty.nextDisabled, true);
+  const filled = paginationSummary(2, 20, 45);
+  assert.equal(filled.label, 'Page 2 of 3 · 45 total');
+  assert.equal(filled.previousDisabled, false);
+  assert.equal(filled.nextDisabled, false);
+  assert.equal(paginationSummary(1, 20, 20).nextDisabled, true);
+  const page = readFileSync(new URL('../pages/admin/crm/crmUi.jsx', import.meta.url), 'utf8');
+  assert.match(page, /paginationSummary\(page, limit, total\)/);
+  assert.match(page, /aria-label="Pagination"/);
 });
 
 test('intelligence filters keep a rate empty until a scheduled cohort exists', () => {

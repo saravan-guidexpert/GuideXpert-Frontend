@@ -285,6 +285,26 @@ export function historyDailyScopeNote(data) {
   return '';
 }
 
+export function paginationSummary(page, limit, total) {
+  const count = Number(total);
+  const safeTotal = Number.isFinite(count) ? count : 0;
+  if (safeTotal <= 0) {
+    return {
+      label: '0 results',
+      pageCount: 0,
+      previousDisabled: true,
+      nextDisabled: true,
+    };
+  }
+  const pageCount = Math.max(1, Math.ceil(safeTotal / limit));
+  return {
+    label: `Page ${page} of ${pageCount} · ${safeTotal} total`,
+    pageCount,
+    previousDisabled: page <= 1,
+    nextDisabled: page >= pageCount,
+  };
+}
+
 export function metricText(value, whenNull) {
   if (value == null) return { text: whenNull.text, detail: whenNull.detail, unavailable: true };
   return { text: String(value), detail: '', unavailable: false };

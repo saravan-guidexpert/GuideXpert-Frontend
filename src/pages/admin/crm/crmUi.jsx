@@ -1,3 +1,5 @@
+import { paginationSummary } from '../../../utils/crmWorkspace';
+
 export function Banner({ tone = 'error', children }) {
   const styles = {
     error: 'border-red-200 bg-red-50 text-red-800',
@@ -37,17 +39,15 @@ export function PrimaryButton({ children, ...props }) {
 }
 
 export function Pagination({ page, limit, total, onPage }) {
-  const pages = Math.max(1, Math.ceil(total / limit));
+  const summary = paginationSummary(page, limit, total);
   return (
-    <div className="mt-4 flex items-center justify-between text-sm text-gray-600">
-      <span>
-        Page {page} of {pages} · {total} total
-      </span>
+    <nav className="mt-4 flex items-center justify-between text-sm text-gray-600" aria-label="Pagination">
+      <span>{summary.label}</span>
       <div className="flex gap-2">
         <button
           type="button"
           className="rounded-lg border border-gray-300 px-3 py-1.5 disabled:opacity-40"
-          disabled={page <= 1}
+          disabled={summary.previousDisabled}
           onClick={() => onPage(page - 1)}
         >
           Previous
@@ -55,12 +55,12 @@ export function Pagination({ page, limit, total, onPage }) {
         <button
           type="button"
           className="rounded-lg border border-gray-300 px-3 py-1.5 disabled:opacity-40"
-          disabled={page >= pages}
+          disabled={summary.nextDisabled}
           onClick={() => onPage(page + 1)}
         >
           Next
         </button>
       </div>
-    </div>
+    </nav>
   );
 }

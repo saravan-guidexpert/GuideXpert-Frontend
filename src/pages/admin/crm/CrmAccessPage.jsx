@@ -357,7 +357,9 @@ export default function CrmAccessPage() {
           </table>
         </div>
       ) : null}
-      <Pagination page={page} limit={LIMIT} total={total} onPage={(next) => { setPage(next); setLoading(true); setApplied((current) => ({ ...current, page: next })); }} />
+      {!loading || total > 0 ? (
+        <Pagination page={page} limit={LIMIT} total={total} onPage={(next) => { setPage(next); setLoading(true); setApplied((current) => ({ ...current, page: next })); }} />
+      ) : null}
 
       {editor ? (
         <Modal title={editor.mode === 'create' ? 'Create CRM account' : 'Edit CRM account'} onClose={() => setEditor(null)}>
