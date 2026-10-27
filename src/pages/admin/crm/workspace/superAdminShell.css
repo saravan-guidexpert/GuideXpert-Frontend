@@ -1,0 +1,260 @@
+/* Super Admin design tokens and shell polish. Scoped to .gx-admin so the
+   signed-in user CRM, which shares crmShell.css, is not affected. */
+
+.gx-app.gx-admin {
+  /* Aliases of the user CRM palette in crmShell.css, so both products share
+     one set of colors and the dark theme follows the user CRM values. */
+  --sa-bg: var(--canvas);
+  --sa-surface: var(--white);
+  --sa-surface-2: var(--paper);
+  --sa-sunken: var(--hover);
+  --sa-line: var(--line);
+  --sa-line-strong: color-mix(in srgb, var(--line) 70%, var(--ink) 12%);
+  --sa-ink: var(--ink);
+  --sa-ink-2: var(--ink-soft);
+  --sa-muted: var(--muted);
+  --sa-faint: var(--muted);
+  --sa-accent: var(--ink);
+  --sa-accent-soft: var(--wash);
+  --sa-accent-ink: #3f5c16;
+  --sa-brand: var(--lime);
+  --sa-on-brand: var(--on-lime);
+  --sa-active-bg: var(--lime);
+  --sa-active-fg: var(--on-lime);
+  --sa-ok: #3f5c16;
+  --sa-ok-soft: var(--ok-wash);
+  --sa-warn: #8a5a12;
+  --sa-warn-soft: var(--warn-wash);
+  --sa-danger: #8d332c;
+  --sa-danger-soft: var(--error-wash);
+  --sa-info: var(--ink-soft);
+  --sa-info-soft: var(--paper);
+  --sa-neutral-soft: var(--paper);
+  --sa-bone: var(--hover);
+  --sa-bone-hi: var(--paper);
+  --sa-online: var(--lime);
+  --sa-idle: var(--ink-soft);
+  --sa-offline: color-mix(in srgb, var(--muted) 55%, var(--white));
+  --sa-inactive: var(--line);
+  --sa-invited: var(--paper);
+  --sa-shadow: 0 1px 2px rgba(28, 28, 26, 0.04);
+  --sa-shadow-pop: 0 12px 32px rgba(28, 28, 26, 0.12);
+  --sa-radius: 12px;
+  --sa-radius-sm: 8px;
+  --sa-ease: cubic-bezier(0.2, 0.8, 0.2, 1);
+  --sa-font: Inter, "Source Sans 3", -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+
+  grid-template-columns: 68px minmax(0, 1fr);
+  gap: 12px;
+  padding: 12px;
+  font-family: var(--sa-font);
+  font-feature-settings: "cv11", "ss01";
+  letter-spacing: -0.006em;
+}
+
+.gx-app.gx-admin[data-theme="dark"] {
+  --sa-accent-ink: #d7ee9a;
+  --sa-ok: #d7ee9a;
+  --sa-warn: #e6c27a;
+  --sa-danger: #f0b4ae;
+  --sa-offline: color-mix(in srgb, var(--muted) 45%, var(--white));
+  --sa-inactive: var(--selected);
+  --sa-shadow: 0 1px 0 rgba(0, 0, 0, 0.25);
+  --sa-shadow-pop: 0 14px 40px rgba(0, 0, 0, 0.5);
+}
+
+/* Sidebar */
+.gx-admin .gx-side {
+  top: 12px;
+  height: calc(100vh - 24px);
+  padding: 12px 0;
+  border: 1px solid var(--sa-line);
+  border-radius: 16px;
+  background: var(--sa-surface);
+  box-shadow: var(--sa-shadow);
+}
+.gx-admin .gx-nav { gap: 4px; }
+.gx-admin .gx-nav a,
+.gx-admin .gx-side-foot a {
+  width: 40px;
+  height: 40px;
+  border-radius: 10px;
+  color: var(--sa-faint);
+  transition: background-color 160ms ease, color 160ms ease;
+}
+.gx-admin .gx-nav a:hover,
+.gx-admin .gx-side-foot a:hover { background: var(--sa-sunken); color: var(--sa-ink); }
+.gx-admin .gx-nav a.active,
+.gx-admin .gx-side-foot a.active {
+  background: var(--sa-active-bg);
+  color: var(--sa-active-fg);
+}
+.gx-admin .gx-nav a.active::before {
+  content: "";
+  position: absolute;
+  top: 10px;
+  bottom: 10px;
+  left: -13px;
+  width: 3px;
+  border-radius: 0 3px 3px 0;
+  background: var(--sa-ink);
+}
+.gx-admin .gx-nav a:focus-visible,
+.gx-admin .gx-side-foot a:focus-visible,
+.gx-admin .gx-brand:focus-visible,
+.gx-admin .gx-menu:focus-visible,
+.gx-admin .gx-tool:focus-visible,
+.gx-admin .gx-theme:focus-visible {
+  outline: 2px solid var(--sa-accent);
+  outline-offset: 2px;
+}
+.gx-admin .gx-side-sep {
+  width: 24px;
+  height: 1px;
+  margin: 8px 0;
+  background: var(--sa-line);
+}
+.gx-app.gx-admin:not(.is-menu) .gx-nav a::after,
+.gx-app.gx-admin:not(.is-menu) .gx-side-foot a::after {
+  left: calc(100% + 12px);
+  padding: 6px 9px;
+  border-radius: 7px;
+  background: var(--sa-ink);
+  color: var(--sa-surface);
+  font-size: 12px;
+  font-weight: 550;
+  box-shadow: var(--sa-shadow-pop);
+  transform: translate(-4px, -50%);
+  transition: opacity 120ms ease, transform 120ms ease;
+}
+.gx-app.gx-admin:not(.is-menu) .gx-nav a:hover::after,
+.gx-app.gx-admin:not(.is-menu) .gx-nav a:focus-visible::after,
+.gx-app.gx-admin:not(.is-menu) .gx-side-foot a:hover::after,
+.gx-app.gx-admin:not(.is-menu) .gx-side-foot a:focus-visible::after {
+  transform: translate(0, -50%);
+}
+
+/* Top bar */
+.gx-admin .gx-workspace { gap: 12px; }
+.gx-admin .gx-topbar {
+  min-height: 60px;
+  padding: 0 12px 0 16px;
+  border: 1px solid var(--sa-line);
+  border-radius: 16px;
+  background: var(--sa-surface);
+  box-shadow: var(--sa-shadow);
+}
+.gx-admin .gx-brand .gx-ico {
+  width: 32px;
+  height: 32px;
+  border-radius: 9px;
+  background: var(--sa-active-bg);
+  color: var(--sa-active-fg);
+}
+.gx-admin .gx-word { font-size: 14px; font-weight: 650; letter-spacing: -0.02em; }
+.gx-admin .gx-word small { font-size: 10.5px; color: var(--sa-faint); letter-spacing: 0.06em; }
+.gx-admin .gx-top-tools { gap: 4px; }
+.gx-admin .gx-tool {
+  width: 36px;
+  height: 36px;
+  border-radius: 10px;
+  color: var(--sa-muted);
+  transition: background-color 160ms ease, color 160ms ease;
+}
+.gx-admin .gx-tool:hover,
+.gx-admin .gx-tool.active { background: var(--sa-sunken); color: var(--sa-ink); }
+.gx-admin .gx-theme {
+  width: 36px;
+  height: 36px;
+  border: 1px solid var(--sa-line);
+  border-radius: 10px;
+  background: var(--sa-surface);
+  color: var(--sa-ink);
+  box-shadow: none;
+}
+.gx-admin .gx-theme:hover { background: var(--sa-sunken); }
+.gx-admin .gx-top-sep {
+  width: 1px;
+  height: 24px;
+  margin: 0 6px;
+  background: var(--sa-line);
+}
+.gx-admin .gx-who {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-width: 0;
+  padding: 0 6px 0 2px;
+}
+.gx-admin .gx-who .gx-avatar {
+  flex: 0 0 32px;
+  width: 32px;
+  height: 32px;
+  margin: 0;
+  border-radius: 50%;
+  background: var(--sa-active-bg);
+  color: var(--sa-active-fg);
+  font-size: 11.5px;
+  font-weight: 700;
+  letter-spacing: 0;
+}
+.gx-admin .gx-who-copy { display: flex; flex-direction: column; min-width: 0; line-height: 1.2; }
+.gx-admin .gx-who-copy strong {
+  max-width: 180px;
+  overflow: hidden;
+  color: var(--sa-ink);
+  font-size: 13px;
+  font-weight: 600;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+.gx-admin .gx-who-copy small {
+  max-width: 180px;
+  overflow: hidden;
+  color: var(--sa-faint);
+  font-size: 11.5px;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+.gx-admin .gx-content {
+  padding: 8px 4px 32px;
+  min-width: 0;
+  overflow-x: clip;
+}
+/* One content boundary for Super Admin pages */
+.gx-admin .gx-admin-page {
+  box-sizing: border-box;
+  width: 100%;
+  max-width: 100%;
+  min-width: 0;
+  gap: 24px;
+}
+.gx-admin .gx-menu { border-color: var(--sa-line); border-radius: 10px; background: var(--sa-surface); }
+
+@media (max-width: 1024px) {
+  .gx-admin .gx-who-copy { display: none; }
+}
+@media (max-width: 860px) {
+  .gx-app.gx-admin { padding: 0; gap: 0; grid-template-columns: 1fr; }
+  .gx-admin .gx-workspace { gap: 0; }
+  .gx-admin .gx-side {
+    top: 0;
+    height: 100vh;
+    padding: 16px 12px;
+    border-width: 0 1px 0 0;
+    border-radius: 0 16px 16px 0;
+  }
+  .gx-admin .gx-nav a,
+  .gx-admin .gx-side-foot a { width: 100%; height: 44px; color: var(--sa-muted); }
+  .gx-admin .gx-nav a.active::before { left: -12px; }
+  .gx-admin .gx-side-sep { width: 100%; }
+  .gx-admin .gx-topbar { margin: 8px 8px 0; min-height: 56px; padding: 0 8px 0 10px; }
+  .gx-admin .gx-content { padding: 16px 12px 32px; }
+  .gx-admin .gx-top-sep { display: none; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .gx-admin .gx-nav a,
+  .gx-admin .gx-tool,
+  .gx-app.gx-admin .gx-nav a::after,
+  .gx-app.gx-admin .gx-side-foot a::after { transition: none; }
+}

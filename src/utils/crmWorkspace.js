@@ -1,4 +1,4 @@
-import { crmCan } from '../constants/crmUserAccess.js';
+import { CRM_ROLE_OPTIONS, crmCan, permissionsForRole } from '../constants/crmUserAccess.js';
 import { interpretCrmResult } from './crmAccess.js';
 import { analyticsParams } from '../pages/admin/crm/crmProductionQuery.js';
 
@@ -8,6 +8,7 @@ export const CRM_WORKSPACE_PERMISSION = 'crm.roles.manage';
 export const WORKSPACE_SECTIONS = Object.freeze([
   { id: 'overview', to: `${WORKSPACE_HOME}/overview`, label: 'Overview', access: 'workspace', end: true },
   { id: 'users', to: `${WORKSPACE_HOME}/users`, label: 'CRM Users', access: 'workspace', end: false },
+  { id: 'access', to: `${WORKSPACE_HOME}/access`, label: 'Manage Access', access: 'workspace', end: false },
   { id: 'consultancies', to: `${WORKSPACE_HOME}/consultancies`, label: 'Consultancies', access: 'workspace', end: false },
   { id: 'activity', to: `${WORKSPACE_HOME}/activity`, label: 'Activity', access: 'workspace', end: false },
   { id: 'analytics', to: `${WORKSPACE_HOME}/analytics`, label: 'Operations', access: 'workspace', end: false },
@@ -18,18 +19,31 @@ export const WORKSPACE_SECTIONS = Object.freeze([
 const ACTIVITY_ACTIONS = Object.freeze([
   'consultancy.created',
   'consultancy.updated',
+  'contact.created',
+  'contact.updated',
+  'contact.deactivated',
   'student.created',
   'student.updated',
   'referral.created',
   'referral.source_corrected',
   'crm_assignment.created',
   'crm_assignment.revoked',
+  'crm_user.created',
+  'crm_user.invited',
+  'crm_user.updated',
+  'crm_user.deactivated',
+  'crm_user.reset_issued',
+  'crm_user.password_reset',
   'crm_user.login_succeeded',
   'crm_user.login_failed',
   'crm_user.login_inactive',
   'crm_user.logout',
+  'crm_user.reset_requested',
+  'crm_user.reset_completed',
   'crm_session.revoked',
   'crm_session.revoked_all',
+  'crm_permission.updated',
+  'crm_permission.revoked',
   'consultancy.follow_up',
   'consultancy.follow_up_updated',
   'consultancy.follow_up_completed',
@@ -91,7 +105,22 @@ export function accountActions(user) {
     viewDirectory: crmCan(user, CRM_WORKSPACE_PERMISSION),
     revokeSession: crmCan(user, 'crm.users.deactivate'),
     manageAssignment: crmCan(user, CRM_WORKSPACE_PERMISSION),
+    createAccount: crmCan(user, 'crm.users.create'),
+    updateAccount: crmCan(user, 'crm.users.update'),
+    deactivateAccount: crmCan(user, 'crm.users.deactivate'),
   };
+}
+
+const ROLE_RANK = Object.freeze({ crm_administrator: 3, crm_manager: 2, crm_viewer: 1 });
+
+export function grantableRoles(user) {
+  const rank = ROLE_RANK[user?.role] || 0;
+  return CRM_ROLE_OPTIONS.filter((option) => (ROLE_RANK[option.id] || 0) <= rank);
+}
+
+export function grantablePermissions(user, role) {
+  const granted = new Set(Array.isArray(user?.permissions) ? user.permissions : []);
+  return permissionsForRole(role).filter((key) => granted.has(key));
 }
 
 export function applyFilterPatch(current, patch) {
@@ -139,7 +168,11 @@ export function activityListQuery(input) {
   if (to) query.to = to;
   const search = input.q && String(input.q).trim();
   if (search) query.q = search;
-  if (input.consultancyId) query.consultancyId = input.consultancyId;
+  if (input.consultancyId && isObjectId(input.consultancyId)) query.consultancyId = input.consultancyId;
+  if (input.actorId && isObjectId(input.actorId)) query.actorId = input.actorId;
+  if (input.actorType === 'admin' || input.actorType === 'crm-user') query.actorType = input.actorType;
+  if (input.entityType) query.entityType = input.entityType;
+  if (input.entityId && isObjectId(input.entityId)) query.entityId = input.entityId;
   if (input.timeZone) query.timeZone = input.timeZone;
   return { query };
 }
@@ -219,6 +252,7 @@ export function dayEndQuery(input) {
   if (!/^\d{4}-\d{2}-\d{2}$/.test(date)) return { error: 'Enter a reporting date.' };
   const query = { page: input.page || 1, limit: input.limit || 20, date };
   intelligenceIds(input, query);
+  if (input.actorId && isObjectId(input.actorId)) query.actorId = input.actorId;
   if (INTELLIGENCE_EVENTS.includes(input.event)) query.event = input.event;
   return { query };
 }
@@ -231,6 +265,27 @@ export function intelligenceEmptyMessage(section) {
     return 'No recorded events match this reporting day. Missing history is not filled in.';
   }
   return 'No assigned staff match these filters. Staff are not ranked by activity.';
+}
+
+export function dayEndAccuracy(row) {
+  if (!row || row.exact !== false) return 'Recorded';
+  if (row.scheduleKnown === false) return 'Approximate · schedule at day end unknown';
+  if (row.rescheduledLater) return 'Approximate · rescheduled later';
+  return 'Approximate';
+}
+
+export function dayEndScheduleNote(summary) {
+  const overdue = summary && summary.overdue;
+  const base = 'Outstanding means an open Meeting Scheduled or Follow-up Required row that was not completed or cancelled by the end of the day. Other statuses are recorded outcomes and never count as outstanding.';
+  if (!overdue) return base;
+  const parts = [base];
+  if (overdue.rescheduledLater) {
+    parts.push(`${overdue.rescheduledLater} outstanding ${overdue.rescheduledLater === 1 ? 'row was' : 'rows were'} rescheduled after this day; the recorded earlier time is used where it was stored.`);
+  }
+  if (overdue.scheduleUnknown) {
+    parts.push(`${overdue.scheduleUnknown} ${overdue.scheduleUnknown === 1 ? 'row has' : 'rows have'} no stored earlier time, so the current time is used and overdue may be wrong.`);
+  }
+  return parts.join(' ');
 }
 
 export function completionRateText(completion) {
@@ -251,6 +306,9 @@ export function completionRateText(completion) {
 
 export function intelligenceScopeNote(data) {
   if (!data) return '';
+  if (data.scopeBasis === 'organization_permission' && data.scope === 'module') {
+    return 'These totals and records cover every consultancy in the organization. This account holds organization-wide read access.';
+  }
   if (data.aggregateScope === 'module' && data.scope === 'assigned') {
     return 'These totals are organization-wide. The records below stay inside consultancies assigned to this account.';
   }
@@ -265,6 +323,9 @@ export function intelligenceScopeNote(data) {
 
 export function historyAdmissionScopeNote(data) {
   if (!data) return '';
+  if (data.scopeBasis === 'organization_permission' && data.scope === 'module') {
+    return 'This list covers every consultancy in the organization. This account holds organization-wide read access.';
+  }
   if (data.scope === 'assigned') {
     return 'This list stays inside consultancies assigned to this account. It is not the whole organization.';
   }
@@ -276,6 +337,9 @@ export function historyAdmissionScopeNote(data) {
 
 export function historyDailyScopeNote(data) {
   if (!data) return '';
+  if (data.scopeBasis === 'organization_permission' && data.aggregateScope === 'module') {
+    return 'These counts and the lists above are organization-wide.';
+  }
   if (data.aggregateScope === 'module') {
     return 'These counts are organization-wide. The lists above stay assignment-scoped.';
   }
@@ -423,7 +487,9 @@ export function isObjectId(value) {
 
 export function reduceCrmLoad(state, event) {
   if (event.type === 'reset') return { loading: false, data: null, notice: null, requestId: 0 };
-  if (event.type === 'start') return { loading: true, data: null, notice: null, requestId: event.requestId };
+  if (event.type === 'start') {
+    return { loading: true, data: event.keep && state ? state.data : null, notice: null, requestId: event.requestId };
+  }
   if (!state || event.requestId !== state.requestId) return state;
   if (event.type === 'success') {
     return { loading: false, data: event.data, notice: null, requestId: event.requestId };

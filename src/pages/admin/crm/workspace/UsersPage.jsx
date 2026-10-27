@@ -87,7 +87,7 @@ export default function UsersPage() {
       <header className="gx-page-head">
         <div>
           <h2 className="gx-title">CRM Users</h2>
-          <p className="gx-subtitle">Directory of CRM accounts. Online is a valid session heartbeated within two minutes. Idle is a valid session with a stale heartbeat and is not working time. Offline is an active account with no valid session. Inactive and Invited are account statuses. Times use {PHASE_A_TIME_ZONE}. Creating accounts and changing roles stays in platform Admin, under CRM Access Management.</p>
+          <p className="gx-subtitle">Directory of CRM accounts. Online is a valid session heartbeated within two minutes. Idle is a valid session with a stale heartbeat and is not working time. Offline is an active account with no valid session. Inactive and Invited are account statuses. Times use {PHASE_A_TIME_ZONE}. Create accounts and change roles under Manage Access.</p>
         </div>
       </header>
       <div className="gx-toolbar">

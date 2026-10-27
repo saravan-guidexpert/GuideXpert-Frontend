@@ -68,6 +68,7 @@ import CrmLegacyRedirect from './pages/crm-app/CrmLegacyRedirect';
 import CrmWorkspaceLayout from './pages/admin/crm/workspace/CrmWorkspaceLayout';
 import CrmWorkspaceOverviewPage from './pages/admin/crm/workspace/OverviewPage';
 import CrmWorkspaceUsersPage from './pages/admin/crm/workspace/UsersPage';
+import CrmWorkspaceManageAccessPage from './pages/admin/crm/workspace/ManageAccessPage';
 import CrmWorkspaceConsultanciesPage from './pages/admin/crm/workspace/ConsultanciesPage';
 import CrmWorkspaceActivityPage from './pages/admin/crm/workspace/ActivityPage';
 import CrmWorkspaceAnalyticsPage from './pages/admin/crm/workspace/AnalyticsPage';
@@ -621,6 +622,7 @@ function App() {
             <Route index element={<Navigate to="overview" replace />} />
             <Route path="overview" element={<CrmWorkspaceOverviewPage />} />
             <Route path="users" element={<CrmWorkspaceUsersPage />} />
+            <Route path="access" element={<CrmWorkspaceManageAccessPage />} />
             <Route path="consultancies" element={<CrmWorkspaceConsultanciesPage />} />
             <Route path="activity" element={<CrmWorkspaceActivityPage />} />
             <Route path="analytics" element={<CrmWorkspaceAnalyticsPage />} />

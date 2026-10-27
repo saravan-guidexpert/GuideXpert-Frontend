@@ -1,8 +1,9 @@
 import { useEffect, useRef, useState } from 'react';
 import { applyCrmResult, reduceCrmLoad } from '../../../../utils/crmWorkspace';
 
-export function useCrmResource(enabled, queryKey, fetcher, expectList = false) {
+export function useCrmResource(enabled, queryKey, fetcher, expectList = false, options = {}) {
   const activeKey = enabled ? String(queryKey) : 'disabled';
+  const keepData = options.keepData === true;
   const [seenKey, setSeenKey] = useState('');
   const [state, setState] = useState(() => reduceCrmLoad(null, { type: 'reset' }));
   const fetcherRef = useRef(fetcher);
@@ -10,7 +11,7 @@ export function useCrmResource(enabled, queryKey, fetcher, expectList = false) {
   if (seenKey !== activeKey) {
     setSeenKey(activeKey);
     setState((current) => reduceCrmLoad(current, enabled
-      ? { type: 'start', requestId: activeKey }
+      ? { type: 'start', requestId: activeKey, keep: keepData }
       : { type: 'reset' }));
   }
 

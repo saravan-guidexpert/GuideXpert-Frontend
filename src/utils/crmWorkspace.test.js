@@ -54,6 +54,7 @@ test('workspace sections follow the CRM administrator permission and ignore plat
   assert.deepEqual(visibleWorkspaceSections(administrator).map((item) => item.to), [
     '/crm/admin/overview',
     '/crm/admin/users',
+    '/crm/admin/access',
     '/crm/admin/consultancies',
     '/crm/admin/activity',
     '/crm/admin/analytics',
@@ -230,8 +231,8 @@ test('history filters keep the timezone explicit and do not invent an empty day'
   const page = readFileSync(new URL('../pages/admin/crm/workspace/HistoryPage.jsx', import.meta.url), 'utf8');
   assert.match(page, /historyAdmissionScopeNote\(admissions\.data\)/);
   assert.match(page, /historyDailyScopeNote\(daily\.data\)/);
-  assert.match(page, /\{admissionScope\}/);
-  assert.match(page, /\{dailyScope\}/);
+  assert.match(page, /\{admissionScope\b/);
+  assert.match(page, /\{dailyScope\b/);
   assert.doesNotMatch(page, /data\?\.scope === 'assigned'/);
   assert.doesNotMatch(page, /aggregateScope === 'module'/);
 });
@@ -280,6 +281,8 @@ test('intelligence filters keep a rate empty until a scheduled cohort exists', (
   assert.doesNotMatch(page, /overdueApproximation\}/);
   assert.doesNotMatch(page, /sort\(\(left, right\) => right\.(admissionsRecorded|followUpsCompleted)/);
   assert.match(page, /not working time/);
+  assert.match(page, /not ranked by volume/);
+  assert.match(page, /dayEndScheduleNote/);
 });
 
 test('an empty assigned consultancy list does not stand in for organization totals', () => {

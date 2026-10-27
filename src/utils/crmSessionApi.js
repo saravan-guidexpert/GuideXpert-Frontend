@@ -21,10 +21,19 @@ export function readCrmCsrfCookie() {
 }
 
 export function currentCrmCsrf() {
-  return memoryCsrf || readCrmCsrfCookie();
+  return readCrmCsrfCookie() || memoryCsrf;
 }
 
-async function crmFetch(path, options = {}) {
+async function refreshCrmCsrf() {
+  const result = await crmFetch('/crm-auth/me', {}, true);
+  if (result.success && result.data?.csrfToken) {
+    rememberCrmCsrf(result.data.csrfToken);
+    return true;
+  }
+  return false;
+}
+
+async function crmFetch(path, options = {}, retried = false) {
   const startedEpoch = beginCrmRequest();
   const method = String(options.method || 'GET').toUpperCase();
   const headers = {
@@ -51,6 +60,9 @@ async function crmFetch(path, options = {}) {
     body = await response.json();
   } catch {
     body = {};
+  }
+  if (response.status === 403 && body.code === 'csrf_failed' && !retried && method !== 'GET' && method !== 'HEAD') {
+    if (await refreshCrmCsrf()) return crmFetch(path, options, true);
   }
   if (shouldEndCrmSession(response.status, path, startedEpoch) && typeof window !== 'undefined') {
     window.dispatchEvent(new CustomEvent('gx-crm-unauthorized'));
@@ -154,8 +166,44 @@ export function getPortalWorkload(params) {
   return crmPortalGet('/intelligence/workload', params);
 }
 
+export function getPortalStaff360(userId, params) {
+  return crmPortalGet(`/intelligence/staff/${encodeURIComponent(userId)}`, params);
+}
+
 export function fetchPortalDirectory(params) {
   return crmPortalGet('/users/directory', params);
+}
+
+export function fetchPortalUserSummary() {
+  return crmPortalGet('/users/summary');
+}
+
+export function fetchPortalUsers(params) {
+  return crmPortalGet('/users', params);
+}
+
+export function fetchPortalUserAudit(id, params) {
+  return crmPortalGet(`/users/${id}/audit`, params);
+}
+
+export function createPortalUser(body) {
+  return crmPortalSend('/users', 'POST', body);
+}
+
+export function updatePortalUser(id, body) {
+  return crmPortalSend(`/users/${id}`, 'PATCH', body);
+}
+
+export function activatePortalUser(id, reason) {
+  return crmPortalSend(`/users/${id}/activate`, 'POST', { reason });
+}
+
+export function deactivatePortalUser(id, reason) {
+  return crmPortalSend(`/users/${id}/deactivate`, 'POST', { reason });
+}
+
+export function resetPortalUserPassword(id, body) {
+  return crmPortalSend(`/users/${id}/reset-password`, 'POST', body);
 }
 
 export function fetchPortalUserSessions(id, params) {
@@ -176,4 +224,8 @@ export function assignPortalConsultancy(id, consultancyId) {
 
 export function revokePortalConsultancy(id, consultancyId) {
   return crmPortalSend(`/users/${id}/assignments/${consultancyId}`, 'DELETE', {});
+}
+
+export function createPortalConsultancy(body) {
+  return crmPortalSend('/consultancies', 'POST', body);
 }

@@ -1,4 +1,4 @@
-import { createContext, useContext, useEffect, useRef } from 'react';
+import { useEffect, useRef } from 'react';
 import {
   Bar,
   BarChart,
@@ -10,15 +10,10 @@ import {
 } from 'recharts';
 import { chartPalette } from '../../../crm-demo/crmTheme';
 import { accountBadge, metricText, presenceBadge, snapshotValue } from '../../../../utils/crmWorkspace';
-
-const AdminThemeContext = createContext('light');
+import { AdminThemeContext, useAdminTheme } from './adminThemeContext';
 
 export function AdminThemeProvider({ theme, children }) {
   return <AdminThemeContext.Provider value={theme}>{children}</AdminThemeContext.Provider>;
-}
-
-function useAdminTheme() {
-  return useContext(AdminThemeContext);
 }
 
 const TONE = { online: 'is-on', idle: 'is-warn', offline: 'is-off', inactive: 'is-off', invited: 'is-invited' };

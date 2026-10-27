@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from 'react';
-import { FiActivity, FiArrowUpRight, FiBarChart2, FiBriefcase, FiClock, FiGrid, FiLayers, FiLogOut, FiMenu, FiMoon, FiSun, FiUsers, FiX } from 'react-icons/fi';
+import { FiActivity, FiArrowUpRight, FiBarChart2, FiBriefcase, FiClock, FiGrid, FiLayers, FiLogOut, FiMenu, FiMoon, FiShield, FiSun, FiUsers, FiX } from 'react-icons/fi';
 import { NavLink, Navigate, Outlet, useLocation, useNavigate } from 'react-router-dom';
 import { useCrmSession } from '../../../crm-app/useCrmSession';
 import { fetchPortalDirectory } from '../../../../utils/crmSessionApi';
@@ -9,10 +9,12 @@ import { readCrmTheme, revealTheme, writeCrmTheme } from '../../../crm-demo/crmT
 import { AccessNote, AdminThemeProvider } from './workspaceUi';
 import '../../../crm-demo/crmShell.css';
 import '../../../crm-demo/overview.css';
+import './superAdminShell.css';
 
 const ICONS = {
   overview: FiGrid,
   users: FiUsers,
+  access: FiShield,
   consultancies: FiBriefcase,
   activity: FiClock,
   analytics: FiBarChart2,
@@ -120,7 +122,8 @@ export default function CrmWorkspaceLayout() {
   }
 
   const sections = visibleWorkspaceSections(user);
-  const initials = String(user?.fullName || 'SA').slice(0, 2).toUpperCase();
+  const words = String(user?.fullName || 'Super Admin').trim().split(/\s+/);
+  const initials = (words.length > 1 ? `${words[0][0]}${words[1][0]}` : words[0].slice(0, 2)).toUpperCase();
 
   return (
     <AdminThemeProvider theme={theme}>
@@ -146,6 +149,7 @@ export default function CrmWorkspaceLayout() {
             })}
           </nav>
           <div className="gx-side-foot">
+            <span className="gx-side-sep" aria-hidden="true" />
             <NavLink to="/crm/app" data-label="User CRM" onClick={() => closeMenu(false)}>
               <span className="gx-ico"><FiArrowUpRight size={18} strokeWidth={1.75} /></span>
               <span className="gx-label">User CRM</span>
@@ -181,7 +185,14 @@ export default function CrmWorkspaceLayout() {
               <NavLink to="/crm/admin/activity" className="gx-tool" aria-label="Activity" data-label="Activity">
                 <FiClock size={18} strokeWidth={1.75} />
               </NavLink>
-              <span className="gx-avatar" title={user?.fullName || 'Super Admin'} aria-hidden="true">{initials}</span>
+              <span className="gx-top-sep" aria-hidden="true" />
+              <div className="gx-who" title={user?.fullName || 'Super Admin'}>
+                <span className="gx-avatar" aria-hidden="true">{initials}</span>
+                <span className="gx-who-copy">
+                  <strong>{user?.fullName || 'Super Admin'}</strong>
+                  <small>{user?.email || 'Super Admin'}</small>
+                </span>
+              </div>
               <button type="button" className="gx-tool" aria-label="Sign out" data-label="Sign out" onClick={logout}>
                 <FiLogOut size={18} strokeWidth={1.75} />
               </button>
