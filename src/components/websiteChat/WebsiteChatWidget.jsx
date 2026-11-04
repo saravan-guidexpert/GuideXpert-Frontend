@@ -310,7 +310,7 @@ export default function WebsiteChatWidget() {
     }
   };
 
-  if (pathname.startsWith('/admin') || pathname.startsWith('/crm')) return null;
+  if (pathname.startsWith('/admin') || pathname.startsWith('/crm') || pathname.startsWith('/terms-and-conditions')) return null;
 
   return (
     <div className="font-sw-body">

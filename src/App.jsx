@@ -215,6 +215,7 @@ import RankPredictorHome from './pages/RankPredictorHome';
 import ExamPredictor from './pages/ExamPredictor';
 import BlogDetails from './pages/BlogDetails';
 import BlogsPage from './pages/BlogsPage';
+import TermsAndConditionsPage from './pages/terms/TermsAndConditionsPage';
 import LegacyBlogRedirect from './pages/LegacyBlogRedirect';
 import AdminBlog from './pages/AdminBlog';
 import ResourcesAdmin from './pages/admin/ResourcesAdmin';
@@ -535,6 +536,7 @@ function App() {
             </Route>
           </Route>
           <Route path="/blogs" element={<BlogsPage />} />
+          <Route path="/terms-and-conditions" element={<TermsAndConditionsPage />} />
           <Route path="/blogs/:id" element={<BlogDetails />} />
           <Route path="/blog" element={<Navigate to="/blogs" replace />} />
           <Route path="/blog/:id" element={<LegacyBlogRedirect />} />

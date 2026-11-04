@@ -8,7 +8,7 @@ const linkClass =
 const Footer = () => {
   const quickLinks = [
     { name: 'Privacy Policy', href: '#privacy' },
-    { name: 'Terms & Conditions', href: '#terms' },
+    { name: 'Terms & Conditions', to: '/terms-and-conditions' },
     { name: 'Blogs', to: '/blogs' },
     { name: 'Counselor Login', to: '/counsellor/login' },
     { name: 'About GuideXpert', href: '#about' },
