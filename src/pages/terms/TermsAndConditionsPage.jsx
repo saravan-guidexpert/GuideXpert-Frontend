@@ -19,9 +19,9 @@ function TermText({ text }) {
 
 function BulletList({ items, nested = false }) {
   return (
-    <ul className={nested ? 'mt-2 list-[circle] space-y-2 pl-5' : 'list-disc space-y-2.5 pl-5 marker:text-[#6b6b6b]'}>
+    <ul className={nested ? 'mt-1 list-[circle] space-y-1 pl-5' : 'list-disc space-y-1 pl-5 marker:text-[#6b6b6b]'}>
       {items.map((item) => (
-        <li key={item.text} className={bodyClass}>
+        <li key={item.text} className="text-base leading-6 text-[#3d3d3d]">
           <TermText text={item.text} />
           {item.children?.length ? (
             <BulletList items={item.children.map((child) => ({ text: child }))} nested />
@@ -95,9 +95,9 @@ export default function TermsAndConditionsPage() {
               ))}
             </div>
 
-            <div className="mt-10 space-y-9">
+            <div className="mt-8 space-y-4">
               {terms.sections.map((section) => (
-                <section key={section.id} id={section.id} className="scroll-mt-28">
+                <section key={section.id} id={section.id} className="scroll-mt-28 !py-0">
                   <h2 className="text-lg font-semibold leading-snug text-[#1a1a1a]">
                     {section.number}. {section.title}
                   </h2>
