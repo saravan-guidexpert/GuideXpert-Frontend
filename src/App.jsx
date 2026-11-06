@@ -90,6 +90,7 @@ import Export from './pages/admin/Export';
 import Settings from './pages/admin/Settings';
 import SystemPrompt from './pages/admin/SystemPrompt';
 import AnswerStudio from './pages/admin/AnswerStudio';
+import AnswerStudioPrompts from './pages/admin/AnswerStudioPrompts';
 import MeetingAttendance from './pages/admin/MeetingAttendance';
 import ProData from './pages/admin/ProData';
 import IitMeetAttendance from './pages/admin/IitMeetAttendance';
@@ -675,6 +676,7 @@ function App() {
             <Route path="settings" element={<Settings />} />
             <Route path="system-prompt" element={<SystemPrompt />} />
             <Route path="answer-studio" element={<AnswerStudio />} />
+            <Route path="answer-studio/prompts" element={<AnswerStudioPrompts />} />
             <Route path="meeting-attendance" element={<MeetingAttendance />} />
             <Route
               path="activation-counsellor-meet-attendance"

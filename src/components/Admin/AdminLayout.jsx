@@ -79,6 +79,7 @@ const navItems = [
   { to: '/admin/resources', label: 'Resources', icon: FiBookOpen, sectionKey: 'resources', sidebarPlacement: 'students' },
   { to: '/admin/system-prompt', label: 'System Prompt', icon: FiEdit3, sectionKey: 'system-prompt', sidebarPlacement: 'students' },
   { to: '/admin/answer-studio', label: 'Answer Studio', icon: FiPenTool, sectionKey: 'answer-studio', sidebarPlacement: 'both' },
+  { to: '/admin/answer-studio/prompts', label: 'System Prompts', icon: FiFileText, sectionKey: 'answer-studio', sidebarPlacement: 'both', superAdminOnly: true },
   { to: '/admin/calling-team', label: 'Calling Team', icon: FiPhone, sectionKey: 'calling-team', hideInSidebar: true },
   { to: '/admin/calling-data', label: 'Calling Data', icon: FiDatabase, sectionKey: 'calling-data', hideInSidebar: true },
   { to: '/admin/calling-team/leads', label: 'Calling Team Leads', icon: FiUsers, sectionKey: 'calling-team', hideInSidebar: true },
@@ -98,6 +99,7 @@ function getVisibleNavItems(user) {
   if (!Array.isArray(access) || access.length === 0) return [];
   const set = new Set(access);
   return navItems.filter((item) => {
+    if (item.superAdminOnly) return false;
     if (set.has(item.sectionKey)) return true;
     if (
       item.sectionKey === 'student-workspace' &&
@@ -397,7 +399,7 @@ export default function AdminLayout() {
                   label={label}
                   icon={icon}
                   sidebarCollapsed={sidebarCollapsed}
-                  end={to === '/admin/dashboard' || to === '/admin/webinar-progress'}
+                  end={to === '/admin/dashboard' || to === '/admin/webinar-progress' || to === '/admin/answer-studio'}
                   onNavigate={closeMobileSidebar}
                 />
               ))}

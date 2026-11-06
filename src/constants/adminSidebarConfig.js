@@ -59,6 +59,7 @@ export const DEFAULT_ROUTE_PLACEMENTS = {
   '/admin/resources': 'students',
   '/admin/system-prompt': 'students',
   '/admin/answer-studio': 'both',
+  '/admin/answer-studio/prompts': 'both',
 };
 
 /** Labels for settings UI (sidebar-visible routes). */
@@ -110,6 +111,7 @@ export const SIDEBAR_SETTINGS_ITEMS = [
   { to: '/admin/resources', label: 'Resources' },
   { to: '/admin/system-prompt', label: 'System Prompt' },
   { to: '/admin/answer-studio', label: 'Answer Studio' },
+  { to: '/admin/answer-studio/prompts', label: 'System Prompts' },
 ];
 
 export function getDefaultSidebarConfig() {

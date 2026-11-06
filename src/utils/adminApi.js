@@ -1885,3 +1885,43 @@ export const generateAnswerStudio = async ({ platform, question }, token = getSt
     method: 'POST',
     body: JSON.stringify({ platform, question }),
   }, token);
+
+function answerStudioPromptQuery(params = {}) {
+  const search = new URLSearchParams();
+  if (params.platform) search.set('platform', params.platform);
+  if (params.page != null) search.set('page', String(params.page));
+  if (params.limit != null) search.set('limit', String(params.limit));
+  if (params.key) search.set('key', params.key);
+  const query = search.toString();
+  return query ? `?${query}` : '';
+}
+
+/** GET /admin/answer-studio/prompts — metadata only. The prompt body is omitted. */
+export const listAnswerStudioPrompts = async (params = {}, token = getStoredToken()) =>
+  adminRequest(`/answer-studio/prompts${answerStudioPromptQuery(params)}`, { method: 'GET' }, token);
+
+/** GET /admin/answer-studio/prompts/:id — includes the immutable prompt body. */
+export const getAnswerStudioPrompt = async (id, token = getStoredToken()) =>
+  adminRequest(`/answer-studio/prompts/${encodeURIComponent(id)}`, { method: 'GET' }, token);
+
+/** POST /admin/answer-studio/prompts — create a draft. Body is key, platform, and body. */
+export const createAnswerStudioPrompt = async (payload, token = getStoredToken()) =>
+  adminRequest('/answer-studio/prompts', {
+    method: 'POST',
+    body: JSON.stringify(payload),
+  }, token);
+
+/** POST /admin/answer-studio/prompts/:id/versions — create a new draft version. */
+export const createAnswerStudioPromptVersion = async (id, payload, token = getStoredToken()) =>
+  adminRequest(`/answer-studio/prompts/${encodeURIComponent(id)}/versions`, {
+    method: 'POST',
+    body: JSON.stringify(payload),
+  }, token);
+
+/** POST /admin/answer-studio/prompts/:id/activate */
+export const activateAnswerStudioPrompt = async (id, token = getStoredToken()) =>
+  adminRequest(`/answer-studio/prompts/${encodeURIComponent(id)}/activate`, { method: 'POST' }, token);
+
+/** POST /admin/answer-studio/prompts/:id/deactivate */
+export const deactivateAnswerStudioPrompt = async (id, token = getStoredToken()) =>
+  adminRequest(`/answer-studio/prompts/${encodeURIComponent(id)}/deactivate`, { method: 'POST' }, token);
