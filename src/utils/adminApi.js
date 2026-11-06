@@ -1878,3 +1878,10 @@ export const unpublishStudentResource = async (id, token = getStoredToken()) =>
 
 export const deleteStudentResource = async (id, token = getStoredToken()) =>
   adminRequest(`/resources/${encodeURIComponent(id)}`, { method: 'DELETE' }, token);
+
+/** POST /admin/answer-studio/generate — prompt-only answer. Body is platform and question only. */
+export const generateAnswerStudio = async ({ platform, question }, token = getStoredToken()) =>
+  adminRequest('/answer-studio/generate', {
+    method: 'POST',
+    body: JSON.stringify({ platform, question }),
+  }, token);

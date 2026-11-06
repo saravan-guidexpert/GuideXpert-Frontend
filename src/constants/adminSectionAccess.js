@@ -46,7 +46,6 @@ export const ADMIN_SECTION_OPTIONS = [
   { sectionKey: 'student-testimonials', label: 'Student panel (testimonials, legacy)' },
   { sectionKey: 'settings', label: 'Settings' },
   { sectionKey: 'system-prompt', label: 'System Prompt' },
-  // Permission only. The admin page and sidebar entry are a later phase.
   { sectionKey: 'answer-studio', label: 'AI Answer Studio' },
 ];
 

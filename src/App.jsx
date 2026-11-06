@@ -89,6 +89,7 @@ import DemoMeetSchedule from './pages/admin/DemoMeetSchedule';
 import Export from './pages/admin/Export';
 import Settings from './pages/admin/Settings';
 import SystemPrompt from './pages/admin/SystemPrompt';
+import AnswerStudio from './pages/admin/AnswerStudio';
 import MeetingAttendance from './pages/admin/MeetingAttendance';
 import ProData from './pages/admin/ProData';
 import IitMeetAttendance from './pages/admin/IitMeetAttendance';
@@ -673,6 +674,7 @@ function App() {
             <Route path="export" element={<Export />} />
             <Route path="settings" element={<Settings />} />
             <Route path="system-prompt" element={<SystemPrompt />} />
+            <Route path="answer-studio" element={<AnswerStudio />} />
             <Route path="meeting-attendance" element={<MeetingAttendance />} />
             <Route
               path="activation-counsellor-meet-attendance"
