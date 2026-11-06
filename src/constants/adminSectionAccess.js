@@ -46,6 +46,8 @@ export const ADMIN_SECTION_OPTIONS = [
   { sectionKey: 'student-testimonials', label: 'Student panel (testimonials, legacy)' },
   { sectionKey: 'settings', label: 'Settings' },
   { sectionKey: 'system-prompt', label: 'System Prompt' },
+  // Permission only. The admin page and sidebar entry are a later phase.
+  { sectionKey: 'answer-studio', label: 'AI Answer Studio' },
 ];
 
 export const ADMIN_SECTION_KEYS = ADMIN_SECTION_OPTIONS.map((o) => o.sectionKey);
@@ -105,7 +107,7 @@ export const ADMIN_SECTION_GROUPS = [
   {
     id: 'admin',
     label: 'Admin',
-    sectionKeys: ['settings', 'consultancy-crm-manager', 'crm-access-management'],
+    sectionKeys: ['settings', 'consultancy-crm-manager', 'crm-access-management', 'answer-studio'],
   },
 ];
 
