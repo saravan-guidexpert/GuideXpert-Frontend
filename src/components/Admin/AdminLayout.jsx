@@ -25,7 +25,6 @@ const SETTINGS_ROUTE = '/admin/settings';
 const navItems = [
   { to: '/admin/dashboard', label: 'Dashboard', icon: FiLayout, sectionKey: 'dashboard', sidebarPlacement: 'counsellors' },
   { to: '/admin/executive-dashboard', label: 'Executive Dashboard', icon: FiBarChart2, sectionKey: 'funnel-analytics', sidebarPlacement: 'counsellors' },
-  { to: '/admin/analytics/alerts', label: 'Smart Alerts', icon: FiBell, sectionKey: 'funnel-analytics', sidebarPlacement: 'counsellors' },
   { to: '/admin/analytics/reports', label: 'Executive Reports', icon: FiFileText, sectionKey: 'funnel-analytics', sidebarPlacement: 'counsellors' },
   { to: '/admin/analytics/demand', label: 'Demand Intelligence', icon: FiGlobe, sectionKey: 'funnel-analytics', sidebarPlacement: 'counsellors' },
   { to: '/admin/analytics/predictions', label: 'Conversion Prediction', icon: FiTarget, sectionKey: 'funnel-analytics', sidebarPlacement: 'counsellors' },

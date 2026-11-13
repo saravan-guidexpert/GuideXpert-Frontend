@@ -75,7 +75,6 @@ import CrmWorkspaceAnalyticsPage from './pages/admin/crm/workspace/AnalyticsPage
 import CrmWorkspaceHistoryPage from './pages/admin/crm/workspace/HistoryPage';
 import CrmWorkspaceIntelligencePage from './pages/admin/crm/workspace/IntelligencePage';
 import ExecutiveDashboard from './pages/admin/ExecutiveDashboard';
-import AlertsDashboard from './pages/admin/AlertsDashboard';
 import ReportsDashboard from './pages/admin/ReportsDashboard';
 import DemandIntelligenceDashboard from './pages/admin/DemandIntelligenceDashboard';
 import PredictionDashboard from './pages/admin/PredictionDashboard';
@@ -652,7 +651,7 @@ function App() {
             <Route path="crm/calendar" element={<CrmCalendarPage />} />
             <Route path="crm-access" element={<CrmAccessPage />} />
             <Route path="executive-dashboard" element={<ExecutiveDashboard />} />
-            <Route path="analytics/alerts" element={<AlertsDashboard />} />
+            <Route path="analytics/alerts" element={<Navigate to="/admin/dashboard" replace />} />
             <Route path="analytics/reports" element={<ReportsDashboard />} />
             <Route path="analytics/demand" element={<DemandIntelligenceDashboard />} />
             <Route path="analytics/predictions" element={<PredictionDashboard />} />
