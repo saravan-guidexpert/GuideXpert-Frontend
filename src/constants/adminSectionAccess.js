@@ -47,6 +47,7 @@ export const ADMIN_SECTION_OPTIONS = [
   { sectionKey: 'settings', label: 'Settings' },
   { sectionKey: 'system-prompt', label: 'System Prompt' },
   { sectionKey: 'answer-studio', label: 'AI Answer Studio' },
+  { sectionKey: 'support-email', label: 'Support email' },
 ];
 
 export const ADMIN_SECTION_KEYS = ADMIN_SECTION_OPTIONS.map((o) => o.sectionKey);
@@ -106,7 +107,7 @@ export const ADMIN_SECTION_GROUPS = [
   {
     id: 'admin',
     label: 'Admin',
-    sectionKeys: ['settings', 'consultancy-crm-manager', 'crm-access-management', 'answer-studio'],
+    sectionKeys: ['settings', 'consultancy-crm-manager', 'crm-access-management', 'answer-studio', 'support-email'],
   },
 ];
 

@@ -2,7 +2,7 @@ import { createElement, useState, useMemo, useEffect, useCallback, useRef } from
 import { useSidebarScrollbarActivity } from '../../hooks/useSidebarScrollbarActivity';
 import { Link, NavLink, Outlet, useLocation, useNavigate } from 'react-router-dom';
 import { HiMenu, HiX } from 'react-icons/hi';
-import { FiLayout, FiUsers, FiBarChart2, FiDownload, FiSettings, FiCalendar, FiClock, FiVideo, FiFileText, FiBell, FiLink, FiClipboard, FiMessageSquare, FiBookOpen, FiImage, FiPhone, FiLayers, FiTarget, FiUserPlus, FiSend, FiDatabase, FiChevronLeft, FiChevronRight, FiLogOut, FiGlobe, FiColumns, FiEdit3, FiBriefcase, FiShield, FiPenTool, FiEye } from 'react-icons/fi';
+import { FiLayout, FiUsers, FiBarChart2, FiDownload, FiSettings, FiCalendar, FiClock, FiVideo, FiFileText, FiBell, FiLink, FiClipboard, FiMessageSquare, FiBookOpen, FiImage, FiPhone, FiLayers, FiTarget, FiUserPlus, FiSend, FiDatabase, FiChevronLeft, FiChevronRight, FiLogOut, FiGlobe, FiColumns, FiEdit3, FiBriefcase, FiShield, FiPenTool, FiEye, FiMail } from 'react-icons/fi';
 import { useAuth } from '../../hooks/useAuth';
 import { AdminDashboardProvider } from '../../contexts/AdminDashboardContext';
 import { useAdminDateRange } from '../../hooks/useAdminDateRange';
@@ -79,6 +79,7 @@ const navItems = [
   { to: '/admin/resources', label: 'Resources', icon: FiBookOpen, sectionKey: 'resources', sidebarPlacement: 'students' },
   { to: '/admin/system-prompt', label: 'System Prompt', icon: FiEdit3, sectionKey: 'system-prompt', sidebarPlacement: 'students' },
   { to: '/admin/answer-studio', label: 'Answer Studio', icon: FiPenTool, sectionKey: 'answer-studio', sidebarPlacement: 'both' },
+  { to: '/admin/support-email', label: 'Support email', icon: FiMail, sectionKey: 'support-email', sidebarPlacement: 'both' },
   { to: '/admin/answer-studio/prompts', label: 'System Prompts', icon: FiFileText, sectionKey: 'answer-studio', sidebarPlacement: 'both', superAdminOnly: true },
   { to: '/admin/calling-team', label: 'Calling Team', icon: FiPhone, sectionKey: 'calling-team', hideInSidebar: true },
   { to: '/admin/calling-data', label: 'Calling Data', icon: FiDatabase, sectionKey: 'calling-data', hideInSidebar: true },
@@ -316,7 +317,8 @@ export default function AdminLayout() {
     currentPath.startsWith('/admin/ai-calls') ||
     currentPath.startsWith('/admin/iit-ai-calls-summary') ||
     currentPath.startsWith('/admin/lead-intelligence') ||
-    currentPath.startsWith('/admin/crm');
+    currentPath.startsWith('/admin/crm') ||
+    currentPath.startsWith('/admin/support-email');
   useEffect(() => {
     const firstAllowed = visibleNavItems[0];
     if (user && !user.isSuperAdmin && !isPathAllowed && firstAllowed) {

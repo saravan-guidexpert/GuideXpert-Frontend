@@ -1935,3 +1935,40 @@ export const activateAnswerStudioPrompt = async (id, token = getStoredToken()) =
 /** POST /admin/answer-studio/prompts/:id/deactivate */
 export const deactivateAnswerStudioPrompt = async (id, token = getStoredToken()) =>
   adminRequest(`/answer-studio/prompts/${encodeURIComponent(id)}/deactivate`, { method: 'POST' }, token);
+
+function supportEmailQuery(params = {}) {
+  const search = new URLSearchParams();
+  Object.entries(params).forEach(([key, value]) => {
+    if (value !== undefined && value !== null && value !== '') search.set(key, String(value));
+  });
+  const text = search.toString();
+  return text ? `?${text}` : '';
+}
+
+export const getSupportEmailOverview = async (params = {}, token = getStoredToken()) =>
+  adminRequest(`/support-email/overview${supportEmailQuery(params)}`, { method: 'GET' }, token);
+
+export const listSupportEmailTickets = async (params = {}, token = getStoredToken()) =>
+  adminRequest(`/support-email/tickets${supportEmailQuery(params)}`, { method: 'GET' }, token);
+
+export const getSupportEmailTicket = async (id, token = getStoredToken()) =>
+  adminRequest(`/support-email/tickets/${encodeURIComponent(id)}`, { method: 'GET' }, token);
+
+export const reviewSupportEmailTicket = async (id, payload, token = getStoredToken()) =>
+  adminRequest(`/support-email/tickets/${encodeURIComponent(id)}/review`, {
+    method: 'PATCH',
+    body: JSON.stringify(payload),
+  }, token);
+
+export const listSupportEmailJobs = async (params = {}, token = getStoredToken()) =>
+  adminRequest(`/support-email/jobs${supportEmailQuery(params)}`, { method: 'GET' }, token);
+
+export const retrySupportEmailJob = async (id, token = getStoredToken()) =>
+  adminRequest(`/support-email/jobs/${encodeURIComponent(id)}/retry`, { method: 'POST' }, token);
+
+export const getSupportEmailHealth = async (token = getStoredToken()) =>
+  adminRequest('/support-email/health', { method: 'GET' }, token);
+
+export function supportEmailAttachmentUrl(id) {
+  return `${getApiBaseUrl()}/admin/support-email/attachments/${encodeURIComponent(id)}`;
+}

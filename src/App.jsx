@@ -107,6 +107,12 @@ import JeeSessionLeads from './pages/admin/JeeSessionLeads';
 import MockTestLeads from './pages/admin/MockTestLeads';
 import JeeMainMockTestLeads from './pages/admin/JeeMainMockTestLeads';
 import JeeMockTestResultActivity from './pages/admin/JeeMockTestResultActivity';
+import SupportEmailShell from './pages/admin/supportEmail/SupportEmailShell';
+import SupportEmailOverview from './pages/admin/supportEmail/OverviewPage';
+import SupportEmailTickets from './pages/admin/supportEmail/TicketsPage';
+import SupportEmailTicketDetail from './pages/admin/supportEmail/TicketDetailPage';
+import SupportEmailProcessing from './pages/admin/supportEmail/ProcessingPage';
+import SupportEmailHealth from './pages/admin/supportEmail/HealthPage';
 import LeadIntelligenceDashboard from './pages/admin/lead-intelligence/LeadIntelligenceDashboard';
 import GuidanceSlotBookings from './pages/admin/GuidanceSlotBookings';
 import OneOnOneCounselorsAdmin from './pages/admin/OneOnOneCounselorsAdmin';
@@ -683,6 +689,14 @@ function App() {
             <Route path="system-prompt" element={<SystemPrompt />} />
             <Route path="answer-studio" element={<AnswerStudio />} />
             <Route path="answer-studio/prompts" element={<AnswerStudioPrompts />} />
+            <Route path="support-email" element={<SupportEmailShell />}>
+              <Route index element={<SupportEmailOverview />} />
+              <Route path="tickets" element={<SupportEmailTickets />} />
+              <Route path="tickets/:id" element={<SupportEmailTicketDetail />} />
+              <Route path="review" element={<SupportEmailTickets reviewOnly />} />
+              <Route path="processing" element={<SupportEmailProcessing />} />
+              <Route path="health" element={<SupportEmailHealth />} />
+            </Route>
             <Route path="meeting-attendance" element={<MeetingAttendance />} />
             <Route
               path="activation-counsellor-meet-attendance"
