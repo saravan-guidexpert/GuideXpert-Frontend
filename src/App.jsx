@@ -112,6 +112,9 @@ import OneOnOneCounselorsAdmin from './pages/admin/OneOnOneCounselorsAdmin';
 import OneOnOneSessionPage from './pages/OneOnOneSessionPage';
 import JeeSessionPage from './pages/JeeSessionPage';
 import MockTestPage from './pages/MockTestPage';
+import JeeMockTestMobileEntryPage from './pages/jeeMockTestResults/MobileEntryPage';
+import JeeMockTestVerifyPage from './pages/jeeMockTestResults/VerifyOtpPage';
+import JeeMockTestResultPage from './pages/jeeMockTestResults/ResultViewPage';
 import GuidanceBookingConfirmation from './pages/GuidanceBookingConfirmation';
 import GuidanceSessionMeet from './pages/GuidanceSessionMeet';
 import {
@@ -371,6 +374,9 @@ function App() {
           <Route path="/one-on-one-session" element={<OneOnOneSessionPage />} />
           <Route path="/jee-session" element={<JeeSessionPage />} />
           <Route path="/mock-test" element={<MockTestPage />} />
+          <Route path="/jee-mock-test/results" element={<JeeMockTestMobileEntryPage />} />
+          <Route path="/jee-mock-test/results/verify" element={<JeeMockTestVerifyPage />} />
+          <Route path="/jee-mock-test/results/view" element={<JeeMockTestResultPage />} />
           <Route path="/jee-sessions" element={<Navigate to="/jee-session" replace />} />
           <Route path="/jee-sessioans" element={<Navigate to="/jee-session" replace />} />
           <Route path="/guidance-booking-confirmation" element={<GuidanceBookingConfirmation />} />

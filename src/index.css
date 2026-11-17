@@ -551,6 +551,12 @@
       font-size: 3rem;
     }
   }
+
+  /* Marketing section rhythm must not open gaps inside the result report. */
+  .jee-result-report section {
+    padding-top: 0;
+    padding-bottom: 0;
+  }
 }
 
 @layer utilities {
@@ -1106,4 +1112,50 @@
 
 .bda-toast-container .Toastify__toast--warning {
   border-left: 4px solid var(--color-warning, #d97706);
+}
+
+@keyframes jee-result-pop {
+  from { opacity: 0; transform: scale(0.96); }
+  to { opacity: 1; transform: scale(1); }
+}
+
+@keyframes jee-result-check {
+  from { opacity: 0; transform: scale(0.86); }
+  to { opacity: 1; transform: scale(1); }
+}
+
+.jee-result-pop {
+  animation: jee-result-pop 220ms ease-out;
+}
+
+.jee-result-check {
+  animation: jee-result-check 280ms ease-out 40ms both;
+}
+
+@keyframes jee-report-in {
+  from { opacity: 0; transform: translateY(6px); }
+  to { opacity: 1; transform: none; }
+}
+
+@keyframes jee-bar-fill {
+  from { transform: scaleX(0); }
+  to { transform: scaleX(1); }
+}
+
+.jee-report-in {
+  animation: jee-report-in 420ms ease-out both;
+}
+
+.jee-bar-fill {
+  transform-origin: left center;
+  animation: jee-bar-fill 700ms ease-out both;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .jee-result-pop,
+  .jee-result-check,
+  .jee-report-in,
+  .jee-bar-fill {
+    animation: none;
+  }
 }
