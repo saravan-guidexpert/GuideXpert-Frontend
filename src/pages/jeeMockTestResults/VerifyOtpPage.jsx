@@ -65,7 +65,10 @@ export default function VerifyOtpPage() {
       setSubmitting(false);
       setError(response.data?.message || 'Unable to verify that code.');
       setErrorCode(response.data?.code || '');
-      if (response.data?.code === 'OTP_EXPIRED') setOtpExpired(true);
+      if (response.data?.code === 'OTP_EXPIRED') {
+        setOtpExpired(true);
+        setSecondsLeft(0);
+      }
       return;
     }
     if (response.data?.eligible === false || response.data?.eligibility === 'FORM_INCOMPLETE') {
