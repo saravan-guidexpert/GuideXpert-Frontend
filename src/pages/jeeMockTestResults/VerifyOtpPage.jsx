@@ -65,8 +65,8 @@ export default function VerifyOtpPage() {
       setSubmitting(false);
       setError(response.data?.message || 'Unable to verify that code.');
       setErrorCode(response.data?.code || '');
-      if (response.data?.code === 'OTP_EXPIRED') {
-        setOtpExpired(true);
+      if (response.data?.code === 'OTP_EXPIRED' || response.status >= 500) {
+        setOtpExpired(response.data?.code === 'OTP_EXPIRED');
         setSecondsLeft(0);
       }
       return;
