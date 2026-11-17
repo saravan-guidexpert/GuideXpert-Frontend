@@ -2,7 +2,7 @@ import { createElement, useState, useMemo, useEffect, useCallback, useRef } from
 import { useSidebarScrollbarActivity } from '../../hooks/useSidebarScrollbarActivity';
 import { Link, NavLink, Outlet, useLocation, useNavigate } from 'react-router-dom';
 import { HiMenu, HiX } from 'react-icons/hi';
-import { FiLayout, FiUsers, FiBarChart2, FiDownload, FiSettings, FiCalendar, FiClock, FiVideo, FiFileText, FiBell, FiLink, FiClipboard, FiMessageSquare, FiBookOpen, FiImage, FiPhone, FiLayers, FiTarget, FiUserPlus, FiSend, FiDatabase, FiChevronLeft, FiChevronRight, FiLogOut, FiGlobe, FiColumns, FiEdit3, FiBriefcase, FiShield, FiPenTool } from 'react-icons/fi';
+import { FiLayout, FiUsers, FiBarChart2, FiDownload, FiSettings, FiCalendar, FiClock, FiVideo, FiFileText, FiBell, FiLink, FiClipboard, FiMessageSquare, FiBookOpen, FiImage, FiPhone, FiLayers, FiTarget, FiUserPlus, FiSend, FiDatabase, FiChevronLeft, FiChevronRight, FiLogOut, FiGlobe, FiColumns, FiEdit3, FiBriefcase, FiShield, FiPenTool, FiEye } from 'react-icons/fi';
 import { useAuth } from '../../hooks/useAuth';
 import { AdminDashboardProvider } from '../../contexts/AdminDashboardContext';
 import { useAdminDateRange } from '../../hooks/useAdminDateRange';
@@ -56,6 +56,7 @@ const navItems = [
   { to: '/admin/iit-counselling-utm', label: 'IIT Counselling UTM', icon: FiLink, sectionKey: 'iit-counselling', sidebarPlacement: 'students' },
   { to: '/admin/mock-test', label: 'Mock Test', icon: FiClipboard, sectionKey: 'iit-counselling', sidebarPlacement: 'students' },
   { to: '/admin/jee-main-mock-test', label: 'JEE Mock Test', icon: FiClipboard, sectionKey: 'iit-counselling', sidebarPlacement: 'students' },
+  { to: '/admin/jee-mock-test-results', label: 'JEE Result Activity', icon: FiEye, sectionKey: 'iit-counselling', sidebarPlacement: 'students' },
   { to: '/admin/organic-rank-leads', label: 'Organic rank leads', icon: FiTarget, sectionKey: 'leads', sidebarPlacement: 'students' },
   { to: '/admin/college-comparisons', label: 'College comparisons', icon: FiColumns, sectionKey: 'leads', sidebarPlacement: 'students' },
   { to: '/admin/student-workspace-leads', label: 'Student workspace leads', icon: FiUsers, sectionKey: 'leads', sidebarPlacement: 'students' },

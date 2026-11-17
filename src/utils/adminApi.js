@@ -650,6 +650,16 @@ export const getJeeMainMockTestLeads = async (params = {}, token = getStoredToke
   return adminRequest(`/jee-main-mock-test${query ? `?${query}` : ''}`, { method: 'GET' }, token);
 };
 
+export const getJeeMockTestResultActivity = async (params = {}, token = getStoredToken()) => {
+  const search = new URLSearchParams();
+  if (params.page) search.set('page', String(params.page));
+  if (params.limit) search.set('limit', String(params.limit));
+  if (params.q) search.set('q', params.q);
+  if (params.status) search.set('status', params.status);
+  const query = search.toString();
+  return adminRequest(`/jee-mock-test-results/activity${query ? `?${query}` : ''}`, { method: 'GET' }, token);
+};
+
 export const getMockTestLeads = async (params = {}, token = getStoredToken()) => {
   const search = new URLSearchParams();
   if (params.page) search.set('page', String(params.page));
