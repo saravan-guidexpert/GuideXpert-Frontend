@@ -1,4 +1,6 @@
+import { useContext } from 'react';
 import { NavLink, Outlet } from 'react-router-dom';
+import { AuthContext } from '../../../contexts/AuthContext';
 import { SUPPORT_EMAIL_LAYOUT } from './supportEmailFormat';
 
 const LINKS = [
@@ -10,6 +12,10 @@ const LINKS = [
 ];
 
 export default function SupportEmailShell() {
+  const auth = useContext(AuthContext);
+  const links = auth && auth.user && auth.user.isSuperAdmin === true
+    ? LINKS.concat([['/admin/support-email/single-test', 'Single email test', false]])
+    : LINKS;
   return (
     <div className={SUPPORT_EMAIL_LAYOUT.page}>
       <header className="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
@@ -19,7 +25,7 @@ export default function SupportEmailShell() {
         </div>
       </header>
       <nav className="flex gap-2 overflow-x-auto" aria-label="Support email sections">
-        {LINKS.map(([to, label, end]) => (
+        {links.map(([to, label, end]) => (
           <NavLink
             key={to}
             to={to}

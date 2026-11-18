@@ -113,6 +113,7 @@ import SupportEmailTickets from './pages/admin/supportEmail/TicketsPage';
 import SupportEmailTicketDetail from './pages/admin/supportEmail/TicketDetailPage';
 import SupportEmailProcessing from './pages/admin/supportEmail/ProcessingPage';
 import SupportEmailHealth from './pages/admin/supportEmail/HealthPage';
+import SingleEmailTestPage from './pages/admin/supportEmail/SingleEmailTestPage';
 import LeadIntelligenceDashboard from './pages/admin/lead-intelligence/LeadIntelligenceDashboard';
 import GuidanceSlotBookings from './pages/admin/GuidanceSlotBookings';
 import OneOnOneCounselorsAdmin from './pages/admin/OneOnOneCounselorsAdmin';
@@ -696,6 +697,7 @@ function App() {
               <Route path="review" element={<SupportEmailTickets reviewOnly />} />
               <Route path="processing" element={<SupportEmailProcessing />} />
               <Route path="health" element={<SupportEmailHealth />} />
+              <Route path="single-test" element={<SingleEmailTestPage />} />
             </Route>
             <Route path="meeting-attendance" element={<MeetingAttendance />} />
             <Route

@@ -1,7 +1,9 @@
-import { useEffect, useState } from 'react';
+import { useState } from 'react';
+import { Link } from 'react-router-dom';
 import { getSupportEmailOverview } from '../../../utils/adminApi';
-import { ERROR_COPY, LOADING_COPY, SUPPORT_EMAIL_LAYOUT } from './supportEmailFormat';
+import { ERROR_COPY, LOADING_COPY, SUPPORT_EMAIL_LAYOUT, formatWhen } from './supportEmailFormat';
 import { PanelMessage } from './SupportEmailShell';
+import { useAsyncData } from './useAsyncData';
 
 const PRESETS = [
   ['today', 'Today'],
@@ -32,18 +34,14 @@ export default function SupportEmailOverview() {
   const [preset, setPreset] = useState('7d');
   const [from, setFrom] = useState('');
   const [to, setTo] = useState('');
-  const [state, setState] = useState({ loading: true, error: '', overview: null });
-
-  useEffect(() => {
-    let active = true;
-    setState((current) => ({ ...current, loading: true, error: '' }));
-    getSupportEmailOverview({ preset, from, to }).then((result) => {
-      if (!active) return;
-      if (!result.success) setState({ loading: false, error: result.message || ERROR_COPY, overview: null });
-      else setState({ loading: false, error: '', overview: result.data.overview });
-    });
-    return () => { active = false; };
-  }, [preset, from, to]);
+  const customIncomplete = preset === 'custom' && (!from || !to);
+  const { loading, result, reload } = useAsyncData(
+    () => (customIncomplete ? null : getSupportEmailOverview({ preset, from, to })),
+    [preset, from, to]
+  );
+  const error = result && !result.success ? (result.message || ERROR_COPY) : '';
+  const overview = result && result.success && !customIncomplete ? result.data.overview : null;
+  const state = { loading, error, overview };
 
   const totals = state.overview ? state.overview.totals : null;
   const cards = totals ? [
@@ -63,6 +61,7 @@ export default function SupportEmailOverview() {
         {PRESETS.map(([value, label]) => (
           <button key={value} type="button" onClick={() => setPreset(value)} className={`rounded-md px-3 py-1.5 text-sm ${preset === value ? 'bg-slate-900 text-white' : 'bg-slate-100 text-slate-700'}`}>{label}</button>
         ))}
+        <button type="button" onClick={reload} className="ml-auto rounded-md border border-slate-300 px-3 py-1.5 text-sm text-slate-700">Refresh</button>
         {preset === 'custom' && (
           <>
             <label className="text-sm text-slate-600">From <input type="date" value={from} onChange={(event) => setFrom(event.target.value)} className="ml-1 rounded border border-slate-300 px-2 py-1" /></label>
@@ -70,6 +69,7 @@ export default function SupportEmailOverview() {
           </>
         )}
       </div>
+      {customIncomplete && <PanelMessage>Choose a start and end date.</PanelMessage>}
       {state.loading && <PanelMessage>{LOADING_COPY}</PanelMessage>}
       {state.error && <PanelMessage tone="error">{state.error}</PanelMessage>}
       {totals && (
@@ -97,7 +97,35 @@ export default function SupportEmailOverview() {
             </section>
             <section className={`${SUPPORT_EMAIL_LAYOUT.panel} p-3`}>
               <h2 className="mb-2 text-sm font-medium text-slate-900">Priority and AI</h2>
-              <Bars rows={[...state.overview.priorities.map((row) => ({ label: row.priority, count: row.count })), ...state.overview.ai.map((row) => ({ label: `AI ${row.outcome}`, count: row.count })), ...state.overview.sheets.map((row) => ({ label: `Sheets ${row.state}`, count: row.count }))]} labelKey="label" />
+              <Bars rows={[...state.overview.priorities.map((row) => ({ label: row.priority, count: row.count })), ...state.overview.ai.map((row) => ({ label: `AI ${row.outcome}`, count: row.count }))]} labelKey="label" />
+            </section>
+          </div>
+          <div className="grid gap-4 lg:grid-cols-2">
+            <section className={`${SUPPORT_EMAIL_LAYOUT.panel} p-3`} aria-label="Recent tickets">
+              <h2 className="mb-2 text-sm font-medium text-slate-900">Recent tickets</h2>
+              {(state.overview.recentTickets || []).length === 0 && <p className="text-sm text-slate-500">No tickets in this range.</p>}
+              <ul className="space-y-2">
+                {(state.overview.recentTickets || []).map((ticket) => (
+                  <li key={ticket.id} className="text-sm">
+                    <Link className="font-medium text-slate-900 underline" to={`/admin/support-email/tickets/${ticket.id}`}>{ticket.ticketNumber}</Link>
+                    <span className="text-slate-700"> {ticket.subject || 'No subject'}</span>
+                    <span className="block text-slate-500">{ticket.category} · {ticket.priority} · {ticket.status} · {formatWhen(ticket.receivedAt)}</span>
+                  </li>
+                ))}
+              </ul>
+            </section>
+            <section className={`${SUPPORT_EMAIL_LAYOUT.panel} p-3`} aria-label="Recent processing failures">
+              <h2 className="mb-2 text-sm font-medium text-slate-900">Recent processing failures</h2>
+              {(state.overview.recentFailures || []).length === 0 && <p className="text-sm text-slate-500">No processing failures in this range.</p>}
+              <ul className="space-y-2">
+                {(state.overview.recentFailures || []).map((failure) => (
+                  <li key={failure.id} className="text-sm">
+                    <span className="font-medium text-slate-900">{failure.stage} · {failure.state}</span>
+                    <span className="text-slate-700"> {failure.subject || 'No subject'}</span>
+                    <span className="block text-slate-500">{failure.reason || 'No reason recorded'} · attempts {failure.attempts}/{failure.maxAttempts} · {formatWhen(failure.updatedAt)}</span>
+                  </li>
+                ))}
+              </ul>
             </section>
           </div>
         </>

@@ -1969,6 +1969,18 @@ export const retrySupportEmailJob = async (id, token = getStoredToken()) =>
 export const getSupportEmailHealth = async (token = getStoredToken()) =>
   adminRequest('/support-email/health', { method: 'GET' }, token);
 
+export const testSupportEmailGraphAuthentication = async (token = getStoredToken()) =>
+  adminRequest('/support-email/graph-authentication', { method: 'GET' }, token);
+
+export const getSingleEmailTestReadiness = async (token = getStoredToken()) =>
+  adminRequest('/support-email/single-email-test/readiness', { method: 'GET' }, token);
+
+export const runSingleEmailTest = async (graphMessageId, token = getStoredToken()) =>
+  adminRequest('/support-email/single-email-test', {
+    method: 'POST',
+    body: JSON.stringify({ graphMessageId }),
+  }, token);
+
 export function supportEmailAttachmentUrl(id) {
   return `${getApiBaseUrl()}/admin/support-email/attachments/${encodeURIComponent(id)}`;
 }
