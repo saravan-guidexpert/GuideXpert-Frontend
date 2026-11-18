@@ -15,6 +15,8 @@ vi.mock('../../../utils/adminApi', () => ({
   testSupportEmailGraphAuthentication: vi.fn(),
   getSingleEmailTestReadiness: vi.fn(),
   runSingleEmailTest: vi.fn(),
+  createIngestionPolicy: vi.fn(),
+  updateIngestionPolicy: vi.fn(),
   supportEmailAttachmentUrl: vi.fn((id) => `/attachments/${id}`),
 }))
 
@@ -322,6 +324,69 @@ describe('Health', () => {
     renderWith(<HealthPage />, { user: { isSuperAdmin: false } })
     await screen.findByTestId('health-database')
     expect(screen.queryByRole('button', { name: 'Test Graph authentication' })).toBeNull()
+    expect(screen.queryByRole('form', { name: 'Ingestion settings' })).toBeNull()
+  })
+
+  it('asks a super admin to approve an activation time and does not enable processing', async () => {
+    api.getSupportEmailHealth.mockImplementation(() => ok({ health }))
+    api.createIngestionPolicy.mockReturnValue(ok({ policy: { mailbox: 'support@niatindia.com', enabled: false } }))
+    renderWith(<HealthPage />, { user: { isSuperAdmin: true } })
+    expect((await screen.findAllByText(/Policy status: not configured/)).length).toBeGreaterThan(0)
+    const button = await screen.findByRole('button', { name: 'Save activation time' })
+    expect(button).toBeDisabled()
+    expect(screen.queryByRole('checkbox', { name: 'Enable ingestion for this mailbox' })).toBeNull()
+    fireEvent.change(screen.getByLabelText('Activation time'), { target: { value: '2026-11-18T10:00' } })
+    expect(screen.getByText(/Selected 2026-11-18 10:00 IST/)).toBeInTheDocument()
+    expect(screen.getByText(/stored as 2026-11-18T04:30:00.000Z/)).toBeInTheDocument()
+    expect(button).toBeDisabled()
+    fireEvent.click(screen.getByRole('checkbox', { name: /I approve this activation time/ }))
+    expect(button).toBeEnabled()
+    fireEvent.click(button)
+    await waitFor(() => expect(api.createIngestionPolicy).toHaveBeenCalledWith({
+      mailbox: 'support@niatindia.com',
+      activationAt: '2026-11-18T10:00',
+      timeZone: 'Asia/Kolkata',
+      approveActivation: true,
+    }))
+    expect(api.createIngestionPolicy.mock.calls[0][0].enabled).toBeUndefined()
+  })
+
+  it('requires confirmation before changing an existing activation boundary', async () => {
+    const stored = {
+      ...health,
+      ingestion: {
+        ...health.ingestion,
+        policies: [{
+          mailbox: 'support@niatindia.com',
+          enabled: false,
+          status: 'disabled',
+          activationAt: '2026-11-18T04:30:00.000Z',
+          activationLocal: '2026-11-18 10:00 IST',
+          activationTimeZone: 'Asia/Kolkata',
+          activationApprovedAt: '2026-11-18T04:31:00.000Z',
+          configuredBy: { id: 'admin-1', name: 'Root' },
+        }],
+      },
+    }
+    api.getSupportEmailHealth.mockImplementation(() => ok({ health: stored }))
+    api.updateIngestionPolicy.mockReturnValue(ok({ policy: stored.ingestion.policies[0] }))
+    const confirm = vi.spyOn(window, 'confirm').mockReturnValue(false)
+    renderWith(<HealthPage />, { user: { isSuperAdmin: true } })
+    expect((await screen.findAllByText(/Configured by Root/)).length).toBeGreaterThan(0)
+    expect(screen.getAllByText(/policy status disabled/i).length).toBeGreaterThan(0)
+    fireEvent.change(screen.getByLabelText('Activation time'), { target: { value: '2026-11-18T11:00' } })
+    fireEvent.click(screen.getByRole('checkbox', { name: /I approve this activation time/ }))
+    fireEvent.click(screen.getByRole('button', { name: 'Save activation time' }))
+    expect(confirm).toHaveBeenCalled()
+    expect(api.updateIngestionPolicy).not.toHaveBeenCalled()
+    confirm.mockReturnValue(true)
+    fireEvent.click(screen.getByRole('button', { name: 'Save activation time' }))
+    await waitFor(() => expect(api.updateIngestionPolicy).toHaveBeenCalledWith(expect.objectContaining({
+      activationAt: '2026-11-18T11:00',
+      confirmBoundaryChange: true,
+    })))
+    expect(api.updateIngestionPolicy.mock.calls[0][0].enabled).toBeUndefined()
+    confirm.mockRestore()
   })
 
   it('shows an error when health cannot be loaded', async () => {
@@ -341,10 +406,27 @@ describe('Single email test', () => {
     expect(api.getSingleEmailTestReadiness).not.toHaveBeenCalled()
   })
 
+  it('keeps the test available when the only reported state is bulk processing', async () => {
+    api.getSingleEmailTestReadiness.mockReturnValue(ok({
+      readiness: {
+        blockers: ['global_processing_enabled'],
+        checks: [
+          { key: 'policy', verified: true, blocking: true, code: null, detail: 'An enabled ingestion policy exists for support@niatindia.com.' },
+          { key: 'bulk_processing', verified: false, blocking: false, code: 'bulk_processing_enabled', detail: 'Global processing is enabled because SUPPORT_EMAIL_PROCESSING_ENABLED is 1.' },
+        ],
+      },
+    }))
+    renderWith(<SingleEmailTestPage />)
+    expect(await screen.findByText(/Global processing is enabled/)).toBeInTheDocument()
+    fireEvent.change(screen.getByLabelText('Graph message id'), { target: { value: MESSAGE_ID } })
+    expect(screen.getByRole('button', { name: 'Run single email test' })).toBeEnabled()
+  })
+
   it('disables the button while blockers exist and lists them', async () => {
     api.getSingleEmailTestReadiness.mockReturnValue(ok({ readiness: { blockers: ['MAILBOX_SCOPE_UNVERIFIED'] } }))
     renderWith(<SingleEmailTestPage />)
-    expect(await screen.findByText('MAILBOX_SCOPE_UNVERIFIED')).toBeInTheDocument()
+    expect(await screen.findByText(/MAILBOX_SCOPE_UNVERIFIED/)).toBeInTheDocument()
+    expect(screen.getByText(/Exchange mailbox scope is not verified/)).toBeInTheDocument()
     fireEvent.change(screen.getByLabelText('Graph message id'), { target: { value: MESSAGE_ID } })
     expect(screen.getByRole('button', { name: 'Run single email test' })).toBeDisabled()
   })

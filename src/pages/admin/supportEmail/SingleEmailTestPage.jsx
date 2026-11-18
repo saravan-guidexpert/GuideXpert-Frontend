@@ -4,7 +4,7 @@ import { AuthContext } from '../../../contexts/AuthContext';
 import { getSingleEmailTestReadiness, runSingleEmailTest, testSupportEmailGraphAuthentication } from '../../../utils/adminApi';
 import { ERROR_COPY, SUPPORT_EMAIL_LAYOUT, singleTestErrorCopy } from './supportEmailFormat';
 import { PanelMessage } from './SupportEmailShell';
-import { canRunSingleEmailTest, singleEmailBlockers } from './singleEmailTest';
+import { canRunSingleEmailTest, readinessNotices, singleEmailBlockers } from './singleEmailTest';
 
 export const CONFIRM_COPY = 'This creates or updates one real support ticket for the Graph message you entered. It does not send a reply.';
 
@@ -36,6 +36,8 @@ export default function SingleEmailTestPage() {
   }
 
   const blockers = singleEmailBlockers(readiness);
+  const checks = readiness && Array.isArray(readiness.checks) ? readiness.checks : [];
+  const notices = readinessNotices(readiness);
   const enabled = canRunSingleEmailTest(readiness, messageId) && !running;
 
   async function onGraphTest() {
@@ -78,13 +80,25 @@ export default function SingleEmailTestPage() {
   return (
     <section className={`${SUPPORT_EMAIL_LAYOUT.panel} p-3 text-sm`}>
       <h2 className="font-medium text-slate-900">Run single email test</h2>
-      <p className="mt-2 text-slate-600">Processes one Graph message id. The normal processing worker stays off.</p>
+      <p className="mt-2 text-slate-600">Processes one Graph message id. This page does not start the normal processing worker.</p>
       {!readiness && !error && <p className="mt-3 text-slate-500">Checking readiness.</p>}
-      {blockers.length > 0 && (
-        <ul className="mt-3 list-disc pl-5 text-amber-800" aria-label="Blockers">
-          {blockers.map((blocker) => <li key={blocker}>{blocker}</li>)}
+      {checks.length > 0 && (
+        <ul className="mt-3 space-y-1" aria-label="Readiness checks">
+          {checks.filter((check) => check.blocking !== false).map((check) => (
+            <li key={check.key} className={check.verified === true ? 'text-green-800' : 'text-amber-800'}>
+              {check.code ? `${check.code}: ` : ''}{check.detail}
+            </li>
+          ))}
         </ul>
       )}
+      {checks.length === 0 && blockers.length > 0 && (
+        <ul className="mt-3 list-disc pl-5 text-amber-800" aria-label="Blockers">
+          {blockers.map((blocker) => <li key={blocker}>{blocker}: {singleTestErrorCopy(blocker)}</li>)}
+        </ul>
+      )}
+      {notices.map((notice) => (
+        <p key={notice.key || notice.code} className="mt-3 text-slate-700" role="status">{notice.detail || singleTestErrorCopy(notice.code)}</p>
+      ))}
       <div className="mt-3">
         <button type="button" className="rounded-md border border-slate-300 px-3 py-1.5 text-slate-800 disabled:opacity-50" onClick={onGraphTest} disabled={graphRunning}>
           {graphRunning ? 'Testing Graph token' : 'Test Graph token'}

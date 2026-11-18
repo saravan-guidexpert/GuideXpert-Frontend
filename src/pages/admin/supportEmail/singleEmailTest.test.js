@@ -8,5 +8,7 @@ test('single-email execution stays disabled while readiness is blocked', () => {
   assert.equal(canRunSingleEmailTest(blocked, 'AAMkAGSingleEmailTest0001'), false);
   assert.equal(canRunSingleEmailTest({ blockers: [] }, 'short'), false);
   assert.equal(canRunSingleEmailTest({ blockers: [] }, 'AAMkAGSingleEmailTest0001'), true);
+  assert.equal(canRunSingleEmailTest({ blockers: ['global_processing_enabled'] }, 'AAMkAGSingleEmailTest0001'), true);
+  assert.equal(canRunSingleEmailTest({ blockers: ['bulk_processing_enabled', 'policy_missing'] }, 'AAMkAGSingleEmailTest0001'), false);
   assert.deepEqual(singleEmailBlockers(null), ['readiness_unavailable']);
 });

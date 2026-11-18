@@ -49,9 +49,16 @@ const SINGLE_TEST_ERRORS = {
   graph_token_failed: 'Graph authentication failed. Run the Graph token test.',
   policy_missing: 'No ingestion policy exists for the approved mailbox.',
   policy_disabled: 'The ingestion policy is disabled.',
-  activation_missing: 'The ingestion policy has no activation time.',
+  activation_missing: 'Missing activation timestamp. Choose a time and approve it.',
+  activation_invalid: 'Invalid activation timestamp. Enter a real date and time and approve it.',
   wrong_mailbox: 'The policy is not for the approved mailbox.',
-  global_processing_enabled: 'Global processing is enabled. Turn it off before running a single email test.',
+  global_processing_enabled: 'Global processing is enabled. Set SUPPORT_EMAIL_PROCESSING_ENABLED to 0. The single-email test can still run.',
+  bulk_processing_enabled: 'Global processing is enabled. Set SUPPORT_EMAIL_PROCESSING_ENABLED to 0. The single-email test can still run.',
+  policy_exists: 'A policy for this mailbox already exists. Update it instead of creating another.',
+  activation_not_approved: 'Approve the activation time before saving the policy.',
+  enabled_required: 'Choose whether the policy is enabled. It is not enabled automatically.',
+  invalid_mailbox: 'The policy mailbox must be support@niatindia.com.',
+  boundary_change_not_confirmed: 'Confirm the activation boundary change before saving a different time.',
   attachment_stream_unavailable: 'Attachment download is unavailable.',
   download_failed: 'An attachment could not be downloaded.'
 };

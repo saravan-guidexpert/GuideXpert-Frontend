@@ -3,6 +3,7 @@ import { AuthContext } from '../../../contexts/AuthContext';
 import { getSupportEmailHealth, testSupportEmailGraphAuthentication } from '../../../utils/adminApi';
 import { ERROR_COPY, LOADING_COPY, SUPPORT_EMAIL_LAYOUT, verificationLabel, verificationTone } from './supportEmailFormat';
 import { PanelMessage } from './SupportEmailShell';
+import IngestionPolicyForm from './IngestionPolicyForm';
 
 function when(value) {
   return value ? new Date(value).toLocaleString() : 'Not recorded';
@@ -93,14 +94,25 @@ export default function SupportEmailHealth() {
       <article className={`${SUPPORT_EMAIL_LAYOUT.panel} p-3 text-sm lg:col-span-2`}>
         <h2 className="font-medium text-slate-900">Ingestion readiness</h2>
         <p className="mt-2 text-slate-700">Mailbox scope: {ingestion.mailboxScope}. Approved mailbox: {ingestion.approvedMailbox || 'support@niatindia.com'}.</p>
-        <p>Global processing: {ingestion.processingEnabled ? 'enabled' : 'disabled'}.</p>
-        {(ingestion.policies || []).length === 0 && <p>No mailbox policy is stored.</p>}
+        <p>Global processing: {ingestion.processingEnabled ? 'enabled' : 'disabled'}{ingestion.processingFlag ? ` (SUPPORT_EMAIL_PROCESSING_ENABLED=${ingestion.processingFlag})` : ' (SUPPORT_EMAIL_PROCESSING_ENABLED is unset)'}.</p>
+        {(ingestion.policies || []).length === 0 && <p>Policy status: not configured. No mailbox policy is stored. Activation time is not configured.</p>}
         {(ingestion.policies || []).map((policy) => (
-          <p key={policy.mailbox}>{policy.mailbox}: {policy.enabled ? 'enabled' : 'disabled'}, activation {when(policy.activationAt)}, baseline {when(policy.baselineCompletedAt)}</p>
+          <p key={policy.mailbox}>
+            {policy.mailbox}: policy status {policy.status || (policy.enabled ? 'enabled' : 'disabled')}.
+            {' '}Activation {policy.activationLocal || 'not configured'}{policy.activationAt ? `, stored as ${new Date(policy.activationAt).toISOString()}` : ''}.
+            {' '}Configured by {policy.configuredBy && policy.configuredBy.name ? policy.configuredBy.name : 'Not recorded'}{policy.activationApprovedAt ? ` at ${when(policy.activationApprovedAt)}` : ''}.
+            {' '}Baseline {when(policy.baselineCompletedAt)}.
+          </p>
         ))}
         {(health.sync.cursors || []).map((cursor) => (
           <p key={`${cursor.mailbox}-${cursor.folder}`}>{cursor.mailbox}/{cursor.folder}: delta cursor {cursor.hasDeltaLink ? 'present' : 'absent'}, baseline {when(cursor.baselineCompletedAt)}</p>
         ))}
+        {isSuperAdmin && (
+          <IngestionPolicyForm
+            policy={(ingestion.policies || []).find((row) => row.mailbox === (ingestion.approvedMailbox || 'support@niatindia.com')) || null}
+            onSaved={() => setRefreshKey((value) => value + 1)}
+          />
+        )}
         {isSuperAdmin && (
           <button type="button" className="mt-3 rounded-md bg-slate-900 px-3 py-1.5 text-white disabled:opacity-50" onClick={onGraphTest} disabled={graphRunning}>
             {graphRunning ? 'Testing Graph authentication' : 'Test Graph authentication'}

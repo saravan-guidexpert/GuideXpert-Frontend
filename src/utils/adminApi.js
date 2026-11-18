@@ -1972,6 +1972,21 @@ export const getSupportEmailHealth = async (token = getStoredToken()) =>
 export const testSupportEmailGraphAuthentication = async (token = getStoredToken()) =>
   adminRequest('/support-email/graph-authentication', { method: 'GET' }, token);
 
+export const getIngestionPolicy = async (token = getStoredToken()) =>
+  adminRequest('/support-email/ingestion-policy', { method: 'GET' }, token);
+
+export const createIngestionPolicy = async (payload, token = getStoredToken()) =>
+  adminRequest('/support-email/ingestion-policy', {
+    method: 'POST',
+    body: JSON.stringify(payload),
+  }, token);
+
+export const updateIngestionPolicy = async (payload, token = getStoredToken()) =>
+  adminRequest('/support-email/ingestion-policy', {
+    method: 'PATCH',
+    body: JSON.stringify(payload),
+  }, token);
+
 export const getSingleEmailTestReadiness = async (token = getStoredToken()) =>
   adminRequest('/support-email/single-email-test/readiness', { method: 'GET' }, token);
 
