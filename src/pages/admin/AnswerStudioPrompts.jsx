@@ -140,9 +140,9 @@ export default function AnswerStudioPrompts() {
   if (!allowed) {
     return (
       <section className="mx-auto max-w-3xl px-4 py-10 sm:px-6">
-        <h1 className="text-[28px] font-bold text-[#111827]">System Prompt Management</h1>
+        <h1 className="text-[28px] font-bold text-[#111827]">Quora and Reddit system prompt</h1>
         <p className="mt-3 rounded-[10px] border border-amber-200 bg-amber-50 px-4 py-3 text-[14px] text-amber-900" role="alert">
-          Only a super admin can manage Answer Studio prompts.
+          Quora and Reddit system prompt access is required.
         </p>
       </section>
     );
@@ -161,7 +161,7 @@ export default function AnswerStudioPrompts() {
     <div className="mx-auto max-w-[1280px] space-y-6 px-4 py-4 md:px-6 md:py-6">
       <div className="flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
         <div>
-          <h1 className="text-[28px] font-bold leading-tight text-[#111827]">System Prompt Management</h1>
+          <h1 className="text-[28px] font-bold leading-tight text-[#111827]">Quora and Reddit system prompt</h1>
           <p className="mt-2 max-w-3xl text-[15px] leading-relaxed text-[#6B7280]">
             Manage the instructions that control how GuideXpert generates Quora and Reddit answers.
           </p>

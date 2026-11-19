@@ -80,7 +80,7 @@ const navItems = [
   { to: '/admin/system-prompt', label: 'System Prompt', icon: FiEdit3, sectionKey: 'system-prompt', sidebarPlacement: 'students' },
   { to: '/admin/answer-studio', label: 'Answer Studio', icon: FiPenTool, sectionKey: 'answer-studio', sidebarPlacement: 'both' },
   { to: '/admin/support-email', label: 'Support email', icon: FiMail, sectionKey: 'support-email', sidebarPlacement: 'both' },
-  { to: '/admin/answer-studio/prompts', label: 'System Prompts', icon: FiFileText, sectionKey: 'answer-studio', sidebarPlacement: 'both', superAdminOnly: true },
+  { to: '/admin/answer-studio/prompts', label: 'Quora and Reddit system prompt', icon: FiFileText, sectionKey: 'quora-reddit-system-prompt', sidebarPlacement: 'both' },
   { to: '/admin/calling-team', label: 'Calling Team', icon: FiPhone, sectionKey: 'calling-team', hideInSidebar: true },
   { to: '/admin/calling-data', label: 'Calling Data', icon: FiDatabase, sectionKey: 'calling-data', hideInSidebar: true },
   { to: '/admin/calling-team/leads', label: 'Calling Team Leads', icon: FiUsers, sectionKey: 'calling-team', hideInSidebar: true },

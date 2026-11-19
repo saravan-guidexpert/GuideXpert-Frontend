@@ -114,7 +114,7 @@ export const SIDEBAR_SETTINGS_ITEMS = [
   { to: '/admin/resources', label: 'Resources' },
   { to: '/admin/system-prompt', label: 'System Prompt' },
   { to: '/admin/answer-studio', label: 'Answer Studio' },
-  { to: '/admin/answer-studio/prompts', label: 'System Prompts' },
+  { to: '/admin/answer-studio/prompts', label: 'Quora and Reddit system prompt' },
   { to: '/admin/support-email', label: 'Support email' },
 ];
 

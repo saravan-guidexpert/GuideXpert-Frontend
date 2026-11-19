@@ -36,21 +36,24 @@ function read(relativePath) {
   return fs.readFileSync(path.join(root, relativePath), 'utf8');
 }
 
-test('only a super admin can manage Answer Studio prompts', () => {
+test('Quora and Reddit system prompt access is granted from Manage Admins', () => {
   const layout = read('components/Admin/AdminLayout.jsx');
   const app = read('App.jsx');
   const page = read('pages/admin/AnswerStudioPrompts.jsx');
+  const sections = read('constants/adminSectionAccess.js');
   assert.equal(canManageAnswerStudioPrompts({ isSuperAdmin: true, sectionAccess: [] }), true);
   assert.equal(canManageAnswerStudioPrompts({ isSuperAdmin: false, sectionAccess: ['answer-studio'] }), false);
+  assert.equal(canManageAnswerStudioPrompts({ isSuperAdmin: false, sectionAccess: ['quora-reddit-system-prompt'] }), true);
   assert.equal(canManageAnswerStudioPrompts(null), false);
-  assert.match(layout, /label: 'System Prompts'/);
+  assert.match(layout, /label: 'Quora and Reddit system prompt'/);
   assert.match(layout, /to: '\/admin\/answer-studio\/prompts'/);
-  assert.match(layout, /superAdminOnly: true/);
-  assert.match(layout, /if \(item\.superAdminOnly\) return false/);
+  assert.match(layout, /sectionKey: 'quora-reddit-system-prompt'/);
   assert.match(app, /path="answer-studio\/prompts" element=\{<AnswerStudioPrompts/);
   assert.match(app, /path="answer-studio" element=\{<AnswerStudio/);
-  assert.match(page, /Only a super admin can manage Answer Studio prompts/);
+  assert.match(page, /Quora and Reddit system prompt access is required/);
   assert.match(page, /canManageAnswerStudioPrompts/);
+  assert.match(sections, /sectionKey: 'quora-reddit-system-prompt', label: 'Quora and Reddit system prompt'/);
+  assert.match(sections, /'quora-reddit-system-prompt'/);
 });
 
 test('prompt API calls use the admin client and the Phase 5A routes', () => {

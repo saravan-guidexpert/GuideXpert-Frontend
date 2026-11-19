@@ -46,8 +46,12 @@ export const ANSWER_STUDIO_DEFAULT_PROMPTS = Object.freeze({
   reddit: Object.freeze({ key: 'reddit-default-v1', version: 1, source: 'default' }),
 });
 
+export const QUORA_REDDIT_PROMPT_SECTION_KEY = 'quora-reddit-system-prompt';
+
 export function canManageAnswerStudioPrompts(user) {
-  return user?.isSuperAdmin === true;
+  if (!user) return false;
+  if (user.isSuperAdmin === true) return true;
+  return Array.isArray(user.sectionAccess) && user.sectionAccess.includes(QUORA_REDDIT_PROMPT_SECTION_KEY);
 }
 
 export function defaultPromptFor(platform) {

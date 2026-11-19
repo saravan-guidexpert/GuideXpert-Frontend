@@ -47,6 +47,7 @@ export const ADMIN_SECTION_OPTIONS = [
   { sectionKey: 'settings', label: 'Settings' },
   { sectionKey: 'system-prompt', label: 'System Prompt' },
   { sectionKey: 'answer-studio', label: 'AI Answer Studio' },
+  { sectionKey: 'quora-reddit-system-prompt', label: 'Quora and Reddit system prompt' },
   { sectionKey: 'support-email', label: 'Support email' },
 ];
 
@@ -107,7 +108,7 @@ export const ADMIN_SECTION_GROUPS = [
   {
     id: 'admin',
     label: 'Admin',
-    sectionKeys: ['settings', 'consultancy-crm-manager', 'crm-access-management', 'answer-studio', 'support-email'],
+    sectionKeys: ['settings', 'consultancy-crm-manager', 'crm-access-management', 'answer-studio', 'quora-reddit-system-prompt', 'support-email'],
   },
 ];
 
